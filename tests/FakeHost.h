@@ -638,12 +638,20 @@ public:
         std::vector<uint8_t> data;
         bool ignorePlayersInBg = false;
         uint64_t ignore = 0;
+        uint32_t rank = 0;   // SendPacketToRanked only
+        uint32_t toRank = 0; // 1 = the ranked form was used
     };
     std::vector<SentPacket> packets;
     bool sendPacket(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
                     bool ignorePlayersInBg, uint64_t ignore) override
     {
-        packets.push_back(SentPacket{target, opcode, data, ignorePlayersInBg, ignore});
+        packets.push_back(SentPacket{target, opcode, data, ignorePlayersInBg, ignore, 0, 0});
+        return true;
+    }
+    bool sendPacketToRanked(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
+                            uint32_t rank) override
+    {
+        packets.push_back(SentPacket{target, opcode, data, false, 0, rank, 1});
         return true;
     }
     void commandsChanged() override { ++commandsChangedCalls; }

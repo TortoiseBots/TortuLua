@@ -2955,60 +2955,76 @@
      "declared": "Group"
     },
     "ConvertToLFG": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "ConvertToRaid": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "Disband": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetLeaderGUID": {
      "status": "implemented",
      "declared": "Group"
     },
     "GetMemberFlags": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetMemberGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetMemberGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetMembers": {
      "status": "implemented",
      "declared": "Group"
     },
     "GetMembersCount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "HasFreeSlotSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsAssistant": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsBFGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsBGGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsFull": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsLeader": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsLFGGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsRaidGroup": {
      "status": "implemented",
@@ -3019,23 +3035,28 @@
      "declared": "Group"
     },
     "SameSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SendPacket": {
      "status": "implemented",
      "declared": "Group"
     },
     "SetLeader": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SetMemberFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SetMembersGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SetTargetIcon": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     }
    }
   },
@@ -3043,36 +3064,44 @@
    "inherits": null,
    "methods": {
     "AddMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "DeleteMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "Disband": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetInfo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetLeader": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetLeaderGUID": {
      "status": "implemented",
      "declared": "Guild"
     },
     "GetMemberCount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetMembers": {
      "status": "implemented",
      "declared": "Guild"
     },
     "GetMOTD": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetName": {
      "status": "implemented",
@@ -3083,7 +3112,8 @@
      "declared": "Guild"
     },
     "SendPacketToRanked": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "SetBankTabText": {
      "status": "stub",
@@ -3091,10 +3121,13 @@
      "declared": "Guild"
     },
     "SetLeader": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this server)",
+     "declared": "Guild"
     },
     "SetMemberRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     }
    }
   },
@@ -5961,42 +5994,6 @@
     "GetSpeed",
     "SetRandomProperty",
     "SetRandomSuffix"
-   ],
-   "Group": [
-    "ConvertToLFG",
-    "ConvertToRaid",
-    "Disband",
-    "GetGUID",
-    "GetMemberFlags",
-    "GetMemberGroup",
-    "GetMemberGUID",
-    "GetMembersCount",
-    "HasFreeSlotSubGroup",
-    "IsAssistant",
-    "IsBFGroup",
-    "IsBGGroup",
-    "IsFull",
-    "IsLeader",
-    "IsLFGGroup",
-    "IsMember",
-    "SameSubGroup",
-    "SetLeader",
-    "SetMemberFlag",
-    "SetMembersGroup",
-    "SetTargetIcon"
-   ],
-   "Guild": [
-    "AddMember",
-    "DeleteMember",
-    "Disband",
-    "GetId",
-    "GetInfo",
-    "GetLeader",
-    "GetMemberCount",
-    "GetMOTD",
-    "SendPacketToRanked",
-    "SetLeader",
-    "SetMemberRank"
    ],
    "Quest": [
     "GetFlags",

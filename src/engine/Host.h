@@ -208,6 +208,16 @@ public:
     {
         return false;
     }
+    // A core-driven group or guild hook is dispatching Lua now: the core's own mutation that called the hook is still
+    // open, so a change the handler asks for must not run inside it.
+    virtual void enterSocialHook() { }
+    virtual void leaveSocialHook() { }
+    // Guild:SendPacketToRanked: the packet to the online members of one guild rank only.
+    virtual bool sendPacketToRanked(fl::HandleData const& /*target*/, uint32_t /*opcode*/,
+                                    std::vector<uint8_t> const& /*data*/, uint32_t /*rank*/)
+    {
+        return false;
+    }
 
     // ForeverData (E3). dataLoad reads every stored value at start; false and `error` refuse the load (database down, more
     // rows than the load cap): the engine then keeps the store unavailable and retries, it never starts empty.
@@ -223,8 +233,8 @@ public:
     virtual void takeDataWrites(std::vector<DataWriteResult>& /*out*/) { }
 
     // ---- fixes of the E2/E3 review round ----
-    // True when the calling thread may run a world-only READ (the member lists of a group or a guild) now: the world
-    // thread with the maps idle. A map-thread handler gets a Lua error instead of a racy read.
+    // True when the calling thread may run a world-only READ (a Group or Guild method) now: the world thread with the
+    // maps idle. A map-thread handler gets a Lua error instead of a racy read of world-owned social state.
     virtual bool worldOnlyReadOk() { return true; }
     // RegisterInstanceEvent / RegisterMapEvent on a dungeon or raid map need core hook C11 (the core's InstanceMapScript is
     // database-bound): true when `mapId` is a dungeon or raid map.

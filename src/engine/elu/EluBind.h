@@ -63,6 +63,10 @@ fl::HandleData const& objArg(lua_State* L, int idx, unsigned kinds, char const* 
 // whole guarantee, the host answers the rest.
 fl::HandleData const& kindArg(lua_State* L, int idx, unsigned kinds, char const* what);
 
+// Raised when the calling thread may not read world-owned social state (a Group or Guild method) now: the world
+// thread with the maps idle. A map-thread handler gets this error instead of a racy read.
+void requireWorldRead(lua_State* L, char const* display);
+
 // Host::gameCall, raising "<display>: not available" when the core does not provide the op.
 void gameCall(lua_State* L, fl::HandleData const& object, char const* op, std::vector<EventValue> const& args,
               std::vector<EventValue>& out, char const* display);
@@ -115,6 +119,8 @@ void addMethods(lua_State* L, char const* className, luaL_Reg const* regs);
 // E5: sends the WorldPacket argument at `idx` to `target` (Player, Group or Guild).
 void sendPacketArg(lua_State* L, fl::HandleData const& target, int idx, char const* display, bool ignorePlayersInBg = false,
                    uint64_t ignore = 0);
+// The same to one guild rank (Guild:SendPacketToRanked).
+void sendPacketToRankArg(lua_State* L, fl::HandleData const& target, int idx, uint32_t rank, char const* display);
 
 // Pushes the docs cancel closure of a freshly registered event handler (the id travels in its upvalue).
 int pushHandlerId(lua_State* L, uint64_t id);

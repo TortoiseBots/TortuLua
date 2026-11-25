@@ -6,6 +6,7 @@
 #include "engine/Host.h"
 
 #include <atomic>
+#include <functional>
 #include <memory>
 
 class ResultSet;   // core type (QueryResult); only referenced here
@@ -110,6 +111,17 @@ public:
     void endLuaCall() override;
     bool sendPacket(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
                     bool ignorePlayersInBg, uint64_t ignore) override;
+    bool sendPacketToRanked(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
+                            uint32_t rank) override;
+    // Group and guild changes (E2 and the long tail). The core calls its script hooks while its own mutation is still
+    // open; a change a hook asks for is therefore queued to the next world tick instead of running inside that mutation.
+    void runSocialWrite(char const* what, std::function<void()> job);
+    void enterSocialHook() override { ++_socialHookDepth; }
+    void leaveSocialHook() override { --_socialHookDepth; }
+    // Both flags are touched on the world thread only (the callers branch on the thread/place first).
+    bool socialWriteBlocked() const { return _socialWriteActive || _socialHookDepth > 0; }
+    bool _socialWriteActive = false;
+    int _socialHookDepth = 0;
     bool dataLoad(std::vector<fl::DataRow>& out, std::string& error) override;
     bool dataWrite(fl::DataWrite const& w) override;
     void takeDataWrites(std::vector<fl::DataWriteResult>& out) override;
