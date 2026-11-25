@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """Fail when private or internal details reach this public repository.
 
-Scans every tracked text file except ``dep/lua/`` (vendored, unchanged) and the
-commit messages in ``BASE..HEAD`` for:
+Scans every tracked text file except ``dep/lua/`` (vendored, unchanged), plus
+commit messages and author emails in ``BASE..HEAD`` for:
 
 * IPv4 addresses outside the documentation ranges ``192.0.2.0/24``,
   ``198.51.100.0/24`` and ``203.0.113.0/24`` and the two loopback/unspecified
   literals ``127.0.0.1`` and ``0.0.0.0``;
-* home directories, ``/home/<name>`` and ``C:\\Users\\<name>``;
+* home directories, ``/home/<name>``, ``/Users/<name>``, ``/root/<path>``,
+  and ``C:\\Users\\<name>`` or ``C:/Users/<name>``;
 * the regular expressions in ``tools/public_text_denylist.txt``;
 * password literals: ``password`` used as a key with ``=`` or ``:``, quoted or
-  not, followed by a value of six or more characters.
+  not, followed by a value of six or more characters;
+* commit author emails outside ``<digits>+<name>@users.noreply.github.com``.
 
 The denylist file is scanned for the address, home-directory and password
 checks but not for its own expressions, which would match themselves. The
@@ -54,8 +56,17 @@ IPV4_RE = re.compile(r"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d.])")
 DOC_IPV4_PREFIXES = ("192.0.2.", "198.51.100.", "203.0.113.")
 ALLOWED_IPV4 = ("127.0.0.1", "0.0.0.0")
 
-HOME_POSIX_RE = re.compile(r"(?<![\w.])/home/[A-Za-z0-9._-]+(?![A-Za-z0-9._-])")
-HOME_WINDOWS_RE = re.compile(r"(?i)(?<![A-Za-z0-9])[A-Za-z]:\\+Users\\+[^\\\s\"'<>]+")
+HOME_POSIX_RE = re.compile(
+    r"(?<![\w.])/(?:home|Users)/[A-Za-z0-9._-]+(?![A-Za-z0-9._-])"
+)
+HOME_ROOT_RE = re.compile(r"(?<![\w.])/root/(?:[A-Za-z0-9._-]+|(?=$|[\s\"'`,;)]))")
+HOME_WINDOWS_RE = re.compile(
+    r"(?i)(?<![A-Za-z0-9])[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s\"'<>]+"
+)
+NOREPLY_EMAIL_RE = re.compile(
+    r"^\d+\+[A-Za-z0-9-]+(?:\[bot\])?@users\.noreply\.github\.com$",
+    re.IGNORECASE,
+)
 PASSWORD_RE = re.compile(
     r"""(?ix)
     (?: ["']? password ["']? \s* [:=] \s* )
@@ -77,6 +88,8 @@ class Hit:
 
     @property
     def label(self) -> str:
+        if self.line == 0:
+            return self.path
         return f"{self.path}:{self.line}"
 
 
@@ -170,6 +183,8 @@ def scan_text(rel: str, text: str, denylist: list[tuple[int, str, re.Pattern[str
             hits.append(hit_at(rel, lineno, line, "ipv4 address", match))
         for match in HOME_POSIX_RE.finditer(line):
             hits.append(hit_at(rel, lineno, line, "home directory", match))
+        for match in HOME_ROOT_RE.finditer(line):
+            hits.append(hit_at(rel, lineno, line, "home directory", match))
         for match in HOME_WINDOWS_RE.finditer(line):
             hits.append(hit_at(rel, lineno, line, "home directory", match))
         for match in PASSWORD_RE.finditer(line):
@@ -209,17 +224,30 @@ def scan_commits(
         revision_range = [f"{base}..{head}"]
     else:
         revision_range = ["--max-count=1", head]
-    raw = git("log", "--format=%H%x1f%B%x1e", *revision_range)
+    raw = git("log", "--format=%H%x1f%ae%x1f%B%x1e", *revision_range)
     hits: list[Hit] = []
     commits = 0
     for record in raw.split(b"\x1e"):
         record = record.strip(b"\n")
         if not record:
             continue
-        sha, _, body = record.partition(b"\x1f")
-        short = sha.decode("ascii")[:12]
+        sha_b, email_b, body_b = record.split(b"\x1f", 2)
+        short = sha_b.decode("ascii")[:12]
+        email = email_b.decode("utf-8", "replace").strip()
         commits += 1
-        for lineno, line in enumerate(body.decode("utf-8", "replace").splitlines(), 1):
+        if not NOREPLY_EMAIL_RE.fullmatch(email):
+            hits.append(
+                Hit(
+                    f"commit {short}",
+                    0,
+                    email,
+                    "author email",
+                    email,
+                    0,
+                    len(email),
+                )
+            )
+        for lineno, line in enumerate(body_b.decode("utf-8", "replace").splitlines(), 1):
             for hit in scan_text(f"commit {short}", line, denylist):
                 hits.append(hit)
     return hits, commits
@@ -263,7 +291,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"'{hit.path}:{hit.matched}' to tools/public_text_allow.txt"
             )
     print(
-        "commit messages cannot be allow-listed: reword or rebase them out of the range"
+        "commit messages and author emails cannot be allow-listed: reword or rebase them out of the range"
     )
     return 1
 
