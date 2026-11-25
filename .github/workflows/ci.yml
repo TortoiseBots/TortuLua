@@ -16,6 +16,26 @@ jobs:
           cmake -S . -B build-asan -DCMAKE_BUILD_TYPE=Debug -DFOREVER_LUA_SANITIZE=ON
           cmake --build build-asan -j 4
           ctest --test-dir build-asan --output-on-failure
+  public-text:
+    # No private or internal text may reach this public repository: run on every
+    # pull request and on dev/main. GitHub-hosted runner, no secrets.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check the checker
+        run: python3 tests/tools/test_check_public_text.py
+      - name: Check tracked text and commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          args=()
+          if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            args+=(--base "$BASE_SHA")
+          fi
+          python3 tools/check_public_text.py "${args[@]}"
   tsan:
     runs-on: ubuntu-24.04
     steps:

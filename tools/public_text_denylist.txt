@@ -1,0 +1,23 @@
+# Forbidden public text: one regular expression per line, case-insensitive.
+#
+# tools/check_public_text.py fails when any of these matches in a tracked text
+# file or in a commit message of the PR range. Keep entries generic: this file
+# is public, so never add a private repository name, host, account or path here.
+# Lines starting with '#' are comments. This file itself is not scanned.
+
+# Private test infrastructure and repositories (generic shapes only).
+-audit\b
+forever-test[0-9]
+tortoise-test[0-9]
+\bvmhost\b
+\byulon\b
+
+# AI tools and model names.
+\bclaude\b
+\bcodex\b
+\bdeepseek\b
+\bgemini\b
+\bopus\b
+\bsonnet\b
+\bhaiku\b
+\bmuse-spark\b
