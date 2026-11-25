@@ -1,0 +1,16 @@
+Lua 5.4.9: the official release tarball plus the patches in dep/lua/patches (tree = tarball + these patches)
+  https://www.lua.org/ftp/lua-5.4.9.tar.gz   (released 2026-08-10)
+  sha256 2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6
+The checksum is the one lua.org publishes at https://www.lua.org/ftp/ and matches the downloaded file.
+src/*.c and src/*.h are the files of the tarball's src/ folder (lua.c and luac.c included, never built); doc/readme.html
+and README.lua are the tarball's doc/readme.html and README.
+Patches (security review R1, 2026-11-20; applied to dep/lua/src, kept as diffs against the tarball):
+  patches/0001-match-step-limit.patch  lstrlib.c: a step counter shared by every scan the pattern functions make
+  (string.find/match/gmatch/gsub abort with "pattern too complex" past a limit the engine sets per call from the call
+  budget). match() charges one step per entry; the character class scan, singlematch, %b (matchbalance), the greedy and
+  minimal expansions and a plain (non-pattern) find charge for every character they walk. The counter saturates instead
+  of overflowing. The pattern functions are single C calls that the hook cannot interrupt; exponential backtracking, a
+  1 MiB class scan or a 1 MiB plain find would otherwise hold the world thread for seconds.
+Nothing else in dep/lua/src was edited. To check: unpack the tarball, apply the patch with `patch -p1`, diff against dep/lua.
+Licence: MIT, see LICENSE in this folder. CMake builds the sources as C++ (decision D1: lua_error then unwinds as a C++
+exception and destructors run).

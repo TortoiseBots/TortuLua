@@ -1,0 +1,139 @@
+[forever_lua]
+###################################################################################################
+# TortuLua (a small Lua 5.4 host for ForeverCore TEST servers; the module and its keys are ForeverLua). Rename this
+# file to forever_lua.conf.
+# Whoever can write ForeverLua.ScriptPath can run code inside the server: the server user must own it.
+###################################################################################################
+
+#
+#    ForeverLua.Enable
+#        Description: Turns the module on. Off by default.
+#        Default:     0
+#
+
+ForeverLua.Enable = 0
+
+#
+#    ForeverLua.ScriptPath
+#        Description: The only folder scripts load from (init.lua first, then the other *.lua files by name).
+#        Default:     "lua_scripts"
+#
+
+ForeverLua.ScriptPath = "lua_scripts"
+
+#
+#    ForeverLua.Mode
+#        Description: "test" = the sandboxed toolkit (Event/Timer/Cmd/World/Db/Json/Gm, no raw SQL);
+#                     "eluna" = the Eluna-compatible API (see knowledge/modes/eluna-mode.md), classes over the handles,
+#                     Register*Event, raw SQL on the module's own connections. Eluna mode trusts its scripts.
+#        Default:     "test"
+#
+
+ForeverLua.Mode = "test"
+
+#
+#    ForeverLua.OpenStdLibs
+#        Description: Eluna mode only: opens io/os/debug/package (and keeps dofile/loadfile/string.dump).
+#        Default:     0
+#
+
+ForeverLua.OpenStdLibs = 0
+
+#
+#    ForeverLua.RequirePath
+#        Description: Eluna mode only: extra folders require() resolves in, after ScriptPath (space separated).
+#        Default:     "" (none)
+#
+
+ForeverLua.RequirePath = ""
+
+#
+#    ForeverLua.MapStates / ForeverLua.SlowHandlerMs / ForeverLua.SyncDbTimeoutMs / ForeverLua.DataFlushMs
+#        Description: E4 per-map states (0 = one world state), the E3 slow-handler threshold in ms (0 = no slow-handler
+#                     log), the read/connect timeout of the module's own MySQL connections, and the E3 ForeverData
+#                     write-behind interval in ms.
+#        Default:     0 / 5 / 5000 / 5000
+#
+
+ForeverLua.MapStates = 0
+ForeverLua.SlowHandlerMs = 5
+ForeverLua.SyncDbTimeoutMs = 5000
+ForeverLua.DataFlushMs = 5000
+
+#
+#    ForeverLua.CommandRoots
+#        Description: Command roots forwarded whole to a Lua function registered with Cmd.register
+#                     (space separated). Adding a root needs a restart.
+#        Default:     "tt"
+#
+
+ForeverLua.CommandRoots = "tt"
+
+#
+#    ForeverLua.MemoryLimitMB
+#        Description: Memory cap of the Lua state.
+#        Default:     128
+#
+
+ForeverLua.MemoryLimitMB = 128
+
+#
+#    ForeverLua.EventBudgetMs / ForeverLua.CommandBudgetMs / ForeverLua.TickBudgetMs
+#        Description: Wall-clock budget of one event or timer call, of one command, and the most Lua time per world tick.
+#                     0 turns a budget off (the Eluna mode default).
+#                     In eluna mode a 0 millisecond budget also means no instruction budget: no clock and no
+#                     count hook run at all. In test mode the minimum is 1.
+#        Default:     20 / 250 / 25 (test mode), 0 / 0 / 0 (eluna mode)
+#                     Left commented out on purpose: setting them here would turn the budgets on in eluna mode too.
+#
+
+# ForeverLua.EventBudgetMs = 20
+# ForeverLua.CommandBudgetMs = 250
+# ForeverLua.TickBudgetMs = 25
+
+#
+#    ForeverLua.AdminSecurity
+#        Description: Account security level needed for .lua reload / .lua status (RBAC 607 is needed as well).
+#        Default:     3
+#
+
+#
+#    ForeverLua.DbTimeoutMs
+#        Description: Client-side timeout of one Db.select, in ms (the MySQL MAX_EXECUTION_TIME hint does not exist in
+#                     MariaDB). The answer arrives in a callback as (nil, "timeout").
+#        Default:     2000
+#
+
+ForeverLua.DbTimeoutMs = 2000
+
+#
+#    ForeverLua.ShutdownBudgetMs
+#        Description: Most time the shutdown drain may spend running what is still queued (server.stop included).
+#        Default:     5000
+#
+
+ForeverLua.ShutdownBudgetMs = 5000
+
+#
+#    ForeverLua.AdminSecurity
+#        Description: Account security level needed for .lua reload / .lua status (RBAC 607 is needed as well).
+#        Default:     3
+#
+
+ForeverLua.AdminSecurity = 3
+
+#
+#    ForeverLua.BridgeDeny
+#        Description: Command roots the GM bridge (Gm.run) refuses. The forwarded roots are always refused.
+#        Default:     "lua server account rbac bnetaccount pdump ban"
+#
+
+ForeverLua.BridgeDeny = "lua server account rbac bnetaccount pdump ban"
+
+#
+#    ForeverLua.BridgeSecurity
+#        Description: Security level the GM bridge runs commands at.
+#        Default:     3
+#
+
+ForeverLua.BridgeSecurity = 3

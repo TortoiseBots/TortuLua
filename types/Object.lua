@@ -1,0 +1,51 @@
+---@meta
+
+---@class Object
+local Object = {}
+
+---@return any
+function Object:GetEntry() end
+
+---returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the type, entry and map live in the high half
+---@return any
+function Object:GetGUID() end
+
+---@return any
+function Object:GetGUIDLow() end
+
+---@return any
+function Object:GetScale() end
+
+---@return any
+function Object:GetTypeId() end
+
+---@param index any
+---@return any
+function Object:GetUInt32Value(index) end
+
+---@param index any
+---@param flag any
+---@return any
+function Object:HasFlag(index, flag) end
+
+---@return any
+function Object:IsInWorld() end
+
+---@return any
+function Object:IsPlayer() end
+
+---@param scale any
+---@return any
+function Object:SetScale(scale) end
+
+---@return any
+function Object:ToCreature() end
+
+---@return any
+function Object:ToGameObject() end
+
+---@return any
+function Object:ToPlayer() end
+
+---@return any
+function Object:ToUnit() end

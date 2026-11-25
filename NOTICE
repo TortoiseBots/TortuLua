@@ -1,0 +1,16 @@
+TortuLua (module folder and configuration keys: ForeverLua)
+Copyright (C) 2026 the TortuLua authors (see AUTHORS)
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later
+version (GPL-2.0-or-later). See COPYING.
+
+Third-party code in this repository:
+
+* Lua 5.4.9 (dep/lua), Copyright (C) 1994-2026 Lua.org, PUC-Rio, distributed under the MIT licence (dep/lua/LICENSE).
+  It is vendored unchanged from the official tarball (dep/lua/SOURCE.txt) and is compatible with the GPL.
+* Catch2 v3 (tests only, fetched at configure time, never part of the module), Boost Software License 1.0.
+
+This is a clean-room implementation. Eluna and ALE (GPL-3.0) were not copied; no code, layout or close paraphrase of
+them is used. The Eluna-compatible mode (E0/E1) was written from Eluna's published API documentation only; the pages
+used are listed in docs/ELUNA-CLEANROOM.md.

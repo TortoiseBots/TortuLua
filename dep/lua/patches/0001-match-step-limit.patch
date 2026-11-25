@@ -1,0 +1,172 @@
+--- a/src/lstrlib.c
++++ b/src/lstrlib.c
+@@ -355,12 +355,23 @@
+ #define CAP_POSITION	(-2)
+ 
+ 
++/* ForeverLua patch 0001: the host sets this before each protected call (0 = no limit). */
++/* ForeverLua: per thread (E4/E5 review, ThreadSanitizer): map states run Lua on several threads at once, and each
++   protected call sets and restores the limit of its own thread. */
++#ifdef __cplusplus
++thread_local unsigned long fl_lua_match_step_limit = 0;
++#else
++_Thread_local unsigned long fl_lua_match_step_limit = 0;
++#endif
++
+ typedef struct MatchState {
+   const char *src_init;  /* init of source string */
+   const char *src_end;  /* end ('\0') of source string */
+   const char *p_end;  /* end ('\0') of pattern */
+   lua_State *L;
+   int matchdepth;  /* control for recursive depth (to avoid C stack overflow) */
++  unsigned long steps;  /* ForeverLua patch 0001: steps taken by this call */
++  unsigned long maxsteps;  /* ForeverLua patch 0001: step limit (0 = none) */
+   unsigned char level;  /* total number of captures (finished or unfinished) */
+   struct {
+     const char *init;
+@@ -444,13 +449,35 @@
+ }
+ 
+ 
+-static int matchbracketclass (int c, const char *p, const char *ec) {
++/* ForeverLua patch 0001: charge steps of work against the per-call limit (0 = no limit). The counter saturates at
++** maxsteps + 1, so it cannot overflow, and every loop that walks the subject or a character class charges for that
++** walk: match() alone did not cover the scans inside max_expand, min_expand, matchbalance, the bracket class and a
++** plain (non-pattern) find, which ran with the hook unable to interrupt them. */
++static void fl_charge (MatchState *ms, unsigned long n) {
++  if (ms->maxsteps == 0 || ms->steps > ms->maxsteps)
++    return;
++  if (n > ms->maxsteps - ms->steps)
++    ms->steps = ms->maxsteps + 1;
++  else
++    ms->steps += n;
++}
++
++
++static void fl_check (MatchState *ms) {
++  if (l_unlikely(ms->steps > ms->maxsteps))
++    luaL_error(ms->L, "pattern too complex");
++}
++
++
++static int matchbracketclass (MatchState *ms, int c, const char *p, const char *ec) {
+   int sig = 1;
+   if (*(p+1) == '^') {
+     sig = 0;
+     p++;  /* skip the '^' */
+   }
+   while (++p < ec) {
++    fl_charge(ms, 1);
++    fl_check(ms);
+     if (*p == L_ESC) {
+       p++;
+       if (match_class(c, uchar(*p)))
+@@ -469,6 +496,8 @@
+ 
+ static int singlematch (MatchState *ms, const char *s, const char *p,
+                         const char *ep) {
++  fl_charge(ms, 1);
++  fl_check(ms);
+   if (s >= ms->src_end)
+     return 0;
+   else {
+@@ -476,7 +505,7 @@
+     switch (*p) {
+       case '.': return 1;  /* matches any char */
+       case L_ESC: return match_class(c, uchar(*(p+1)));
+-      case '[': return matchbracketclass(c, p, ep-1);
++      case '[': return matchbracketclass(ms, c, p, ep-1);
+       default:  return (uchar(*p) == c);
+     }
+   }
+@@ -493,6 +522,8 @@
+     int e = *(p+1);
+     int cont = 1;
+     while (++s < ms->src_end) {
++      fl_charge(ms, 1);
++      fl_check(ms);
+       if (*s == e) {
+         if (--cont == 0) return s+1;
+       }
+@@ -506,8 +537,10 @@
+ static const char *max_expand (MatchState *ms, const char *s,
+                                  const char *p, const char *ep) {
+   ptrdiff_t i = 0;  /* counts maximum expand for item */
+-  while (singlematch(ms, s + i, p, ep))
++  while (singlematch(ms, s + i, p, ep)) {
++    fl_charge(ms, 1);
+     i++;
++  }
+   /* keeps trying to match with the maximum repetitions */
+   while (i>=0) {
+     const char *res = match(ms, (s+i), ep+1);
+@@ -524,8 +557,10 @@
+     const char *res = match(ms, s, ep+1);
+     if (res != NULL)
+       return res;
+-    else if (singlematch(ms, s, p, ep))
++    else if (singlematch(ms, s, p, ep)) {
++      fl_charge(ms, 1);
+       s++;  /* try with one more repetition */
++    }
+     else return NULL;
+   }
+ }
+@@ -571,6 +606,8 @@
+   if (l_unlikely(ms->matchdepth-- == 0))
+     luaL_error(ms->L, "pattern too complex");
+   init: /* using goto to optimize tail recursion */
++  fl_charge(ms, 1);  /* ForeverLua patch 0001 */
++  fl_check(ms);
+   if (p != ms->p_end) {  /* end of pattern? */
+     switch (*p) {
+       case '(': {  /* start capture */
+@@ -606,8 +643,8 @@
+               luaL_error(ms->L, "missing '[' after '%%f' in pattern");
+             ep = classend(ms, p);  /* points to what is next */
+             previous = (s == ms->src_init) ? '\0' : *(s - 1);
+-            if (!matchbracketclass(uchar(previous), p, ep - 1) &&
+-               matchbracketclass(uchar(*s), p, ep - 1)) {
++            if (!matchbracketclass(ms, uchar(previous), p, ep - 1) &&
++               matchbracketclass(ms, uchar(*s), p, ep - 1)) {
+               p = ep; goto init;  /* return match(ms, s, ep); */
+             }
+             s = NULL;  /* match failed */
+@@ -670,7 +707,7 @@
+ 
+ 
+ 
+-static const char *lmemfind (const char *s1, size_t l1,
++static const char *lmemfind (MatchState *ms, const char *s1, size_t l1,
+                                const char *s2, size_t l2) {
+   if (l2 == 0) return s1;  /* empty strings are everywhere */
+   else if (l2 > l1) return NULL;  /* avoids a negative 'l1' */
+@@ -679,6 +716,8 @@
+     l2--;  /* 1st char will be checked by 'memchr' */
+     l1 = l1-l2;  /* 's2' cannot be found after that */
+     while (l1 > 0 && (init = (const char *)memchr(s1, *s2, l1)) != NULL) {
++      fl_charge(ms, 1 + (unsigned long)l2);  /* ForeverLua patch 0001: one memcmp of the rest of the needle */
++      fl_check(ms);
+       init++;   /* 1st char is already checked */
+       if (memcmp(init, s2+1, l2) == 0)
+         return init-1;
+@@ -760,6 +799,8 @@
+   ms->src_init = s;
+   ms->src_end = s + ls;
+   ms->p_end = p + lp;
++  ms->steps = 0;  /* ForeverLua patch 0001 */
++  ms->maxsteps = fl_lua_match_step_limit;
+ }
+ 
+ 
+@@ -781,7 +822,9 @@
+   /* explicit request or no special characters? */
+   if (find && (lua_toboolean(L, 4) || nospecials(p, lp))) {
+     /* do a plain search */
+-    const char *s2 = lmemfind(s + init, ls - init, p, lp);
++    MatchState ms;  /* ForeverLua patch 0001: the step counter covers plain finds as well */
++    prepstate(&ms, L, s, ls, p, lp);
++    const char *s2 = lmemfind(&ms, s + init, ls - init, p, lp);
+     if (s2) {
+       lua_pushinteger(L, (s2 - s) + 1);
+       lua_pushinteger(L, (s2 - s) + lp);

@@ -1,0 +1,5481 @@
+{
+ "format": 1,
+ "generated": "2026-11-24",
+ "sources": [
+  {
+   "name": "Eluna API documentation (published)",
+   "url": "https://elunaluaengine.github.io/",
+   "read": "2026-11-24",
+   "what": "each class page's own method list, the Global page's function list, the Register*Event pages' event names; names only, no page code"
+  },
+  {
+   "name": "Maintainers' API specification, sections 2, 3, 4, 7",
+   "url": "not distributed",
+   "read": "2026-11-24",
+   "what": "the numeric event ids (the documentation pages carry names only), the per-stage global and method lists, the named Classic-era stubs of section 7"
+  }
+ ],
+ "inherits": {
+  "Aura": [],
+  "AuraEffect": [],
+  "BattleGround": [],
+  "Corpse": [
+   "Object",
+   "WorldObject"
+  ],
+  "Creature": [
+   "Object",
+   "WorldObject",
+   "Unit"
+  ],
+  "ElunaProcInfo": [],
+  "ElunaQuery": [],
+  "GameObject": [
+   "Object",
+   "WorldObject"
+  ],
+  "Group": [],
+  "Guild": [],
+  "Item": [
+   "Object"
+  ],
+  "Map": [],
+  "Object": [],
+  "Player": [
+   "Object",
+   "WorldObject",
+   "Unit"
+  ],
+  "Quest": [],
+  "Spell": [],
+  "SpellInfo": [],
+  "Unit": [
+   "Object",
+   "WorldObject"
+  ],
+  "Vehicle": [],
+  "WorldObject": [
+   "Object"
+  ],
+  "WorldPacket": []
+ },
+ "globals": {
+  "AddTaxiPath": [
+   "docs",
+   "spec"
+  ],
+  "AddVendorItem": [
+   "docs",
+   "spec"
+  ],
+  "AuthDBExecute": [
+   "docs",
+   "spec"
+  ],
+  "AuthDBQuery": [
+   "docs",
+   "spec"
+  ],
+  "AuthDBQueryAsync": [
+   "docs",
+   "spec"
+  ],
+  "Ban": [
+   "docs",
+   "spec"
+  ],
+  "CharDBExecute": [
+   "docs",
+   "spec"
+  ],
+  "CharDBQuery": [
+   "docs",
+   "spec"
+  ],
+  "CharDBQueryAsync": [
+   "docs",
+   "spec"
+  ],
+  "ClearBattleGroundEvents": [
+   "docs"
+  ],
+  "ClearCreatureEvents": [
+   "docs"
+  ],
+  "ClearCreatureGossipEvents": [
+   "docs"
+  ],
+  "ClearGameObjectEvents": [
+   "docs"
+  ],
+  "ClearGameObjectGossipEvents": [
+   "docs"
+  ],
+  "ClearGroupEvents": [
+   "docs"
+  ],
+  "ClearGuildEvents": [
+   "docs"
+  ],
+  "ClearInstanceEvents": [
+   "docs"
+  ],
+  "ClearItemEvents": [
+   "docs"
+  ],
+  "ClearItemGossipEvents": [
+   "docs"
+  ],
+  "ClearMapEvents": [
+   "docs"
+  ],
+  "ClearPacketEvents": [
+   "docs"
+  ],
+  "ClearPlayerEvents": [
+   "docs"
+  ],
+  "ClearPlayerGossipEvents": [
+   "docs"
+  ],
+  "ClearServerEvents": [
+   "docs"
+  ],
+  "ClearUniqueCreatureEvents": [
+   "docs"
+  ],
+  "CreateLongLong": [
+   "docs"
+  ],
+  "CreateLuaEvent": [
+   "docs",
+   "spec"
+  ],
+  "CreatePacket": [
+   "docs",
+   "spec"
+  ],
+  "CreateULongLong": [
+   "docs"
+  ],
+  "GetActiveGameEvents": [
+   "docs",
+   "spec"
+  ],
+  "GetAreaName": [
+   "docs",
+   "spec"
+  ],
+  "GetCoreExpansion": [
+   "docs",
+   "spec"
+  ],
+  "GetCoreName": [
+   "docs",
+   "spec"
+  ],
+  "GetCoreVersion": [
+   "docs",
+   "spec"
+  ],
+  "GetCurrTime": [
+   "docs",
+   "spec"
+  ],
+  "GetGUIDEntry": [
+   "docs",
+   "spec"
+  ],
+  "GetGUIDLow": [
+   "docs",
+   "spec"
+  ],
+  "GetGUIDType": [
+   "docs",
+   "spec"
+  ],
+  "GetGameTime": [
+   "docs",
+   "spec"
+  ],
+  "GetGuildByLeaderGUID": [
+   "docs",
+   "spec"
+  ],
+  "GetGuildByName": [
+   "docs",
+   "spec"
+  ],
+  "GetItemGUID": [
+   "docs"
+  ],
+  "GetItemLink": [
+   "docs",
+   "spec"
+  ],
+  "GetLuaEngine": [
+   "docs",
+   "spec"
+  ],
+  "GetMapById": [
+   "docs",
+   "spec"
+  ],
+  "GetObjectGUID": [
+   "docs"
+  ],
+  "GetOwnerHalaa": [
+   "spec"
+  ],
+  "GetPlayerByGUID": [
+   "docs",
+   "spec"
+  ],
+  "GetPlayerByName": [
+   "docs",
+   "spec"
+  ],
+  "GetPlayerCount": [
+   "docs",
+   "spec"
+  ],
+  "GetPlayerGUID": [
+   "docs"
+  ],
+  "GetPlayersInWorld": [
+   "docs",
+   "spec"
+  ],
+  "GetPlayersOnMap": [
+   "docs"
+  ],
+  "GetQuest": [
+   "docs",
+   "spec"
+  ],
+  "GetRealmID": [
+   "docs"
+  ],
+  "GetSpellInfo": [
+   "docs"
+  ],
+  "GetStateInstanceId": [
+   "docs",
+   "spec"
+  ],
+  "GetStateMap": [
+   "docs"
+  ],
+  "GetStateMapId": [
+   "docs",
+   "spec"
+  ],
+  "GetTimeDiff": [
+   "docs",
+   "spec"
+  ],
+  "GetUnitGUID": [
+   "docs"
+  ],
+  "IsBagPos": [
+   "docs"
+  ],
+  "IsBankPos": [
+   "docs"
+  ],
+  "IsCompatibilityMode": [
+   "docs"
+  ],
+  "IsEquipmentPos": [
+   "docs"
+  ],
+  "IsGameEventActive": [
+   "docs",
+   "spec"
+  ],
+  "IsInventoryPos": [
+   "docs"
+  ],
+  "Kick": [
+   "docs",
+   "spec"
+  ],
+  "PerformIngameSpawn": [
+   "docs",
+   "spec"
+  ],
+  "PrintDebug": [
+   "docs",
+   "spec"
+  ],
+  "PrintError": [
+   "docs",
+   "spec"
+  ],
+  "PrintInfo": [
+   "docs",
+   "spec"
+  ],
+  "RegisterBGEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterCreatureEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterCreatureGossipEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterGameObjectEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterGameObjectGossipEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterGroupEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterGuildEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterInstanceEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterItemEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterItemGossipEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterMapEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterPacketEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterPlayerEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterPlayerGossipEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterServerEvent": [
+   "docs",
+   "spec"
+  ],
+  "RegisterSpellEvent": [
+   "docs"
+  ],
+  "RegisterUniqueCreatureEvent": [
+   "docs"
+  ],
+  "RegisterVehicleEvent": [
+   "spec"
+  ],
+  "ReloadEluna": [
+   "docs",
+   "spec"
+  ],
+  "RemoveEventById": [
+   "docs",
+   "spec"
+  ],
+  "RemoveEvents": [
+   "docs",
+   "spec"
+  ],
+  "RunCommand": [
+   "docs",
+   "spec"
+  ],
+  "SaveAllPlayers": [
+   "docs",
+   "spec"
+  ],
+  "SendMail": [
+   "docs",
+   "spec"
+  ],
+  "SendWorldMessage": [
+   "docs",
+   "spec"
+  ],
+  "StartGameEvent": [
+   "docs",
+   "spec"
+  ],
+  "StopGameEvent": [
+   "docs",
+   "spec"
+  ],
+  "VendorRemoveAllItems": [
+   "docs",
+   "spec"
+  ],
+  "VendorRemoveItem": [
+   "docs",
+   "spec"
+  ],
+  "WorldDBExecute": [
+   "docs",
+   "spec"
+  ],
+  "WorldDBQuery": [
+   "docs",
+   "spec"
+  ],
+  "WorldDBQueryAsync": [
+   "docs",
+   "spec"
+  ],
+  "bit_and": [
+   "docs",
+   "spec"
+  ],
+  "bit_lshift": [
+   "docs",
+   "spec"
+  ],
+  "bit_not": [
+   "docs",
+   "spec"
+  ],
+  "bit_or": [
+   "docs",
+   "spec"
+  ],
+  "bit_rshift": [
+   "docs",
+   "spec"
+  ],
+  "bit_xor": [
+   "docs",
+   "spec"
+  ]
+ },
+ "classes": {
+  "Aura": {
+   "GetAuraId": [
+    "docs"
+   ],
+   "GetCaster": [
+    "docs",
+    "spec"
+   ],
+   "GetCasterGUID": [
+    "docs"
+   ],
+   "GetCasterLevel": [
+    "docs"
+   ],
+   "GetDuration": [
+    "docs",
+    "spec"
+   ],
+   "GetEntry": [
+    "spec"
+   ],
+   "GetMaxDuration": [
+    "docs"
+   ],
+   "GetOwner": [
+    "docs"
+   ],
+   "GetSpellInfo": [
+    "docs"
+   ],
+   "GetStackAmount": [
+    "docs"
+   ],
+   "Remove": [
+    "docs"
+   ],
+   "SetDuration": [
+    "docs",
+    "spec"
+   ],
+   "SetMaxDuration": [
+    "docs"
+   ],
+   "SetStackAmount": [
+    "docs"
+   ]
+  },
+  "AuraEffect": {
+   "CalculateAmount": [
+    "docs"
+   ],
+   "CalculatePeriodic": [
+    "docs"
+   ],
+   "CanBeRecalculated": [
+    "docs"
+   ],
+   "ChangeAmount": [
+    "docs"
+   ],
+   "GetAmount": [
+    "docs"
+   ],
+   "GetAmplitude": [
+    "docs"
+   ],
+   "GetAuraType": [
+    "docs"
+   ],
+   "GetBase": [
+    "docs"
+   ],
+   "GetBaseAmount": [
+    "docs"
+   ],
+   "GetCaster": [
+    "docs"
+   ],
+   "GetCasterGUID": [
+    "docs"
+   ],
+   "GetEffIndex": [
+    "docs"
+   ],
+   "GetId": [
+    "docs"
+   ],
+   "GetPeriodicTimer": [
+    "docs"
+   ],
+   "GetRemainingTicks": [
+    "docs"
+   ],
+   "GetSpellInfo": [
+    "docs"
+   ],
+   "GetTargetList": [
+    "docs"
+   ],
+   "GetTickNumber": [
+    "docs"
+   ],
+   "GetTotalTicks": [
+    "docs"
+   ],
+   "RecalculateAmount": [
+    "docs"
+   ],
+   "SetAmount": [
+    "docs"
+   ],
+   "SetCanBeRecalculated": [
+    "docs"
+   ],
+   "SetPeriodicTimer": [
+    "docs"
+   ]
+  },
+  "BattleGround": {
+   "GetAlivePlayersCountByTeam": [
+    "docs"
+   ],
+   "GetBonusHonorFromKillCount": [
+    "docs"
+   ],
+   "GetBracketId": [
+    "docs"
+   ],
+   "GetEndTime": [
+    "docs"
+   ],
+   "GetFreeSlotsForTeam": [
+    "docs"
+   ],
+   "GetInstanceId": [
+    "docs"
+   ],
+   "GetMap": [
+    "docs"
+   ],
+   "GetMapId": [
+    "docs"
+   ],
+   "GetMaxLevel": [
+    "docs"
+   ],
+   "GetMaxPlayers": [
+    "docs"
+   ],
+   "GetMaxPlayersPerTeam": [
+    "docs"
+   ],
+   "GetMinLevel": [
+    "docs"
+   ],
+   "GetMinPlayers": [
+    "docs"
+   ],
+   "GetMinPlayersPerTeam": [
+    "docs"
+   ],
+   "GetName": [
+    "docs"
+   ],
+   "GetStatus": [
+    "docs"
+   ],
+   "GetTypeId": [
+    "docs"
+   ],
+   "GetWinner": [
+    "docs"
+   ]
+  },
+  "Corpse": {
+   "GetGhostTime": [
+    "docs"
+   ],
+   "GetOwnerGUID": [
+    "docs"
+   ],
+   "GetType": [
+    "docs"
+   ],
+   "ResetGhostTime": [
+    "docs"
+   ],
+   "SaveToDB": [
+    "docs"
+   ]
+  },
+  "Creature": {
+   "AddLootMode": [
+    "docs"
+   ],
+   "AddThreat": [
+    "docs"
+   ],
+   "AttackStart": [
+    "docs"
+   ],
+   "CallAssistance": [
+    "docs"
+   ],
+   "CallForHelp": [
+    "docs"
+   ],
+   "CanAggro": [
+    "docs"
+   ],
+   "CanAssistTo": [
+    "docs"
+   ],
+   "CanCompleteQuest": [
+    "docs"
+   ],
+   "CanFly": [
+    "docs"
+   ],
+   "CanStartAttack": [
+    "docs"
+   ],
+   "CanSwim": [
+    "docs"
+   ],
+   "CanWalk": [
+    "docs"
+   ],
+   "ClearFixate": [
+    "docs"
+   ],
+   "ClearThreat": [
+    "docs"
+   ],
+   "ClearThreatList": [
+    "docs"
+   ],
+   "DespawnOrUnsummon": [
+    "docs",
+    "spec"
+   ],
+   "FixateTarget": [
+    "docs"
+   ],
+   "FleeToGetAssistance": [
+    "docs"
+   ],
+   "GetAIName": [
+    "docs"
+   ],
+   "GetAITarget": [
+    "docs",
+    "spec"
+   ],
+   "GetAITargets": [
+    "docs"
+   ],
+   "GetAITargetsCount": [
+    "docs"
+   ],
+   "GetAggroRange": [
+    "docs"
+   ],
+   "GetAttackDistance": [
+    "docs"
+   ],
+   "GetCorpseDelay": [
+    "docs"
+   ],
+   "GetCreatureFamily": [
+    "docs"
+   ],
+   "GetCreatureSpellCooldownDelay": [
+    "docs"
+   ],
+   "GetCurrentWaypointId": [
+    "docs"
+   ],
+   "GetDBTableGUIDLow": [
+    "docs"
+   ],
+   "GetDefaultMovementType": [
+    "docs"
+   ],
+   "GetExtraFlags": [
+    "docs"
+   ],
+   "GetHomePosition": [
+    "docs",
+    "spec"
+   ],
+   "GetLootMode": [
+    "docs"
+   ],
+   "GetLootRecipient": [
+    "docs"
+   ],
+   "GetLootRecipientGroup": [
+    "docs"
+   ],
+   "GetNPCFlags": [
+    "docs"
+   ],
+   "GetRank": [
+    "docs"
+   ],
+   "GetRespawnDelay": [
+    "docs"
+   ],
+   "GetScriptId": [
+    "docs"
+   ],
+   "GetScriptName": [
+    "docs",
+    "spec"
+   ],
+   "GetShieldBlockValue": [
+    "docs"
+   ],
+   "GetSpawnId": [
+    "spec"
+   ],
+   "GetThreat": [
+    "docs"
+   ],
+   "GetWanderRadius": [
+    "docs"
+   ],
+   "GetWaypointPath": [
+    "docs"
+   ],
+   "HasCategoryCooldown": [
+    "docs"
+   ],
+   "HasLootMode": [
+    "docs"
+   ],
+   "HasLootRecipient": [
+    "docs"
+   ],
+   "HasQuest": [
+    "docs"
+   ],
+   "HasSearchedAssistance": [
+    "docs"
+   ],
+   "HasSpell": [
+    "docs"
+   ],
+   "HasSpellCooldown": [
+    "docs"
+   ],
+   "IsBoss": [
+    "spec"
+   ],
+   "IsCivilian": [
+    "docs"
+   ],
+   "IsDamageEnoughForLootingAndReward": [
+    "docs"
+   ],
+   "IsDungeonBoss": [
+    "docs"
+   ],
+   "IsElite": [
+    "docs",
+    "spec"
+   ],
+   "IsGuard": [
+    "docs"
+   ],
+   "IsInEvadeMode": [
+    "docs"
+   ],
+   "IsRacialLeader": [
+    "docs"
+   ],
+   "IsRegeneratingHealth": [
+    "docs"
+   ],
+   "IsReputationGainDisabled": [
+    "docs"
+   ],
+   "IsTappedBy": [
+    "docs"
+   ],
+   "IsTargetableForAttack": [
+    "docs"
+   ],
+   "IsTrigger": [
+    "docs"
+   ],
+   "IsWorldBoss": [
+    "docs",
+    "spec"
+   ],
+   "MoveWaypoint": [
+    "docs"
+   ],
+   "RemoveCorpse": [
+    "docs"
+   ],
+   "RemoveFromWorld": [
+    "docs"
+   ],
+   "RemoveLootMode": [
+    "docs"
+   ],
+   "ResetAllThreat": [
+    "docs"
+   ],
+   "ResetLootMode": [
+    "docs"
+   ],
+   "Respawn": [
+    "docs",
+    "spec"
+   ],
+   "SaveToDB": [
+    "docs"
+   ],
+   "SelectVictim": [
+    "docs"
+   ],
+   "SetAggroEnabled": [
+    "docs"
+   ],
+   "SetDeathState": [
+    "docs"
+   ],
+   "SetDefaultMovementType": [
+    "docs"
+   ],
+   "SetDisableGravity": [
+    "docs"
+   ],
+   "SetDisableReputationGain": [
+    "docs"
+   ],
+   "SetEquipmentSlots": [
+    "docs"
+   ],
+   "SetHomePosition": [
+    "docs"
+   ],
+   "SetHover": [
+    "docs"
+   ],
+   "SetInCombatWithZone": [
+    "docs"
+   ],
+   "SetLootMode": [
+    "docs"
+   ],
+   "SetNPCFlags": [
+    "docs"
+   ],
+   "SetNoCallAssistance": [
+    "docs"
+   ],
+   "SetNoSearchAssistance": [
+    "docs"
+   ],
+   "SetReactState": [
+    "docs",
+    "spec"
+   ],
+   "SetRegeneratingHealth": [
+    "docs"
+   ],
+   "SetRespawnDelay": [
+    "docs",
+    "spec"
+   ],
+   "SetWalk": [
+    "docs"
+   ],
+   "SetWanderRadius": [
+    "docs"
+   ],
+   "UpdateEntry": [
+    "docs"
+   ]
+  },
+  "ElunaProcInfo": {
+   "GetActionTarget": [
+    "docs"
+   ],
+   "GetActor": [
+    "docs"
+   ],
+   "GetAttackType": [
+    "docs"
+   ],
+   "GetBlock": [
+    "docs"
+   ],
+   "GetDamage": [
+    "docs"
+   ],
+   "GetDamageAbsorb": [
+    "docs"
+   ],
+   "GetDamageType": [
+    "docs"
+   ],
+   "GetEffectiveHeal": [
+    "docs"
+   ],
+   "GetHeal": [
+    "docs"
+   ],
+   "GetHealAbsorb": [
+    "docs"
+   ],
+   "GetHitMask": [
+    "docs"
+   ],
+   "GetMap": [
+    "docs"
+   ],
+   "GetProcSpell": [
+    "docs"
+   ],
+   "GetResist": [
+    "docs"
+   ],
+   "GetSchoolMask": [
+    "docs"
+   ],
+   "GetSpellInfo": [
+    "docs"
+   ],
+   "GetSpellPhaseMask": [
+    "docs"
+   ],
+   "GetSpellTypeMask": [
+    "docs"
+   ],
+   "GetTypeMask": [
+    "docs"
+   ],
+   "HasDamage": [
+    "docs"
+   ],
+   "HasHeal": [
+    "docs"
+   ],
+   "SetAbsorbDamage": [
+    "docs"
+   ],
+   "SetAbsorbHeal": [
+    "docs"
+   ],
+   "SetBlockDamage": [
+    "docs"
+   ],
+   "SetDamage": [
+    "docs"
+   ],
+   "SetEffectiveHeal": [
+    "docs"
+   ],
+   "SetHeal": [
+    "docs"
+   ],
+   "SetResistDamage": [
+    "docs"
+   ]
+  },
+  "ElunaQuery": {
+   "GetBool": [
+    "docs",
+    "spec"
+   ],
+   "GetColumnCount": [
+    "docs",
+    "spec"
+   ],
+   "GetDouble": [
+    "docs",
+    "spec"
+   ],
+   "GetFloat": [
+    "docs",
+    "spec"
+   ],
+   "GetInt16": [
+    "docs",
+    "spec"
+   ],
+   "GetInt32": [
+    "docs",
+    "spec"
+   ],
+   "GetInt64": [
+    "docs",
+    "spec"
+   ],
+   "GetInt8": [
+    "docs",
+    "spec"
+   ],
+   "GetRow": [
+    "docs",
+    "spec"
+   ],
+   "GetRowCount": [
+    "docs",
+    "spec"
+   ],
+   "GetString": [
+    "docs",
+    "spec"
+   ],
+   "GetUInt16": [
+    "docs",
+    "spec"
+   ],
+   "GetUInt32": [
+    "docs",
+    "spec"
+   ],
+   "GetUInt64": [
+    "docs",
+    "spec"
+   ],
+   "GetUInt8": [
+    "docs",
+    "spec"
+   ],
+   "IsNull": [
+    "docs",
+    "spec"
+   ],
+   "NextRow": [
+    "docs",
+    "spec"
+   ]
+  },
+  "GameObject": {
+   "Despawn": [
+    "docs",
+    "spec"
+   ],
+   "GetDBTableGUIDLow": [
+    "docs",
+    "spec"
+   ],
+   "GetDisplayId": [
+    "docs"
+   ],
+   "GetGoState": [
+    "docs",
+    "spec"
+   ],
+   "GetLootRecipient": [
+    "docs"
+   ],
+   "GetLootRecipientGroup": [
+    "docs"
+   ],
+   "GetLootState": [
+    "docs",
+    "spec"
+   ],
+   "HasQuest": [
+    "docs"
+   ],
+   "IsActive": [
+    "docs"
+   ],
+   "IsDestructible": [
+    "docs"
+   ],
+   "IsSpawned": [
+    "docs",
+    "spec"
+   ],
+   "IsTransport": [
+    "docs"
+   ],
+   "RemoveFromWorld": [
+    "docs"
+   ],
+   "Respawn": [
+    "docs",
+    "spec"
+   ],
+   "SaveToDB": [
+    "docs"
+   ],
+   "SetGoState": [
+    "docs",
+    "spec"
+   ],
+   "SetLootState": [
+    "docs",
+    "spec"
+   ],
+   "SetRespawnTime": [
+    "docs"
+   ],
+   "SetSpawnedByDefault": [
+    "docs"
+   ],
+   "UseDoorOrButton": [
+    "docs",
+    "spec"
+   ]
+  },
+  "Group": {
+   "AddMember": [
+    "docs",
+    "spec"
+   ],
+   "ConvertToLFG": [
+    "docs"
+   ],
+   "ConvertToRaid": [
+    "docs"
+   ],
+   "Disband": [
+    "docs"
+   ],
+   "GetGUID": [
+    "docs"
+   ],
+   "GetLeaderGUID": [
+    "docs",
+    "spec"
+   ],
+   "GetMemberFlags": [
+    "docs"
+   ],
+   "GetMemberGUID": [
+    "docs"
+   ],
+   "GetMemberGroup": [
+    "docs"
+   ],
+   "GetMembers": [
+    "docs",
+    "spec"
+   ],
+   "GetMembersCount": [
+    "docs"
+   ],
+   "HasFreeSlotSubGroup": [
+    "docs"
+   ],
+   "IsAssistant": [
+    "docs"
+   ],
+   "IsBFGroup": [
+    "docs"
+   ],
+   "IsBGGroup": [
+    "docs"
+   ],
+   "IsFull": [
+    "docs"
+   ],
+   "IsLFGGroup": [
+    "docs"
+   ],
+   "IsLeader": [
+    "docs"
+   ],
+   "IsMember": [
+    "docs"
+   ],
+   "IsRaidGroup": [
+    "docs",
+    "spec"
+   ],
+   "RemoveMember": [
+    "docs",
+    "spec"
+   ],
+   "SameSubGroup": [
+    "docs"
+   ],
+   "SendPacket": [
+    "docs",
+    "spec"
+   ],
+   "SetLeader": [
+    "docs"
+   ],
+   "SetMemberFlag": [
+    "docs"
+   ],
+   "SetMembersGroup": [
+    "docs"
+   ],
+   "SetTargetIcon": [
+    "docs"
+   ]
+  },
+  "Guild": {
+   "AddMember": [
+    "docs"
+   ],
+   "DeleteMember": [
+    "docs"
+   ],
+   "Disband": [
+    "docs"
+   ],
+   "GetId": [
+    "docs"
+   ],
+   "GetInfo": [
+    "docs"
+   ],
+   "GetLeader": [
+    "docs"
+   ],
+   "GetLeaderGUID": [
+    "docs",
+    "spec"
+   ],
+   "GetMOTD": [
+    "docs"
+   ],
+   "GetMemberCount": [
+    "docs"
+   ],
+   "GetMembers": [
+    "docs",
+    "spec"
+   ],
+   "GetName": [
+    "docs",
+    "spec"
+   ],
+   "SendPacket": [
+    "docs",
+    "spec"
+   ],
+   "SendPacketToRanked": [
+    "docs"
+   ],
+   "SetBankTabText": [
+    "docs",
+    "spec"
+   ],
+   "SetLeader": [
+    "docs"
+   ],
+   "SetMemberRank": [
+    "docs"
+   ]
+  },
+  "Item": {
+   "CanBeTraded": [
+    "docs"
+   ],
+   "ClearEnchantment": [
+    "docs"
+   ],
+   "GetAllowableClass": [
+    "docs"
+   ],
+   "GetAllowableRace": [
+    "docs"
+   ],
+   "GetArmor": [
+    "docs"
+   ],
+   "GetBagSize": [
+    "docs"
+   ],
+   "GetBagSlot": [
+    "docs",
+    "spec"
+   ],
+   "GetBuyCount": [
+    "docs"
+   ],
+   "GetBuyPrice": [
+    "docs"
+   ],
+   "GetClass": [
+    "docs"
+   ],
+   "GetCount": [
+    "docs",
+    "spec"
+   ],
+   "GetDamageInfo": [
+    "docs"
+   ],
+   "GetDisplayId": [
+    "docs"
+   ],
+   "GetDurability": [
+    "docs"
+   ],
+   "GetEnchantmentId": [
+    "docs"
+   ],
+   "GetEntry": [
+    "spec"
+   ],
+   "GetExtraFlags": [
+    "docs"
+   ],
+   "GetFlags": [
+    "docs"
+   ],
+   "GetFlags2": [
+    "docs"
+   ],
+   "GetInventoryType": [
+    "docs"
+   ],
+   "GetItemId": [
+    "docs"
+   ],
+   "GetItemLevel": [
+    "docs"
+   ],
+   "GetItemLink": [
+    "docs",
+    "spec"
+   ],
+   "GetItemSet": [
+    "docs"
+   ],
+   "GetMaxDurability": [
+    "docs"
+   ],
+   "GetMaxStackCount": [
+    "docs"
+   ],
+   "GetName": [
+    "docs"
+   ],
+   "GetOwner": [
+    "docs",
+    "spec"
+   ],
+   "GetOwnerGUID": [
+    "docs"
+   ],
+   "GetQuality": [
+    "docs"
+   ],
+   "GetRandomProperty": [
+    "docs"
+   ],
+   "GetRandomSuffix": [
+    "docs"
+   ],
+   "GetRequiredLevel": [
+    "docs"
+   ],
+   "GetSellPrice": [
+    "docs"
+   ],
+   "GetSlot": [
+    "docs",
+    "spec"
+   ],
+   "GetSpeed": [
+    "docs"
+   ],
+   "GetSpellId": [
+    "docs"
+   ],
+   "GetSpellTrigger": [
+    "docs"
+   ],
+   "GetStatInfo": [
+    "docs"
+   ],
+   "GetStatsCount": [
+    "docs"
+   ],
+   "GetSubClass": [
+    "docs"
+   ],
+   "HasQuest": [
+    "docs"
+   ],
+   "IsArmorVellum": [
+    "docs"
+   ],
+   "IsBag": [
+    "docs"
+   ],
+   "IsBoundAccountWide": [
+    "docs"
+   ],
+   "IsBoundByEnchant": [
+    "docs"
+   ],
+   "IsBroken": [
+    "docs"
+   ],
+   "IsConjuredConsumable": [
+    "docs"
+   ],
+   "IsCurrencyToken": [
+    "docs"
+   ],
+   "IsEquipped": [
+    "docs",
+    "spec"
+   ],
+   "IsInBag": [
+    "docs"
+   ],
+   "IsInTrade": [
+    "docs"
+   ],
+   "IsLocked": [
+    "docs"
+   ],
+   "IsNotBoundToPlayer": [
+    "docs"
+   ],
+   "IsNotEmptyBag": [
+    "docs"
+   ],
+   "IsPotion": [
+    "docs"
+   ],
+   "IsRefundExpired": [
+    "docs"
+   ],
+   "IsSoulBound": [
+    "docs"
+   ],
+   "IsWeaponVellum": [
+    "docs"
+   ],
+   "SaveToDB": [
+    "docs"
+   ],
+   "SetBinding": [
+    "docs"
+   ],
+   "SetCount": [
+    "docs",
+    "spec"
+   ],
+   "SetEnchantment": [
+    "docs"
+   ],
+   "SetOwner": [
+    "docs"
+   ],
+   "SetRandomProperty": [
+    "docs"
+   ],
+   "SetRandomSuffix": [
+    "docs"
+   ]
+  },
+  "Map": {
+   "Data": [
+    "docs"
+   ],
+   "GetAreaId": [
+    "docs"
+   ],
+   "GetDifficulty": [
+    "docs"
+   ],
+   "GetHeight": [
+    "docs"
+   ],
+   "GetInstanceData": [
+    "docs"
+   ],
+   "GetInstanceId": [
+    "docs"
+   ],
+   "GetMapId": [
+    "docs"
+   ],
+   "GetName": [
+    "docs"
+   ],
+   "GetPlayerCount": [
+    "docs"
+   ],
+   "GetPlayers": [
+    "docs"
+   ],
+   "GetWorldObject": [
+    "docs"
+   ],
+   "IsArena": [
+    "docs"
+   ],
+   "IsBattleground": [
+    "docs"
+   ],
+   "IsDungeon": [
+    "docs"
+   ],
+   "IsEmpty": [
+    "docs"
+   ],
+   "IsHeroic": [
+    "docs"
+   ],
+   "IsRaid": [
+    "docs"
+   ],
+   "SaveInstanceData": [
+    "docs"
+   ],
+   "SetWeather": [
+    "docs"
+   ]
+  },
+  "Object": {
+   "GetByteValue": [
+    "docs"
+   ],
+   "GetEntry": [
+    "docs",
+    "spec"
+   ],
+   "GetFloatValue": [
+    "docs"
+   ],
+   "GetGUID": [
+    "docs",
+    "spec"
+   ],
+   "GetGUIDLow": [
+    "docs",
+    "spec"
+   ],
+   "GetInt32Value": [
+    "docs"
+   ],
+   "GetScale": [
+    "docs",
+    "spec"
+   ],
+   "GetTypeId": [
+    "docs",
+    "spec"
+   ],
+   "GetUInt16Value": [
+    "docs"
+   ],
+   "GetUInt32Value": [
+    "docs",
+    "spec"
+   ],
+   "GetUInt64Value": [
+    "docs"
+   ],
+   "HasFlag": [
+    "docs",
+    "spec"
+   ],
+   "IsInWorld": [
+    "docs"
+   ],
+   "IsPlayer": [
+    "spec"
+   ],
+   "RemoveFlag": [
+    "docs"
+   ],
+   "SetByteValue": [
+    "docs"
+   ],
+   "SetFlag": [
+    "docs"
+   ],
+   "SetFloatValue": [
+    "docs"
+   ],
+   "SetInt16Value": [
+    "docs"
+   ],
+   "SetInt32Value": [
+    "docs"
+   ],
+   "SetScale": [
+    "docs",
+    "spec"
+   ],
+   "SetUInt16Value": [
+    "docs"
+   ],
+   "SetUInt32Value": [
+    "docs"
+   ],
+   "SetUInt64Value": [
+    "docs"
+   ],
+   "ToCorpse": [
+    "docs"
+   ],
+   "ToCreature": [
+    "docs",
+    "spec"
+   ],
+   "ToGameObject": [
+    "docs",
+    "spec"
+   ],
+   "ToPlayer": [
+    "docs",
+    "spec"
+   ],
+   "ToUnit": [
+    "docs",
+    "spec"
+   ],
+   "UpdateUInt32Value": [
+    "docs"
+   ]
+  },
+  "Player": {
+   "AddComboPoints": [
+    "docs"
+   ],
+   "AddItem": [
+    "docs",
+    "spec"
+   ],
+   "AddLifetimeKills": [
+    "docs"
+   ],
+   "AddQuest": [
+    "docs",
+    "spec"
+   ],
+   "AddTalent": [
+    "docs"
+   ],
+   "AdvanceAllSkills": [
+    "docs"
+   ],
+   "AdvanceSkill": [
+    "docs"
+   ],
+   "AdvanceSkillsToMax": [
+    "docs"
+   ],
+   "AreaExploredOrEventHappens": [
+    "docs"
+   ],
+   "BindToInstance": [
+    "docs"
+   ],
+   "CanBlock": [
+    "docs"
+   ],
+   "CanCompleteQuest": [
+    "docs"
+   ],
+   "CanCompleteRepeatableQuest": [
+    "docs"
+   ],
+   "CanEquipItem": [
+    "docs"
+   ],
+   "CanFly": [
+    "docs"
+   ],
+   "CanParry": [
+    "docs"
+   ],
+   "CanRewardQuest": [
+    "docs"
+   ],
+   "CanShareQuest": [
+    "docs"
+   ],
+   "CanSpeak": [
+    "docs"
+   ],
+   "CanTitanGrip": [
+    "docs"
+   ],
+   "CanUninviteFromGroup": [
+    "docs"
+   ],
+   "CanUseItem": [
+    "docs"
+   ],
+   "ClearComboPoints": [
+    "docs"
+   ],
+   "CompleteQuest": [
+    "docs",
+    "spec"
+   ],
+   "DurabilityLoss": [
+    "docs"
+   ],
+   "DurabilityLossAll": [
+    "docs"
+   ],
+   "DurabilityPointLossForEquipSlot": [
+    "docs"
+   ],
+   "DurabilityPointsLoss": [
+    "docs"
+   ],
+   "DurabilityPointsLossAll": [
+    "docs"
+   ],
+   "DurabilityRepair": [
+    "docs"
+   ],
+   "DurabilityRepairAll": [
+    "docs"
+   ],
+   "EquipItem": [
+    "docs"
+   ],
+   "FailQuest": [
+    "docs"
+   ],
+   "GetAccountId": [
+    "docs",
+    "spec"
+   ],
+   "GetAccountName": [
+    "docs",
+    "spec"
+   ],
+   "GetActiveSpec": [
+    "docs"
+   ],
+   "GetArenaPoints": [
+    "docs",
+    "spec"
+   ],
+   "GetBaseSkillValue": [
+    "docs"
+   ],
+   "GetBattlegroundId": [
+    "docs"
+   ],
+   "GetBattlegroundTypeId": [
+    "docs"
+   ],
+   "GetChampioningFaction": [
+    "docs"
+   ],
+   "GetChatTag": [
+    "docs"
+   ],
+   "GetClass": [
+    "spec"
+   ],
+   "GetCoinage": [
+    "docs",
+    "spec"
+   ],
+   "GetComboPoints": [
+    "docs"
+   ],
+   "GetComboTarget": [
+    "docs"
+   ],
+   "GetCorpse": [
+    "docs"
+   ],
+   "GetDbLocaleIndex": [
+    "docs"
+   ],
+   "GetDbcLocale": [
+    "docs"
+   ],
+   "GetDifficulty": [
+    "docs"
+   ],
+   "GetDrunkValue": [
+    "docs"
+   ],
+   "GetEquippedItemBySlot": [
+    "docs"
+   ],
+   "GetFreeTalentPoints": [
+    "docs"
+   ],
+   "GetGMRank": [
+    "docs",
+    "spec"
+   ],
+   "GetGender": [
+    "spec"
+   ],
+   "GetGossipTextId": [
+    "docs"
+   ],
+   "GetGroup": [
+    "docs",
+    "spec"
+   ],
+   "GetGroupInvite": [
+    "docs"
+   ],
+   "GetGuild": [
+    "docs",
+    "spec"
+   ],
+   "GetGuildId": [
+    "docs",
+    "spec"
+   ],
+   "GetGuildName": [
+    "docs"
+   ],
+   "GetGuildRank": [
+    "docs"
+   ],
+   "GetHealthBonusFromStamina": [
+    "docs"
+   ],
+   "GetHonorPoints": [
+    "docs"
+   ],
+   "GetInGameTime": [
+    "docs"
+   ],
+   "GetItemByEntry": [
+    "docs"
+   ],
+   "GetItemByGUID": [
+    "docs"
+   ],
+   "GetItemByPos": [
+    "docs"
+   ],
+   "GetItemCount": [
+    "docs",
+    "spec"
+   ],
+   "GetLFGRole": [
+    "spec"
+   ],
+   "GetLatency": [
+    "docs"
+   ],
+   "GetLevelPlayedTime": [
+    "docs"
+   ],
+   "GetLifetimeKills": [
+    "docs"
+   ],
+   "GetMailCount": [
+    "docs"
+   ],
+   "GetMailItem": [
+    "docs"
+   ],
+   "GetManaBonusFromIntellect": [
+    "docs"
+   ],
+   "GetMaxSkillValue": [
+    "docs"
+   ],
+   "GetNearbyGameObject": [
+    "docs"
+   ],
+   "GetNextRandomRaidMember": [
+    "docs"
+   ],
+   "GetOriginalGroup": [
+    "docs"
+   ],
+   "GetOriginalSubGroup": [
+    "docs"
+   ],
+   "GetPhaseMaskForSpawn": [
+    "docs"
+   ],
+   "GetPlayerIP": [
+    "docs"
+   ],
+   "GetPureMaxSkillValue": [
+    "docs"
+   ],
+   "GetPureSkillValue": [
+    "docs"
+   ],
+   "GetQuestLevel": [
+    "docs"
+   ],
+   "GetQuestRewardStatus": [
+    "docs"
+   ],
+   "GetQuestStatus": [
+    "docs",
+    "spec"
+   ],
+   "GetRace": [
+    "spec"
+   ],
+   "GetRecruiterId": [
+    "docs"
+   ],
+   "GetReputation": [
+    "docs"
+   ],
+   "GetReputationRank": [
+    "docs"
+   ],
+   "GetReqKillOrCastCurrentCount": [
+    "docs"
+   ],
+   "GetRestBonus": [
+    "docs"
+   ],
+   "GetSelectedPlayer": [
+    "docs"
+   ],
+   "GetSelectedUnit": [
+    "docs"
+   ],
+   "GetSelection": [
+    "docs",
+    "spec"
+   ],
+   "GetShieldBlockValue": [
+    "docs"
+   ],
+   "GetSkillPermBonusValue": [
+    "docs"
+   ],
+   "GetSkillTempBonusValue": [
+    "docs"
+   ],
+   "GetSkillValue": [
+    "docs"
+   ],
+   "GetSpecsCount": [
+    "docs"
+   ],
+   "GetSpellCooldownDelay": [
+    "docs"
+   ],
+   "GetSubGroup": [
+    "docs"
+   ],
+   "GetTeam": [
+    "docs",
+    "spec"
+   ],
+   "GetTotalPlayedTime": [
+    "docs"
+   ],
+   "GetXP": [
+    "docs"
+   ],
+   "GetXPForNextLevel": [
+    "docs"
+   ],
+   "GetXPRestBonus": [
+    "docs"
+   ],
+   "GiveXP": [
+    "docs",
+    "spec"
+   ],
+   "GossipAddQuests": [
+    "docs",
+    "spec"
+   ],
+   "GossipClearMenu": [
+    "docs",
+    "spec"
+   ],
+   "GossipComplete": [
+    "docs",
+    "spec"
+   ],
+   "GossipMenuAddItem": [
+    "docs",
+    "spec"
+   ],
+   "GossipSendMenu": [
+    "docs",
+    "spec"
+   ],
+   "GossipSendPOI": [
+    "docs"
+   ],
+   "GroupCreate": [
+    "docs"
+   ],
+   "GroupEventHappens": [
+    "docs"
+   ],
+   "GroupInvite": [
+    "docs"
+   ],
+   "HasAchieved": [
+    "docs",
+    "spec"
+   ],
+   "HasAtLoginFlag": [
+    "docs"
+   ],
+   "HasItem": [
+    "docs",
+    "spec"
+   ],
+   "HasPendingBind": [
+    "docs"
+   ],
+   "HasQuest": [
+    "docs",
+    "spec"
+   ],
+   "HasQuestForGO": [
+    "docs"
+   ],
+   "HasQuestForItem": [
+    "docs"
+   ],
+   "HasReceivedQuestReward": [
+    "docs"
+   ],
+   "HasRecruited": [
+    "docs"
+   ],
+   "HasSkill": [
+    "docs"
+   ],
+   "HasSpell": [
+    "docs",
+    "spec"
+   ],
+   "HasSpellCooldown": [
+    "docs"
+   ],
+   "HasTalent": [
+    "docs"
+   ],
+   "HasTitle": [
+    "docs"
+   ],
+   "InArena": [
+    "docs"
+   ],
+   "InBattleground": [
+    "docs"
+   ],
+   "InBattlegroundQueue": [
+    "docs"
+   ],
+   "InRandomLfgDungeon": [
+    "docs"
+   ],
+   "IncompleteQuest": [
+    "docs"
+   ],
+   "IsAFK": [
+    "docs"
+   ],
+   "IsARecruiter": [
+    "docs"
+   ],
+   "IsAcceptingWhispers": [
+    "docs"
+   ],
+   "IsAlliance": [
+    "docs",
+    "spec"
+   ],
+   "IsDND": [
+    "docs"
+   ],
+   "IsFalling": [
+    "docs"
+   ],
+   "IsFlying": [
+    "docs"
+   ],
+   "IsGM": [
+    "docs",
+    "spec"
+   ],
+   "IsGMChat": [
+    "docs"
+   ],
+   "IsGMVisible": [
+    "docs"
+   ],
+   "IsGroupVisibleFor": [
+    "docs"
+   ],
+   "IsHonorOrXPTarget": [
+    "docs"
+   ],
+   "IsHorde": [
+    "docs",
+    "spec"
+   ],
+   "IsImmuneToDamage": [
+    "docs"
+   ],
+   "IsImmuneToEnvironmentalDamage": [
+    "docs"
+   ],
+   "IsInArenaTeam": [
+    "docs"
+   ],
+   "IsInGroup": [
+    "docs"
+   ],
+   "IsInGuild": [
+    "docs"
+   ],
+   "IsInSameGroupWith": [
+    "docs"
+   ],
+   "IsInSameRaidWith": [
+    "docs"
+   ],
+   "IsInWater": [
+    "docs"
+   ],
+   "IsMoving": [
+    "docs"
+   ],
+   "IsNeverVisible": [
+    "docs"
+   ],
+   "IsOutdoorPvPActive": [
+    "docs"
+   ],
+   "IsRecruited": [
+    "docs"
+   ],
+   "IsRested": [
+    "docs"
+   ],
+   "IsTaxiCheater": [
+    "docs"
+   ],
+   "IsUsingLfg": [
+    "docs"
+   ],
+   "IsVisibleForPlayer": [
+    "docs"
+   ],
+   "KickPlayer": [
+    "docs",
+    "spec"
+   ],
+   "KillGOCredit": [
+    "docs"
+   ],
+   "KillPlayer": [
+    "docs"
+   ],
+   "KilledMonsterCredit": [
+    "docs"
+   ],
+   "KilledPlayerCredit": [
+    "docs"
+   ],
+   "LearnSpell": [
+    "docs",
+    "spec"
+   ],
+   "LearnTalent": [
+    "docs"
+   ],
+   "LeaveBattleground": [
+    "docs"
+   ],
+   "LogoutPlayer": [
+    "docs"
+   ],
+   "ModifyArenaPoints": [
+    "docs"
+   ],
+   "ModifyHonorPoints": [
+    "docs"
+   ],
+   "ModifyMoney": [
+    "docs",
+    "spec"
+   ],
+   "Mute": [
+    "docs"
+   ],
+   "RemoveActiveQuest": [
+    "docs"
+   ],
+   "RemoveArenaSpellCooldowns": [
+    "docs"
+   ],
+   "RemoveFromBattlegroundRaid": [
+    "docs"
+   ],
+   "RemoveFromGroup": [
+    "docs"
+   ],
+   "RemoveItem": [
+    "docs",
+    "spec"
+   ],
+   "RemoveLifetimeKills": [
+    "docs"
+   ],
+   "RemovePet": [
+    "docs"
+   ],
+   "RemoveQuest": [
+    "docs"
+   ],
+   "RemoveRewardedQuest": [
+    "docs"
+   ],
+   "RemoveSpell": [
+    "docs",
+    "spec"
+   ],
+   "RemovedInsignia": [
+    "docs"
+   ],
+   "ResetAchievements": [
+    "docs"
+   ],
+   "ResetAllCooldowns": [
+    "docs"
+   ],
+   "ResetPetTalents": [
+    "docs"
+   ],
+   "ResetSpellCooldown": [
+    "docs"
+   ],
+   "ResetTalents": [
+    "docs"
+   ],
+   "ResetTalentsCost": [
+    "docs"
+   ],
+   "ResetTypeCooldowns": [
+    "docs"
+   ],
+   "ResurrectPlayer": [
+    "docs",
+    "spec"
+   ],
+   "RewardQuest": [
+    "docs"
+   ],
+   "RunCommand": [
+    "docs"
+   ],
+   "SaveToDB": [
+    "docs",
+    "spec"
+   ],
+   "Say": [
+    "docs"
+   ],
+   "SendAddonMessage": [
+    "docs"
+   ],
+   "SendAreaTriggerMessage": [
+    "docs"
+   ],
+   "SendAuctionMenu": [
+    "docs"
+   ],
+   "SendBroadcastMessage": [
+    "docs",
+    "spec"
+   ],
+   "SendCinematicStart": [
+    "docs"
+   ],
+   "SendGuildInvite": [
+    "docs"
+   ],
+   "SendListInventory": [
+    "docs"
+   ],
+   "SendMovieStart": [
+    "docs"
+   ],
+   "SendNotification": [
+    "docs",
+    "spec"
+   ],
+   "SendPacket": [
+    "docs"
+   ],
+   "SendQuestTemplate": [
+    "docs"
+   ],
+   "SendShowBank": [
+    "docs"
+   ],
+   "SendShowMailBox": [
+    "docs"
+   ],
+   "SendSpiritResurrect": [
+    "docs"
+   ],
+   "SendTabardVendorActivate": [
+    "docs"
+   ],
+   "SendTaxiMenu": [
+    "docs"
+   ],
+   "SendTrainerList": [
+    "docs"
+   ],
+   "SendUpdateWorldState": [
+    "docs"
+   ],
+   "SetAcceptWhispers": [
+    "docs"
+   ],
+   "SetAchievement": [
+    "docs",
+    "spec"
+   ],
+   "SetArenaPoints": [
+    "docs"
+   ],
+   "SetAtLoginFlag": [
+    "docs"
+   ],
+   "SetBindPoint": [
+    "docs"
+   ],
+   "SetCoinage": [
+    "docs"
+   ],
+   "SetDrunkValue": [
+    "docs"
+   ],
+   "SetFFA": [
+    "docs"
+   ],
+   "SetFactionForRace": [
+    "docs"
+   ],
+   "SetFreeTalentPoints": [
+    "docs"
+   ],
+   "SetGMChat": [
+    "docs"
+   ],
+   "SetGMVisible": [
+    "docs"
+   ],
+   "SetGameMaster": [
+    "docs"
+   ],
+   "SetGender": [
+    "docs"
+   ],
+   "SetGuildRank": [
+    "docs"
+   ],
+   "SetHonorPoints": [
+    "docs"
+   ],
+   "SetKnownTitle": [
+    "docs"
+   ],
+   "SetLevel": [
+    "spec"
+   ],
+   "SetLifetimeKills": [
+    "docs"
+   ],
+   "SetMovement": [
+    "docs"
+   ],
+   "SetPlayerLock": [
+    "docs"
+   ],
+   "SetPvPDeath": [
+    "docs"
+   ],
+   "SetQuestStatus": [
+    "docs"
+   ],
+   "SetReputation": [
+    "docs"
+   ],
+   "SetRestBonus": [
+    "docs"
+   ],
+   "SetSheath": [
+    "docs"
+   ],
+   "SetSkill": [
+    "docs"
+   ],
+   "SetTaxiCheat": [
+    "docs"
+   ],
+   "SpawnBones": [
+    "docs"
+   ],
+   "StartTaxi": [
+    "docs"
+   ],
+   "SummonPet": [
+    "docs"
+   ],
+   "SummonPlayer": [
+    "docs"
+   ],
+   "TalkedToCreature": [
+    "docs"
+   ],
+   "Teleport": [
+    "docs",
+    "spec"
+   ],
+   "TextEmote": [
+    "docs"
+   ],
+   "ToggleAFK": [
+    "docs"
+   ],
+   "ToggleDND": [
+    "docs"
+   ],
+   "UnbindAllInstances": [
+    "docs"
+   ],
+   "UnbindInstance": [
+    "docs"
+   ],
+   "UnsetKnownTitle": [
+    "docs"
+   ],
+   "Whisper": [
+    "docs"
+   ],
+   "Yell": [
+    "docs"
+   ]
+  },
+  "Quest": {
+   "GetFlags": [
+    "docs"
+   ],
+   "GetId": [
+    "docs",
+    "spec"
+   ],
+   "GetLevel": [
+    "docs",
+    "spec"
+   ],
+   "GetMaxLevel": [
+    "docs"
+   ],
+   "GetMinLevel": [
+    "docs"
+   ],
+   "GetNextQuestId": [
+    "docs"
+   ],
+   "GetNextQuestInChain": [
+    "docs"
+   ],
+   "GetPrevQuestId": [
+    "docs"
+   ],
+   "GetTitle": [
+    "spec"
+   ],
+   "GetType": [
+    "docs"
+   ],
+   "HasFlag": [
+    "docs"
+   ],
+   "IsDaily": [
+    "docs",
+    "spec"
+   ],
+   "IsRepeatable": [
+    "docs"
+   ]
+  },
+  "Spell": {
+   "CalculateDamage": [
+    "docs"
+   ],
+   "Cancel": [
+    "docs",
+    "spec"
+   ],
+   "Cast": [
+    "docs"
+   ],
+   "CleanupTargetList": [
+    "docs"
+   ],
+   "Finish": [
+    "docs"
+   ],
+   "GetCastTime": [
+    "docs"
+   ],
+   "GetCaster": [
+    "docs",
+    "spec"
+   ],
+   "GetDelayMoment": [
+    "docs"
+   ],
+   "GetDelayStart": [
+    "docs"
+   ],
+   "GetDuration": [
+    "docs",
+    "spec"
+   ],
+   "GetEntry": [
+    "docs",
+    "spec"
+   ],
+   "GetGameObjectTargetCountForEffect": [
+    "docs"
+   ],
+   "GetItemTargetCountForEffect": [
+    "docs"
+   ],
+   "GetOriginalCaster": [
+    "docs"
+   ],
+   "GetPowerCost": [
+    "docs"
+   ],
+   "GetRuneState": [
+    "docs"
+   ],
+   "GetSpellInfo": [
+    "docs"
+   ],
+   "GetState": [
+    "docs"
+   ],
+   "GetTarget": [
+    "docs"
+   ],
+   "GetTargetDest": [
+    "docs"
+   ],
+   "GetUnitTargetCountForEffect": [
+    "docs"
+   ],
+   "IsAutoActionResetSpell": [
+    "docs"
+   ],
+   "IsAutoRepeat": [
+    "docs"
+   ],
+   "IsChannelActive": [
+    "docs"
+   ],
+   "IsDeletable": [
+    "docs"
+   ],
+   "IsIgnoringCooldowns": [
+    "docs"
+   ],
+   "IsInterruptable": [
+    "docs"
+   ],
+   "IsNeedSendToClient": [
+    "docs"
+   ],
+   "IsPositive": [
+    "docs"
+   ],
+   "IsProcDisabled": [
+    "docs"
+   ],
+   "IsTriggered": [
+    "docs"
+   ],
+   "IsTriggeredByAura": [
+    "docs"
+   ],
+   "SetAutoRepeat": [
+    "docs"
+   ],
+   "SetDelayStart": [
+    "docs"
+   ],
+   "SetExecutedCurrently": [
+    "docs"
+   ],
+   "SetReferencedFromCurrent": [
+    "docs"
+   ],
+   "SetRuneState": [
+    "docs"
+   ],
+   "SetSpellValue": [
+    "docs"
+   ],
+   "SetState": [
+    "docs"
+   ],
+   "UpdatePointers": [
+    "docs"
+   ]
+  },
+  "SpellInfo": {
+   "CalcCastTime": [
+    "docs"
+   ],
+   "CanBeUsedInCombat": [
+    "docs"
+   ],
+   "CanDispelAura": [
+    "docs"
+   ],
+   "CanPierceImmuneAura": [
+    "docs"
+   ],
+   "CanSpellProvideImmunityAgainstAura": [
+    "docs"
+   ],
+   "CheckTarget": [
+    "docs"
+   ],
+   "CheckTargetCreatureType": [
+    "docs"
+   ],
+   "EffectIsAreaAuraEffect": [
+    "docs"
+   ],
+   "EffectIsAura": [
+    "docs"
+   ],
+   "EffectIsAuraType": [
+    "docs"
+   ],
+   "EffectIsEffect": [
+    "docs"
+   ],
+   "EffectIsEffectType": [
+    "docs"
+   ],
+   "EffectIsTargetingArea": [
+    "docs"
+   ],
+   "EffectIsUnitOwnedAuraEffect": [
+    "docs"
+   ],
+   "GetActiveIconID": [
+    "docs"
+   ],
+   "GetAllEffectsMechanicMask": [
+    "docs"
+   ],
+   "GetAllowedMechanicMask": [
+    "docs"
+   ],
+   "GetAreaGroupId": [
+    "docs"
+   ],
+   "GetAttackType": [
+    "docs"
+   ],
+   "GetAttributes": [
+    "docs"
+   ],
+   "GetAttributesCu": [
+    "docs"
+   ],
+   "GetAttributesEx": [
+    "docs"
+   ],
+   "GetAttributesEx2": [
+    "docs"
+   ],
+   "GetAttributesEx3": [
+    "docs"
+   ],
+   "GetAttributesEx4": [
+    "docs"
+   ],
+   "GetAttributesEx5": [
+    "docs"
+   ],
+   "GetAttributesEx6": [
+    "docs"
+   ],
+   "GetAttributesEx7": [
+    "docs"
+   ],
+   "GetAuraInterruptFlags": [
+    "docs"
+   ],
+   "GetAuraState": [
+    "docs"
+   ],
+   "GetBaseLevel": [
+    "docs"
+   ],
+   "GetCasterAuraSpell": [
+    "docs"
+   ],
+   "GetCasterAuraState": [
+    "docs"
+   ],
+   "GetCasterAuraStateNot": [
+    "docs"
+   ],
+   "GetCategory": [
+    "docs"
+   ],
+   "GetCategoryRecoveryTime": [
+    "docs"
+   ],
+   "GetChannelInterruptFlags": [
+    "docs"
+   ],
+   "GetDiminishingReturnsGroupForSpell": [
+    "docs"
+   ],
+   "GetDiminishingReturnsGroupType": [
+    "docs"
+   ],
+   "GetDiminishingReturnsLimitDuration": [
+    "docs"
+   ],
+   "GetDiminishingReturnsMaxLevel": [
+    "docs"
+   ],
+   "GetDispel": [
+    "docs"
+   ],
+   "GetDmgClass": [
+    "docs"
+   ],
+   "GetDuration": [
+    "docs"
+   ],
+   "GetEffectAmplitude": [
+    "docs"
+   ],
+   "GetEffectApplyAuraName": [
+    "docs"
+   ],
+   "GetEffectBasePoints": [
+    "docs"
+   ],
+   "GetEffectBonusMultiplier": [
+    "docs"
+   ],
+   "GetEffectCalcRadius": [
+    "docs"
+   ],
+   "GetEffectCalcValue": [
+    "docs"
+   ],
+   "GetEffectChainTarget": [
+    "docs"
+   ],
+   "GetEffectDamageMultiplier": [
+    "docs"
+   ],
+   "GetEffectDieSides": [
+    "docs"
+   ],
+   "GetEffectHasRadius": [
+    "docs"
+   ],
+   "GetEffectImplicitTargetType": [
+    "docs"
+   ],
+   "GetEffectIndex": [
+    "docs"
+   ],
+   "GetEffectItemType": [
+    "docs"
+   ],
+   "GetEffectMechanic": [
+    "docs"
+   ],
+   "GetEffectMechanicMask": [
+    "docs"
+   ],
+   "GetEffectMiscValue": [
+    "docs"
+   ],
+   "GetEffectMiscValueB": [
+    "docs"
+   ],
+   "GetEffectPointsPerComboPoint": [
+    "docs"
+   ],
+   "GetEffectProvidedTargetMask": [
+    "docs"
+   ],
+   "GetEffectRealPointsPerLevel": [
+    "docs"
+   ],
+   "GetEffectSpellClassMask": [
+    "docs"
+   ],
+   "GetEffectTargetACheckType": [
+    "docs"
+   ],
+   "GetEffectTargetADirectionAngle": [
+    "docs"
+   ],
+   "GetEffectTargetADirectionType": [
+    "docs"
+   ],
+   "GetEffectTargetAIsArea": [
+    "docs"
+   ],
+   "GetEffectTargetAObjectType": [
+    "docs"
+   ],
+   "GetEffectTargetAReferenceType": [
+    "docs"
+   ],
+   "GetEffectTargetASelectionCategory": [
+    "docs"
+   ],
+   "GetEffectTargetATarget": [
+    "docs"
+   ],
+   "GetEffectTargetBCheckType": [
+    "docs"
+   ],
+   "GetEffectTargetBDirectionAngle": [
+    "docs"
+   ],
+   "GetEffectTargetBDirectionType": [
+    "docs"
+   ],
+   "GetEffectTargetBIsArea": [
+    "docs"
+   ],
+   "GetEffectTargetBObjectType": [
+    "docs"
+   ],
+   "GetEffectTargetBReferenceType": [
+    "docs"
+   ],
+   "GetEffectTargetBSelectionCategory": [
+    "docs"
+   ],
+   "GetEffectTargetBTarget": [
+    "docs"
+   ],
+   "GetEffectTriggerSpell": [
+    "docs"
+   ],
+   "GetEffectType": [
+    "docs"
+   ],
+   "GetEffectUsedTargetObjectType": [
+    "docs"
+   ],
+   "GetEffectValueMultiplier": [
+    "docs"
+   ],
+   "GetEquippedItemClass": [
+    "docs"
+   ],
+   "GetEquippedItemInventoryTypeMask": [
+    "docs"
+   ],
+   "GetEquippedItemSubClassMask": [
+    "docs"
+   ],
+   "GetExcludeCasterAuraSpell": [
+    "docs"
+   ],
+   "GetExcludeTargetAuraSpell": [
+    "docs"
+   ],
+   "GetExplicitTargetMask": [
+    "docs"
+   ],
+   "GetFacingCasterFlags": [
+    "docs"
+   ],
+   "GetId": [
+    "docs"
+   ],
+   "GetInterruptFlags": [
+    "docs"
+   ],
+   "GetManaCost": [
+    "docs"
+   ],
+   "GetManaCostPercentage": [
+    "docs"
+   ],
+   "GetManaCostPerlevel": [
+    "docs"
+   ],
+   "GetManaPerSecond": [
+    "docs"
+   ],
+   "GetManaPerSecondPerLevel": [
+    "docs"
+   ],
+   "GetMaxAffectedTargets": [
+    "docs"
+   ],
+   "GetMaxDuration": [
+    "docs"
+   ],
+   "GetMaxLevel": [
+    "docs"
+   ],
+   "GetMaxRange": [
+    "docs"
+   ],
+   "GetMaxTargetLevel": [
+    "docs"
+   ],
+   "GetMaxTicks": [
+    "docs"
+   ],
+   "GetMechanic": [
+    "docs"
+   ],
+   "GetMinRange": [
+    "docs"
+   ],
+   "GetPowerType": [
+    "docs"
+   ],
+   "GetPreventionType": [
+    "docs"
+   ],
+   "GetPriority": [
+    "docs"
+   ],
+   "GetProcChance": [
+    "docs"
+   ],
+   "GetProcCharges": [
+    "docs"
+   ],
+   "GetProcFlags": [
+    "docs"
+   ],
+   "GetRank": [
+    "docs"
+   ],
+   "GetReagent": [
+    "docs"
+   ],
+   "GetReagentCount": [
+    "docs"
+   ],
+   "GetRecoveryTime": [
+    "docs"
+   ],
+   "GetRequiresSpellFocus": [
+    "docs"
+   ],
+   "GetRuneCostID": [
+    "docs"
+   ],
+   "GetSchoolMask": [
+    "docs"
+   ],
+   "GetSpeed": [
+    "docs"
+   ],
+   "GetSpellFamilyFlags": [
+    "docs"
+   ],
+   "GetSpellFamilyName": [
+    "docs"
+   ],
+   "GetSpellIconID": [
+    "docs"
+   ],
+   "GetSpellLevel": [
+    "docs"
+   ],
+   "GetSpellMechanicMaskByEffectMask": [
+    "docs"
+   ],
+   "GetSpellSpecific": [
+    "docs"
+   ],
+   "GetSpellVisual": [
+    "docs"
+   ],
+   "GetStackAmount": [
+    "docs"
+   ],
+   "GetStances": [
+    "docs"
+   ],
+   "GetStancesNot": [
+    "docs"
+   ],
+   "GetStartRecoveryCategory": [
+    "docs"
+   ],
+   "GetStartRecoveryTime": [
+    "docs"
+   ],
+   "GetTargetAuraSpell": [
+    "docs"
+   ],
+   "GetTargetAuraState": [
+    "docs"
+   ],
+   "GetTargetAuraStateNot": [
+    "docs"
+   ],
+   "GetTargetCreatureType": [
+    "docs"
+   ],
+   "GetTargets": [
+    "docs"
+   ],
+   "GetTotem": [
+    "docs"
+   ],
+   "GetTotemCategory": [
+    "docs"
+   ],
+   "HasAreaAuraEffect": [
+    "docs"
+   ],
+   "HasAura": [
+    "docs"
+   ],
+   "HasEffect": [
+    "docs"
+   ],
+   "HasInitialAggro": [
+    "docs"
+   ],
+   "HasOnlyDamageEffects": [
+    "docs"
+   ],
+   "IsAbilityLearnedWithProfession": [
+    "docs"
+   ],
+   "IsAbilityOfSkillType": [
+    "docs"
+   ],
+   "IsAffected": [
+    "docs"
+   ],
+   "IsAffectedBySpellMod": [
+    "docs"
+   ],
+   "IsAffectedBySpellMods": [
+    "docs"
+   ],
+   "IsAffectingArea": [
+    "docs"
+   ],
+   "IsAllowingDeadTarget": [
+    "docs"
+   ],
+   "IsAuraExclusiveBySpecificPerCasterWith": [
+    "docs"
+   ],
+   "IsAuraExclusiveBySpecificWith": [
+    "docs"
+   ],
+   "IsAutoRepeatRangedSpell": [
+    "docs"
+   ],
+   "IsAutocastable": [
+    "docs"
+   ],
+   "IsBreakingStealth": [
+    "docs"
+   ],
+   "IsChanneled": [
+    "docs"
+   ],
+   "IsCooldownStartedOnEvent": [
+    "docs"
+   ],
+   "IsDeathPersistent": [
+    "docs"
+   ],
+   "IsDifferentRankOf": [
+    "docs"
+   ],
+   "IsExplicitDiscovery": [
+    "docs"
+   ],
+   "IsGroupBuff": [
+    "docs"
+   ],
+   "IsHighRankOf": [
+    "docs"
+   ],
+   "IsItemFitToSpellRequirements": [
+    "docs"
+   ],
+   "IsLootCrafting": [
+    "docs"
+   ],
+   "IsMoveAllowedChannel": [
+    "docs"
+   ],
+   "IsMultiSlotAura": [
+    "docs"
+   ],
+   "IsNextMeleeSwingSpell": [
+    "docs"
+   ],
+   "IsPassive": [
+    "docs"
+   ],
+   "IsPassiveStackableWithRanks": [
+    "docs"
+   ],
+   "IsPositive": [
+    "docs"
+   ],
+   "IsPositiveEffect": [
+    "docs"
+   ],
+   "IsPrimaryProfession": [
+    "docs"
+   ],
+   "IsPrimaryProfessionFirstRank": [
+    "docs"
+   ],
+   "IsProfession": [
+    "docs"
+   ],
+   "IsProfessionOrRiding": [
+    "docs"
+   ],
+   "IsRangedWeaponSpell": [
+    "docs"
+   ],
+   "IsRankOf": [
+    "docs"
+   ],
+   "IsRanked": [
+    "docs"
+   ],
+   "IsRequiringDeadTarget": [
+    "docs"
+   ],
+   "IsSelfCast": [
+    "docs"
+   ],
+   "IsSingleTarget": [
+    "docs"
+   ],
+   "IsStackableOnOneSlotWithDifferentCasters": [
+    "docs"
+   ],
+   "IsStackableWithRanks": [
+    "docs"
+   ],
+   "IsTargetingArea": [
+    "docs"
+   ],
+   "NeedsComboPoints": [
+    "docs"
+   ],
+   "NeedsExplicitUnitTarget": [
+    "docs"
+   ],
+   "NeedsToBeTriggeredByCaster": [
+    "docs"
+   ],
+   "SpellCancelsAuraEffect": [
+    "docs"
+   ]
+  },
+  "Unit": {
+   "AddAura": [
+    "docs",
+    "spec"
+   ],
+   "AddFlatStatModifier": [
+    "docs"
+   ],
+   "AddPctStatModifier": [
+    "docs"
+   ],
+   "AddUnitState": [
+    "docs"
+   ],
+   "Attack": [
+    "docs",
+    "spec"
+   ],
+   "AttackStop": [
+    "docs",
+    "spec"
+   ],
+   "CanModifyStats": [
+    "docs"
+   ],
+   "CastCustomSpell": [
+    "docs",
+    "spec"
+   ],
+   "CastSpell": [
+    "docs",
+    "spec"
+   ],
+   "CastSpellAoF": [
+    "docs"
+   ],
+   "ClearInCombat": [
+    "docs"
+   ],
+   "ClearUnitState": [
+    "docs"
+   ],
+   "CountPctFromCurHealth": [
+    "docs"
+   ],
+   "CountPctFromMaxHealth": [
+    "docs"
+   ],
+   "DeMorph": [
+    "docs"
+   ],
+   "DealDamage": [
+    "docs",
+    "spec"
+   ],
+   "DealHeal": [
+    "docs"
+   ],
+   "DisableMelee": [
+    "docs"
+   ],
+   "Dismount": [
+    "docs"
+   ],
+   "Emote": [
+    "spec"
+   ],
+   "EmoteState": [
+    "docs"
+   ],
+   "GetAura": [
+    "docs"
+   ],
+   "GetBaseSpellPower": [
+    "docs"
+   ],
+   "GetCharmGUID": [
+    "docs"
+   ],
+   "GetCharmerGUID": [
+    "docs"
+   ],
+   "GetClass": [
+    "docs"
+   ],
+   "GetClassAsString": [
+    "docs"
+   ],
+   "GetClassMask": [
+    "docs"
+   ],
+   "GetControllerGUID": [
+    "docs"
+   ],
+   "GetControllerGUIDS": [
+    "docs"
+   ],
+   "GetCreatorGUID": [
+    "docs"
+   ],
+   "GetCreatureType": [
+    "docs"
+   ],
+   "GetCritterGUID": [
+    "docs"
+   ],
+   "GetCurrentSpell": [
+    "docs"
+   ],
+   "GetDisplayId": [
+    "docs"
+   ],
+   "GetFaction": [
+    "docs",
+    "spec"
+   ],
+   "GetFriendlyUnitsInRange": [
+    "docs"
+   ],
+   "GetGender": [
+    "docs"
+   ],
+   "GetHealth": [
+    "docs",
+    "spec"
+   ],
+   "GetHealthPct": [
+    "docs",
+    "spec"
+   ],
+   "GetLevel": [
+    "docs",
+    "spec"
+   ],
+   "GetMaxHealth": [
+    "docs",
+    "spec"
+   ],
+   "GetMaxPower": [
+    "docs"
+   ],
+   "GetMountId": [
+    "docs"
+   ],
+   "GetMovementType": [
+    "docs"
+   ],
+   "GetNativeDisplayId": [
+    "docs"
+   ],
+   "GetOwnedAura": [
+    "docs"
+   ],
+   "GetOwner": [
+    "docs",
+    "spec"
+   ],
+   "GetOwnerGUID": [
+    "docs"
+   ],
+   "GetPetGUID": [
+    "docs"
+   ],
+   "GetPower": [
+    "docs",
+    "spec"
+   ],
+   "GetPowerPct": [
+    "docs"
+   ],
+   "GetPowerType": [
+    "docs"
+   ],
+   "GetRace": [
+    "docs"
+   ],
+   "GetRaceAsString": [
+    "docs"
+   ],
+   "GetRaceMask": [
+    "docs"
+   ],
+   "GetSpeed": [
+    "docs"
+   ],
+   "GetStandState": [
+    "docs"
+   ],
+   "GetStat": [
+    "docs"
+   ],
+   "GetUnfriendlyUnitsInRange": [
+    "docs"
+   ],
+   "GetVehicle": [
+    "docs",
+    "spec"
+   ],
+   "GetVehicleKit": [
+    "docs"
+   ],
+   "GetVictim": [
+    "docs",
+    "spec"
+   ],
+   "HasAura": [
+    "docs",
+    "spec"
+   ],
+   "HasUnitState": [
+    "docs"
+   ],
+   "HealthAbovePct": [
+    "docs"
+   ],
+   "HealthBelowPct": [
+    "docs"
+   ],
+   "InterruptSpell": [
+    "docs"
+   ],
+   "IsAlive": [
+    "docs",
+    "spec"
+   ],
+   "IsArmorer": [
+    "docs"
+   ],
+   "IsAttackingPlayer": [
+    "docs"
+   ],
+   "IsAuctioneer": [
+    "docs"
+   ],
+   "IsBanker": [
+    "docs"
+   ],
+   "IsBattleMaster": [
+    "docs"
+   ],
+   "IsCasting": [
+    "docs"
+   ],
+   "IsCharmed": [
+    "docs"
+   ],
+   "IsDead": [
+    "docs",
+    "spec"
+   ],
+   "IsDying": [
+    "docs"
+   ],
+   "IsFlying": [
+    "docs"
+   ],
+   "IsFriendlyTo": [
+    "spec"
+   ],
+   "IsFullHealth": [
+    "docs"
+   ],
+   "IsGossip": [
+    "docs"
+   ],
+   "IsGuildMaster": [
+    "docs"
+   ],
+   "IsHostileTo": [
+    "spec"
+   ],
+   "IsInAccessiblePlaceFor": [
+    "docs"
+   ],
+   "IsInCombat": [
+    "docs",
+    "spec"
+   ],
+   "IsInWater": [
+    "docs"
+   ],
+   "IsInnkeeper": [
+    "docs"
+   ],
+   "IsMounted": [
+    "docs"
+   ],
+   "IsMoving": [
+    "docs"
+   ],
+   "IsOnVehicle": [
+    "docs"
+   ],
+   "IsPvPFlagged": [
+    "docs"
+   ],
+   "IsQuestGiver": [
+    "docs"
+   ],
+   "IsRooted": [
+    "docs"
+   ],
+   "IsServiceProvider": [
+    "docs"
+   ],
+   "IsSpiritGuide": [
+    "docs"
+   ],
+   "IsSpiritHealer": [
+    "docs"
+   ],
+   "IsSpiritService": [
+    "docs"
+   ],
+   "IsStandState": [
+    "docs"
+   ],
+   "IsStopped": [
+    "docs"
+   ],
+   "IsTabardDesigner": [
+    "docs"
+   ],
+   "IsTaxi": [
+    "docs"
+   ],
+   "IsTrainer": [
+    "docs"
+   ],
+   "IsUnderWater": [
+    "docs"
+   ],
+   "IsVendor": [
+    "docs"
+   ],
+   "IsVisible": [
+    "docs"
+   ],
+   "Kill": [
+    "docs",
+    "spec"
+   ],
+   "ModifyPower": [
+    "docs"
+   ],
+   "Mount": [
+    "docs"
+   ],
+   "MoveChase": [
+    "docs"
+   ],
+   "MoveClear": [
+    "docs"
+   ],
+   "MoveConfused": [
+    "docs"
+   ],
+   "MoveExpire": [
+    "docs"
+   ],
+   "MoveFleeing": [
+    "docs"
+   ],
+   "MoveFollow": [
+    "docs",
+    "spec"
+   ],
+   "MoveHome": [
+    "docs",
+    "spec"
+   ],
+   "MoveIdle": [
+    "docs"
+   ],
+   "MoveJump": [
+    "docs"
+   ],
+   "MoveRandom": [
+    "docs"
+   ],
+   "MoveStop": [
+    "docs",
+    "spec"
+   ],
+   "MoveTo": [
+    "docs",
+    "spec"
+   ],
+   "NearTeleport": [
+    "docs"
+   ],
+   "PerformEmote": [
+    "docs"
+   ],
+   "RemoveAllAuras": [
+    "docs"
+   ],
+   "RemoveArenaAuras": [
+    "docs"
+   ],
+   "RemoveAura": [
+    "docs",
+    "spec"
+   ],
+   "RemoveBindSightAuras": [
+    "docs"
+   ],
+   "RemoveCharmAuras": [
+    "docs"
+   ],
+   "RestoreDisplayId": [
+    "docs"
+   ],
+   "RestoreFaction": [
+    "docs"
+   ],
+   "SendChatMessageToPlayer": [
+    "docs"
+   ],
+   "SendUnitEmote": [
+    "docs"
+   ],
+   "SendUnitSay": [
+    "docs"
+   ],
+   "SendUnitWhisper": [
+    "docs"
+   ],
+   "SendUnitYell": [
+    "docs"
+   ],
+   "SetCanFly": [
+    "docs"
+   ],
+   "SetConfused": [
+    "docs"
+   ],
+   "SetCreatorGUID": [
+    "docs"
+   ],
+   "SetCritterGUID": [
+    "docs"
+   ],
+   "SetDisplayId": [
+    "docs",
+    "spec"
+   ],
+   "SetFFA": [
+    "docs"
+   ],
+   "SetFacing": [
+    "docs"
+   ],
+   "SetFacingToObject": [
+    "docs"
+   ],
+   "SetFaction": [
+    "docs",
+    "spec"
+   ],
+   "SetFeared": [
+    "docs"
+   ],
+   "SetHealth": [
+    "docs",
+    "spec"
+   ],
+   "SetImmuneTo": [
+    "docs"
+   ],
+   "SetInCombatWith": [
+    "docs"
+   ],
+   "SetLevel": [
+    "docs",
+    "spec"
+   ],
+   "SetMaxHealth": [
+    "docs"
+   ],
+   "SetMaxPower": [
+    "docs"
+   ],
+   "SetName": [
+    "docs"
+   ],
+   "SetNativeDisplayId": [
+    "docs"
+   ],
+   "SetOwnerGUID": [
+    "docs"
+   ],
+   "SetPetGUID": [
+    "docs"
+   ],
+   "SetPower": [
+    "docs",
+    "spec"
+   ],
+   "SetPowerType": [
+    "docs"
+   ],
+   "SetPvP": [
+    "docs"
+   ],
+   "SetRooted": [
+    "docs"
+   ],
+   "SetSanctuary": [
+    "docs"
+   ],
+   "SetSheath": [
+    "docs"
+   ],
+   "SetSpeed": [
+    "docs"
+   ],
+   "SetStandState": [
+    "docs"
+   ],
+   "SetStunned": [
+    "docs"
+   ],
+   "SetVisible": [
+    "docs"
+   ],
+   "SetWaterWalk": [
+    "docs"
+   ],
+   "StopSpellCast": [
+    "docs"
+   ]
+  },
+  "Vehicle": {
+   "AddPassenger": [
+    "docs"
+   ],
+   "GetEntry": [
+    "docs"
+   ],
+   "GetOwner": [
+    "docs"
+   ],
+   "GetPassenger": [
+    "docs"
+   ],
+   "IsOnBoard": [
+    "docs"
+   ],
+   "RemovePassenger": [
+    "docs"
+   ]
+  },
+  "WorldObject": {
+   "Data": [
+    "docs"
+   ],
+   "GetAngle": [
+    "docs"
+   ],
+   "GetAreaId": [
+    "docs",
+    "spec"
+   ],
+   "GetCreaturesInRange": [
+    "docs",
+    "spec"
+   ],
+   "GetDistance": [
+    "docs",
+    "spec"
+   ],
+   "GetDistance2d": [
+    "docs"
+   ],
+   "GetExactDistance": [
+    "docs"
+   ],
+   "GetExactDistance2d": [
+    "docs"
+   ],
+   "GetGameObjectsInRange": [
+    "docs"
+   ],
+   "GetInstanceId": [
+    "docs",
+    "spec"
+   ],
+   "GetLocation": [
+    "docs",
+    "spec"
+   ],
+   "GetMap": [
+    "docs",
+    "spec"
+   ],
+   "GetMapId": [
+    "docs",
+    "spec"
+   ],
+   "GetName": [
+    "docs",
+    "spec"
+   ],
+   "GetNearObject": [
+    "docs"
+   ],
+   "GetNearObjects": [
+    "docs"
+   ],
+   "GetNearestCreature": [
+    "docs",
+    "spec"
+   ],
+   "GetNearestGameObject": [
+    "docs",
+    "spec"
+   ],
+   "GetNearestPlayer": [
+    "docs",
+    "spec"
+   ],
+   "GetO": [
+    "docs",
+    "spec"
+   ],
+   "GetPhaseMask": [
+    "docs"
+   ],
+   "GetPlayersInRange": [
+    "docs",
+    "spec"
+   ],
+   "GetRelativePoint": [
+    "docs"
+   ],
+   "GetX": [
+    "docs",
+    "spec"
+   ],
+   "GetY": [
+    "docs",
+    "spec"
+   ],
+   "GetZ": [
+    "docs",
+    "spec"
+   ],
+   "GetZoneId": [
+    "docs",
+    "spec"
+   ],
+   "IsInBack": [
+    "docs"
+   ],
+   "IsInFront": [
+    "docs"
+   ],
+   "IsInMap": [
+    "docs"
+   ],
+   "IsInRange": [
+    "docs"
+   ],
+   "IsInRange2d": [
+    "docs"
+   ],
+   "IsInRange3d": [
+    "docs"
+   ],
+   "IsWithinDist": [
+    "docs"
+   ],
+   "IsWithinDist2d": [
+    "docs"
+   ],
+   "IsWithinDist3d": [
+    "docs"
+   ],
+   "IsWithinDistInMap": [
+    "docs",
+    "spec"
+   ],
+   "IsWithinLoS": [
+    "docs"
+   ],
+   "PlayDirectSound": [
+    "docs"
+   ],
+   "PlayDistanceSound": [
+    "docs"
+   ],
+   "PlayMusic": [
+    "docs"
+   ],
+   "RegisterEvent": [
+    "docs",
+    "spec"
+   ],
+   "RemoveEventById": [
+    "docs",
+    "spec"
+   ],
+   "RemoveEvents": [
+    "docs",
+    "spec"
+   ],
+   "SendPacket": [
+    "docs"
+   ],
+   "SendUnitSay": [
+    "spec"
+   ],
+   "SendUnitWhisper": [
+    "spec"
+   ],
+   "SendUnitYell": [
+    "spec"
+   ],
+   "SetPhaseMask": [
+    "docs"
+   ],
+   "SpawnCreature": [
+    "docs",
+    "spec"
+   ],
+   "SummonGameObject": [
+    "docs",
+    "spec"
+   ]
+  },
+  "WorldPacket": {
+   "GetOpcode": [
+    "docs"
+   ],
+   "GetSize": [
+    "docs"
+   ],
+   "ReadByte": [
+    "docs"
+   ],
+   "ReadDouble": [
+    "docs"
+   ],
+   "ReadFloat": [
+    "docs"
+   ],
+   "ReadGUID": [
+    "docs"
+   ],
+   "ReadLong": [
+    "docs"
+   ],
+   "ReadShort": [
+    "docs"
+   ],
+   "ReadString": [
+    "docs"
+   ],
+   "ReadUByte": [
+    "docs"
+   ],
+   "ReadULong": [
+    "docs"
+   ],
+   "ReadUShort": [
+    "docs"
+   ],
+   "SetOpcode": [
+    "docs"
+   ],
+   "WriteByte": [
+    "docs"
+   ],
+   "WriteDouble": [
+    "docs"
+   ],
+   "WriteFloat": [
+    "docs"
+   ],
+   "WriteGUID": [
+    "docs"
+   ],
+   "WriteLong": [
+    "docs"
+   ],
+   "WriteShort": [
+    "docs"
+   ],
+   "WriteString": [
+    "docs"
+   ],
+   "WriteUByte": [
+    "docs"
+   ],
+   "WriteULong": [
+    "docs"
+   ],
+   "WriteUShort": [
+    "docs"
+   ]
+  }
+ },
+ "events": {
+  "battleground": {
+   "ids": {
+    "1": {
+     "name": "START",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "END",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "PRE_DESTROY",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_start",
+    "on_end",
+    "on_create",
+    "on_pre_destroy"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterBGEvent"
+  },
+  "creature": {
+   "ids": {
+    "1": {
+     "name": "ENTER_COMBAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "LEAVE_COMBAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "TARGET_DIED",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "DIED",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "SPAWN",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "REACH_WP",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "AIUPDATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "8": {
+     "name": "RECEIVE_EMOTE",
+     "source": [
+      "spec"
+     ]
+    },
+    "9": {
+     "name": "DAMAGE_TAKEN",
+     "source": [
+      "spec"
+     ]
+    },
+    "10": {
+     "name": "PRE_COMBAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "12": {
+     "name": "OWNER_ATTACKED",
+     "source": [
+      "spec"
+     ]
+    },
+    "13": {
+     "name": "OWNER_ATTACKED_AT",
+     "source": [
+      "spec"
+     ]
+    },
+    "14": {
+     "name": "HIT_BY_SPELL",
+     "source": [
+      "spec"
+     ]
+    },
+    "15": {
+     "name": "SPELL_HIT_TARGET",
+     "source": [
+      "spec"
+     ]
+    },
+    "19": {
+     "name": "JUST_SUMMONED_CREATURE",
+     "source": [
+      "spec"
+     ]
+    },
+    "20": {
+     "name": "SUMMONED_CREATURE_DESPAWN",
+     "source": [
+      "spec"
+     ]
+    },
+    "21": {
+     "name": "SUMMONED_CREATURE_DIED",
+     "source": [
+      "spec"
+     ]
+    },
+    "22": {
+     "name": "SUMMONED",
+     "source": [
+      "spec"
+     ]
+    },
+    "23": {
+     "name": "RESET",
+     "source": [
+      "spec"
+     ]
+    },
+    "24": {
+     "name": "REACH_HOME",
+     "source": [
+      "spec"
+     ]
+    },
+    "26": {
+     "name": "CORPSE_REMOVED",
+     "source": [
+      "spec"
+     ]
+    },
+    "27": {
+     "name": "MOVE_IN_LOS",
+     "source": [
+      "spec"
+     ]
+    },
+    "30": {
+     "name": "DUMMY_EFFECT",
+     "source": [
+      "spec"
+     ]
+    },
+    "31": {
+     "name": "QUEST_ACCEPT",
+     "source": [
+      "spec"
+     ]
+    },
+    "34": {
+     "name": "QUEST_REWARD",
+     "source": [
+      "spec"
+     ]
+    },
+    "35": {
+     "name": "DIALOG_STATUS",
+     "source": [
+      "spec"
+     ]
+    },
+    "36": {
+     "name": "ADD",
+     "source": [
+      "spec"
+     ]
+    },
+    "37": {
+     "name": "REMOVE",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_enter_combat",
+    "on_leave_combat",
+    "on_target_died",
+    "on_died",
+    "on_spawn",
+    "on_reach_wp",
+    "on_ai_update",
+    "on_receive_emote",
+    "on_damage_taken",
+    "on_pre_combat",
+    "on_owner_attacked",
+    "on_owner_attacked_at",
+    "on_hit_by_spell",
+    "on_spell_hit_target",
+    "on_just_summoned_creature",
+    "on_summoned_creature_despawn",
+    "on_summoned_creature_died",
+    "on_summoned",
+    "on_reset",
+    "on_reach_home",
+    "on_corpse_removed",
+    "on_move_in_los",
+    "on_dummy_effect",
+    "on_quest_accept",
+    "on_quest_reward",
+    "on_dialog_status",
+    "on_add",
+    "on_remove"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterCreatureEvent"
+  },
+  "creature gossip": {
+   "ids": {
+    "1": {
+     "name": "HELLO",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "SELECT",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_hello",
+    "on_select"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterCreatureGossipEvent"
+  },
+  "gameobject": {
+   "ids": {
+    "1": {
+     "name": "AIUPDATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "SPAWN",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "DUMMY_EFFECT",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "QUEST_ACCEPT",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "QUEST_REWARD",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "DIALOG_STATUS",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "DESTROYED",
+     "source": [
+      "spec"
+     ]
+    },
+    "8": {
+     "name": "DAMAGED",
+     "source": [
+      "spec"
+     ]
+    },
+    "9": {
+     "name": "LOOT_STATE_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "10": {
+     "name": "GO_STATE_CHANGED",
+     "source": [
+      "spec"
+     ]
+    },
+    "12": {
+     "name": "ADD",
+     "source": [
+      "spec"
+     ]
+    },
+    "13": {
+     "name": "REMOVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "14": {
+     "name": "USE",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_ai_update",
+    "on_spawn",
+    "on_dummy_effect",
+    "on_quest_accept",
+    "on_quest_reward",
+    "on_dialog_status",
+    "on_destroyed",
+    "on_damaged",
+    "on_loot_state_change",
+    "on_go_state_changed",
+    "on_add",
+    "on_remove",
+    "on_use"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterGameObjectEvent"
+  },
+  "gameobject gossip": {
+   "ids": {
+    "1": {
+     "name": "HELLO",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "SELECT",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_hello",
+    "on_select"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterGameObjectGossipEvent"
+  },
+  "group": {
+   "ids": {
+    "1": {
+     "name": "MEMBER_ADD",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "MEMBER_INVITE",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "MEMBER_REMOVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "LEADER_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "DISBAND",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "CREATE",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_add_member",
+    "on_invite_member",
+    "on_remove_member",
+    "on_leader_change",
+    "on_disband",
+    "on_create",
+    "on_member_accept"
+   ],
+   "name_only": [
+    "on_member_accept"
+   ],
+   "docs_page": "RegisterGroupEvent"
+  },
+  "guild": {
+   "ids": {
+    "1": {
+     "name": "ADD_MEMBER",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "REMOVE_MEMBER",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "MOTD_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "INFO_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "DISBAND",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "MONEY_WITHDRAW",
+     "source": [
+      "spec"
+     ]
+    },
+    "8": {
+     "name": "MONEY_DEPOSIT",
+     "source": [
+      "spec"
+     ]
+    },
+    "9": {
+     "name": "ITEM_MOVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "10": {
+     "name": "EVENT",
+     "source": [
+      "spec"
+     ]
+    },
+    "11": {
+     "name": "BANK_EVENT",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_add_member",
+    "on_remove_member",
+    "on_motd_change",
+    "on_info_change",
+    "on_create",
+    "on_disband",
+    "on_money_withdraw",
+    "on_money_deposit",
+    "on_item_move",
+    "on_event",
+    "on_bank_event"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterGuildEvent"
+  },
+  "instance": {
+   "ids": {
+    "1": {
+     "name": "INITIALIZE",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "LOAD",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "UPDATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "PLAYER_ENTER",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "CREATURE_CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "GAMEOBJECT_CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "CHECK_ENCOUNTER",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_initialize",
+    "on_load",
+    "on_update",
+    "on_player_enter",
+    "on_creature_create",
+    "on_gameobject_create",
+    "on_check_encounter_in_progress"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterInstanceEvent"
+  },
+  "item": {
+   "ids": {
+    "1": {
+     "name": "DUMMY_EFFECT",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "USE",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "QUEST_ACCEPT",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "EXPIRE",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "REMOVE",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_dummy_effect",
+    "on_use",
+    "on_quest_accept",
+    "on_expire",
+    "on_remove",
+    "on_add",
+    "on_equip",
+    "on_unequip"
+   ],
+   "name_only": [
+    "on_add",
+    "on_equip",
+    "on_unequip"
+   ],
+   "docs_page": "RegisterItemEvent"
+  },
+  "item gossip": {
+   "ids": {
+    "1": {
+     "name": "HELLO",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "SELECT",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_hello",
+    "on_select"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterItemGossipEvent"
+  },
+  "map": {
+   "ids": {
+    "1": {
+     "name": "INITIALIZE",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "LOAD",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "UPDATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "PLAYER_ENTER",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "CREATURE_CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "GAMEOBJECT_CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "CHECK_ENCOUNTER",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_initialize",
+    "on_load",
+    "on_update",
+    "on_player_enter",
+    "on_creature_create",
+    "on_gameobject_create",
+    "on_check_encounter_in_progress"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterMapEvent"
+  },
+  "packet": {
+   "ids": {
+    "5": {
+     "name": "PACKET_RECEIVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "PACKET_SEND",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_receive",
+    "on_send"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterPacketEvent"
+  },
+  "player": {
+   "ids": {
+    "1": {
+     "name": "CHARACTER_CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "CHARACTER_DELETE",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "LOGIN",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "LOGOUT",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "SPELL_CAST",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "KILL_PLAYER",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "KILL_CREATURE",
+     "source": [
+      "spec"
+     ]
+    },
+    "8": {
+     "name": "KILLED_BY_CREATURE",
+     "source": [
+      "spec"
+     ]
+    },
+    "9": {
+     "name": "DUEL_REQUEST",
+     "source": [
+      "spec"
+     ]
+    },
+    "10": {
+     "name": "DUEL_START",
+     "source": [
+      "spec"
+     ]
+    },
+    "11": {
+     "name": "DUEL_END",
+     "source": [
+      "spec"
+     ]
+    },
+    "12": {
+     "name": "GIVE_XP",
+     "source": [
+      "spec"
+     ]
+    },
+    "13": {
+     "name": "LEVEL_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "14": {
+     "name": "MONEY_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "15": {
+     "name": "REPUTATION_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "16": {
+     "name": "TALENTS_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "17": {
+     "name": "TALENTS_RESET",
+     "source": [
+      "spec"
+     ]
+    },
+    "18": {
+     "name": "CHAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "19": {
+     "name": "WHISPER",
+     "source": [
+      "spec"
+     ]
+    },
+    "20": {
+     "name": "GROUP_CHAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "21": {
+     "name": "GUILD_CHAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "22": {
+     "name": "CHANNEL_CHAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "23": {
+     "name": "EMOTE",
+     "source": [
+      "spec"
+     ]
+    },
+    "24": {
+     "name": "TEXT_EMOTE",
+     "source": [
+      "spec"
+     ]
+    },
+    "25": {
+     "name": "SAVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "26": {
+     "name": "BIND_TO_INSTANCE",
+     "source": [
+      "spec"
+     ]
+    },
+    "27": {
+     "name": "UPDATE_ZONE",
+     "source": [
+      "spec"
+     ]
+    },
+    "28": {
+     "name": "MAP_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "29": {
+     "name": "EQUIP",
+     "source": [
+      "spec"
+     ]
+    },
+    "30": {
+     "name": "FIRST_LOGIN",
+     "source": [
+      "spec"
+     ]
+    },
+    "31": {
+     "name": "CAN_USE_ITEM",
+     "source": [
+      "spec"
+     ]
+    },
+    "32": {
+     "name": "LOOT_ITEM",
+     "source": [
+      "spec"
+     ]
+    },
+    "33": {
+     "name": "ENTER_COMBAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "34": {
+     "name": "LEAVE_COMBAT",
+     "source": [
+      "spec"
+     ]
+    },
+    "35": {
+     "name": "REPOP",
+     "source": [
+      "spec"
+     ]
+    },
+    "36": {
+     "name": "RESURRECT",
+     "source": [
+      "spec"
+     ]
+    },
+    "37": {
+     "name": "LOOT_MONEY",
+     "source": [
+      "spec"
+     ]
+    },
+    "38": {
+     "name": "QUEST_ABANDON",
+     "source": [
+      "spec"
+     ]
+    },
+    "39": {
+     "name": "LEARN_TALENTS",
+     "source": [
+      "spec"
+     ]
+    },
+    "40": {
+     "name": "ENVIRONMENTAL_DEATH",
+     "source": [
+      "spec"
+     ]
+    },
+    "41": {
+     "name": "TRADE_ACCEPT",
+     "source": [
+      "spec"
+     ]
+    },
+    "42": {
+     "name": "COMMAND",
+     "source": [
+      "spec"
+     ]
+    },
+    "43": {
+     "name": "SKILL_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "44": {
+     "name": "LEARN_SPELL",
+     "source": [
+      "spec"
+     ]
+    },
+    "45": {
+     "name": "ACHIEVEMENT_COMPLETE",
+     "source": [
+      "spec"
+     ]
+    },
+    "46": {
+     "name": "DISCOVER_TAXI",
+     "source": [
+      "spec"
+     ]
+    },
+    "47": {
+     "name": "UPDATE_AREA",
+     "source": [
+      "spec"
+     ]
+    },
+    "48": {
+     "name": "CAN_INIT_TRADE",
+     "source": [
+      "spec"
+     ]
+    },
+    "49": {
+     "name": "CAN_SEND_MAIL",
+     "source": [
+      "spec"
+     ]
+    },
+    "50": {
+     "name": "CAN_JOIN_LFG",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_character_create",
+    "on_character_delete",
+    "on_login",
+    "on_logout",
+    "on_spell_cast",
+    "on_kill_player",
+    "on_kill_creature",
+    "on_killed_by_creature",
+    "on_duel_request",
+    "on_duel_start",
+    "on_duel_end",
+    "on_give_xp",
+    "on_level_change",
+    "on_money_change",
+    "on_reputation_change",
+    "on_talents_change",
+    "on_talents_reset",
+    "on_chat",
+    "on_whisper",
+    "on_group_chat",
+    "on_guild_chat",
+    "on_channel_chat",
+    "on_emote",
+    "on_text_emote",
+    "on_save",
+    "on_bind_to_instance",
+    "on_update_zone",
+    "on_map_change",
+    "on_equip",
+    "on_first_login",
+    "on_can_use_item",
+    "on_loot_item",
+    "on_enter_combat",
+    "on_leave_combat",
+    "on_repop",
+    "on_resurrect",
+    "on_loot_money",
+    "on_quest_abandon",
+    "on_learn_talents",
+    "on_environmental_death",
+    "on_trade_accept",
+    "on_command",
+    "on_skill_change",
+    "on_learn_spell",
+    "on_achievement_complete",
+    "on_discover_area",
+    "on_update_area",
+    "on_trade_init",
+    "on_send_mail",
+    "on_quest_status_changed"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterPlayerEvent"
+  },
+  "player gossip": {
+   "ids": {
+    "1": {
+     "name": "HELLO",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "SELECT",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_hello",
+    "on_select"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterPlayerGossipEvent"
+  },
+  "server": {
+   "ids": {
+    "1": {
+     "name": "NETWORK_START",
+     "source": [
+      "spec"
+     ]
+    },
+    "2": {
+     "name": "NETWORK_STOP",
+     "source": [
+      "spec"
+     ]
+    },
+    "3": {
+     "name": "SOCKET_OPEN",
+     "source": [
+      "spec"
+     ]
+    },
+    "4": {
+     "name": "SOCKET_CLOSE",
+     "source": [
+      "spec"
+     ]
+    },
+    "5": {
+     "name": "PACKET_RECEIVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "6": {
+     "name": "PACKET_RECEIVE_UNKNOWN",
+     "source": [
+      "spec"
+     ]
+    },
+    "7": {
+     "name": "PACKET_SEND",
+     "source": [
+      "spec"
+     ]
+    },
+    "8": {
+     "name": "OPEN_STATE_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "9": {
+     "name": "CONFIG_LOAD",
+     "source": [
+      "spec"
+     ]
+    },
+    "11": {
+     "name": "SHUTDOWN_INIT",
+     "source": [
+      "spec"
+     ]
+    },
+    "12": {
+     "name": "SHUTDOWN_CANCEL",
+     "source": [
+      "spec"
+     ]
+    },
+    "13": {
+     "name": "UPDATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "14": {
+     "name": "STARTUP",
+     "source": [
+      "spec"
+     ]
+    },
+    "15": {
+     "name": "SHUTDOWN",
+     "source": [
+      "spec"
+     ]
+    },
+    "16": {
+     "name": "LUA_STATE_CLOSE",
+     "source": [
+      "spec"
+     ]
+    },
+    "17": {
+     "name": "MAP_CREATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "18": {
+     "name": "MAP_DESTROY",
+     "source": [
+      "spec"
+     ]
+    },
+    "19": {
+     "name": "GRID_LOAD",
+     "source": [
+      "spec"
+     ]
+    },
+    "20": {
+     "name": "GRID_UNLOAD",
+     "source": [
+      "spec"
+     ]
+    },
+    "21": {
+     "name": "MAP_PLAYER_ENTER",
+     "source": [
+      "spec"
+     ]
+    },
+    "22": {
+     "name": "MAP_PLAYER_LEAVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "23": {
+     "name": "MAP_UPDATE",
+     "source": [
+      "spec"
+     ]
+    },
+    "24": {
+     "name": "TRIGGER_ON_TRIGGER",
+     "source": [
+      "spec"
+     ]
+    },
+    "25": {
+     "name": "WEATHER_CHANGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "26": {
+     "name": "AUCTION_ADD",
+     "source": [
+      "spec"
+     ]
+    },
+    "27": {
+     "name": "AUCTION_REMOVE",
+     "source": [
+      "spec"
+     ]
+    },
+    "28": {
+     "name": "AUCTION_SUCCESSFUL",
+     "source": [
+      "spec"
+     ]
+    },
+    "29": {
+     "name": "AUCTION_EXPIRE",
+     "source": [
+      "spec"
+     ]
+    },
+    "30": {
+     "name": "ADDON_ON_MESSAGE",
+     "source": [
+      "spec"
+     ]
+    },
+    "31": {
+     "name": "DELETE_CREATURE",
+     "source": [
+      "spec"
+     ]
+    },
+    "32": {
+     "name": "DELETE_GAMEOBJECT",
+     "source": [
+      "spec"
+     ]
+    },
+    "33": {
+     "name": "LUA_STATE_OPEN",
+     "source": [
+      "spec"
+     ]
+    },
+    "34": {
+     "name": "GAME_EVENT_START",
+     "source": [
+      "spec"
+     ]
+    },
+    "35": {
+     "name": "GAME_EVENT_STOP",
+     "source": [
+      "spec"
+     ]
+    }
+   },
+   "docs_names": [
+    "on_network_start",
+    "on_network_stop",
+    "on_socket_open",
+    "on_socket_close",
+    "on_packet_receive",
+    "on_packet_receive_unk",
+    "on_packet_send",
+    "on_open_state_change",
+    "on_config_load",
+    "on_shutdown_init",
+    "on_shutdown_cancel",
+    "on_world_update",
+    "on_world_startup",
+    "on_world_shutdown",
+    "on_lua_state_close",
+    "on_map_create",
+    "on_map_destroy",
+    "on_map_grid_load",
+    "on_map_grid_unload",
+    "on_map_player_enter",
+    "on_map_player_leave",
+    "on_map_update",
+    "on_event_trigger",
+    "on_weather_change",
+    "on_auction_add",
+    "on_auction_remove",
+    "on_auction_successful",
+    "on_auction_expire",
+    "on_addon_message",
+    "on_world_delete_creature",
+    "on_world_delete_gameobject",
+    "on_lua_state_open",
+    "on_game_start",
+    "on_game_stop"
+   ],
+   "name_only": [],
+   "docs_page": "RegisterServerEvent"
+  },
+  "spell": {
+   "ids": {},
+   "docs_names": [
+    "on_cast",
+    "on_aura_application",
+    "on_dispel",
+    "on_periodic_tick",
+    "on_periodic_update",
+    "on_aura_calc_amount",
+    "on_calc_periodic",
+    "on_check_proc",
+    "on_proc",
+    "on_check_cast",
+    "on_before_cast",
+    "on_after_cast",
+    "on_object_area_target",
+    "on_object_target",
+    "on_dest_target",
+    "on_effect_launch",
+    "on_effect_launch_target",
+    "on_effect_calc_absorb",
+    "on_effect_hit",
+    "on_before_hit",
+    "on_effect_hit_target",
+    "on_hit",
+    "on_after_hit"
+   ],
+   "name_only": [
+    "on_cast",
+    "on_aura_application",
+    "on_dispel",
+    "on_periodic_tick",
+    "on_periodic_update",
+    "on_aura_calc_amount",
+    "on_calc_periodic",
+    "on_check_proc",
+    "on_proc",
+    "on_check_cast",
+    "on_before_cast",
+    "on_after_cast",
+    "on_object_area_target",
+    "on_object_target",
+    "on_dest_target",
+    "on_effect_launch",
+    "on_effect_launch_target",
+    "on_effect_calc_absorb",
+    "on_effect_hit",
+    "on_before_hit",
+    "on_effect_hit_target",
+    "on_hit",
+    "on_after_hit"
+   ],
+   "docs_page": "RegisterSpellEvent"
+  }
+ }
+}
