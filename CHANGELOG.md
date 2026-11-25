@@ -17,7 +17,9 @@ First public release of TortuLua, the Lua 5.4 scripting engine for ForeverCore, 
 * **Bot API interface (B1-B2):** read access to bot snapshots, bot events and queued bot orders through the
   `BotProvider` interface (`src/engine/BotProvider.h`).
 * **Tests and CI:** a standalone Catch2 unit suite (no core needed), an AddressSanitizer/UBSan job and a
-  ThreadSanitizer job (bot snapshot and event paths) run on every push.
+  ThreadSanitizer job (bot snapshot and event paths) run on every push, and a public-text job that fails pull requests
+  and `dev`/`main` pushes when a tracked text file or commit message carries an IP address, a home directory, a
+  denylisted word or a password literal (`tools/check_public_text.py`).
 * **Editor support:** LuaLS type hints for the Eluna surface in `types/`.
 
 ### Eluna coverage

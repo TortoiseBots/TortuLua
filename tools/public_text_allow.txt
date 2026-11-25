@@ -1,0 +1,6 @@
+# Public-text allow-list, read by tools/check_public_text.py.
+#
+# One 'path:line-substring' per line. The substring must occur literally on the
+# reported line of that exact repository-relative path. Commit messages cannot
+# be allow-listed. Lines starting with '#' are comments. This file itself is not
+# scanned. Prefer fixing the text over adding an entry.
