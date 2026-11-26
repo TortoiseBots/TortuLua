@@ -578,6 +578,9 @@ public:
         bool pendingBind = false, inArena = false, inBgQueue = false, acceptWhispers = false, isRecruiter = false;
         bool gmChat = false, gmVisible = true, neverVisible = false, outdoorPvp = false;
         uint32_t resetTalentsCost = 0;
+        uint32_t lifetimeKills = 0;
+        std::set<uint64_t> mailedItems;                  // GetMailItem: the low guid of a mailbox item
+        bool honorXpTarget = false, seesPlayer = false;  // IsHonorOrXPTarget / IsVisibleForPlayer
         uint64_t groupInvite = 0, originalGroup = 0;     // a group handle's low guid, 0 = none
         uint64_t nearbyGameObject = 0, nextRaidMember = 0, selectedPlayer = 0, selectedUnitCreature = 0;
         std::set<std::pair<uint32_t, uint8_t>> talents;  // HasTalent(spellId, spec)
@@ -589,6 +592,34 @@ public:
         bool resetTalentsNoCost = false, resetTalentsResult = true;
         int resetTalentsCalls = 0;
         std::vector<FakeDurability> durabilities;
+        // E7 long tail, round 3: remaining Player methods.
+        bool canTitanGrip = false;
+        uint8_t comboPoints = 0;
+        uint64_t comboTargetLow = 0;
+        uint32_t gossipTextId = 0;
+        std::set<uint64_t> recruitedPlayers;
+        bool recruited = false;
+        bool addTalentResult = true;
+        std::set<uint32_t> weaponSkills;
+        bool instanceBound = false;
+        // The map is an instance map; the core's lock creation needs its instance script and lock (flh::bindToInstanceAllowed).
+        bool instanceHasData = true, instanceHasLock = true;
+        std::set<std::pair<uint32_t, uint32_t>> instanceBinds;
+        uint32_t muteTime = 0;
+        bool playerLock = false;
+        int32_t movementType = 0;
+        std::map<uint32_t, uint32_t> questStatus;
+        // The quests in the quest log: a status is written only for one of these (flh::questStatusWriteAllowed).
+        std::set<uint32_t> questLog;
+        uint32_t taxiPath = 0;
+        uint64_t createdGroupId = 0;
+        bool groupInviteResult = true;
+        bool inBgRaid = false;
+        uint32_t activePetEntry = 0;
+        uint32_t activePetType = 0;
+        int32_t removedPetMode = -99;
+        bool removedPetReagent = false;
+        std::vector<std::string> playerCommands;
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };

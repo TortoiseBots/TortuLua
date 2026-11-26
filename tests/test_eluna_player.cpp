@@ -428,6 +428,7 @@ std::vector<std::string> const& readCalls()
         "CanSpeak()",
         "CanUninviteFromGroup(stored:GetGUID())",
         "GetChampioningFaction()",
+        "GetChatTag()",
         "GetDbcLocale()",
         "GetDifficulty()",
         "GetDrunkValue()",
@@ -435,7 +436,9 @@ std::vector<std::string> const& readCalls()
         "GetGuildRank()",
         "GetHealthBonusFromStamina()",
         "GetInGameTime()",
+        "GetLifetimeKills()",
         "GetMailCount()",
+        "GetMailItem(0)",
         "GetManaBonusFromIntellect()",
         "GetNearbyGameObject()",
         "GetNextRandomRaidMember(30)",
@@ -458,11 +461,13 @@ std::vector<std::string> const& readCalls()
         "IsARecruiter()",
         "IsGMChat()",
         "IsGMVisible()",
+        "IsHonorOrXPTarget(mob)",
         "IsGroupVisibleFor(other)",
         "IsInSameGroupWith(other)",
         "IsInSameRaidWith(other)",
         "IsNeverVisible()",
         "IsOutdoorPvPActive()",
+        "IsVisibleForPlayer(other)",
         "ResetTalentsCost()"};
     return calls;
 }
@@ -561,6 +566,22 @@ TEST_CASE("eluna player reads, round 2: the values flow through the fake player 
           "4242,3,47");
     CHECK(rig.ok("return stored:ResetTalentsCost()") == "50000");
 
+    state.afk = true;
+    state.lifetimeKills = 42;
+    CHECK(rig.ok("return stored:GetChatTag() .. ',' .. stored:GetLifetimeKills()") == "1,42");
+    // The chat flag bits, as the core sends them: AFK 1, DND 2, GM 4 (GM chat alone no longer collides with AFK).
+    state.afk = false;
+    state.gmChat = true;
+    CHECK(rig.ok("return stored:GetChatTag()") == "4");
+    state.dnd = true;
+    CHECK(rig.ok("return stored:GetChatTag()") == "6");
+    state.afk = true;
+    CHECK(rig.ok("return stored:GetChatTag()") == "7");
+    state.items.push_back(FakeHost::FakeItem{9551, 2589, 0, 0});
+    state.mailedItems.insert(9551);
+    CHECK(rig.ok("return stored:GetMailItem(9551):GetGUIDLow()") == "9551");
+    CHECK(rig.ok("return tostring(stored:GetMailItem(9552))") == "nil");
+
     state.nearbyGameObject = 910;
     state.nextRaidMember = 111;
     state.selectedPlayer = 113;
@@ -599,6 +620,10 @@ TEST_CASE("eluna player reads, round 2: the values flow through the fake player 
     CHECK(rig.ok("return tostring(stored:IsAcceptingWhispers()) .. tostring(stored:IsARecruiter())") == "truetrue");
     CHECK(rig.ok("return tostring(stored:IsGMChat()) .. tostring(stored:IsGMVisible())") == "truefalse");
     CHECK(rig.ok("return tostring(stored:IsNeverVisible()) .. tostring(stored:IsOutdoorPvPActive())") == "truetrue");
+    state.honorXpTarget = true;
+    state.seesPlayer = false;
+    CHECK(rig.ok("return tostring(stored:IsHonorOrXPTarget(mob)) .. tostring(stored:IsVisibleForPlayer(other))") ==
+          "truefalse");
 
     // The three "with" reads answer for the player argument, not for the receiver alone.
     state.groupMates.insert(other.guid.lo);
@@ -650,6 +675,11 @@ TEST_CASE("eluna player reads, round 2: a bad argument raises before the host is
     CHECK(errorOf("stored:IsInSameGroupWith(5)").find("player expected") != std::string::npos);
     CHECK(errorOf("stored:IsInSameRaidWith(mob)").find("player is not of the expected kind") != std::string::npos);
     CHECK(errorOf("stored:IsGroupVisibleFor()").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:IsVisibleForPlayer(mob)").find("player is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:IsVisibleForPlayer()").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:IsHonorOrXPTarget('x')").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:GetMailItem('not-a-guid')").find("guid must be an Object:GetGUID() value") !=
+          std::string::npos);
     CHECK(rig.host.gameCalls.size() == callsBefore);   // nothing reached the host
 
     // A Player-only read is not on the Creature metatable at all.
@@ -665,13 +695,12 @@ TEST_CASE("eluna player reads, round 2: the calls the core has no API for are re
     rig.host.add(p, info);
     storeHandles(rig, p, FakeHost::creature(132, 0, 0, 1100));
 
-    for (std::string const& name : {"GetChatTag", "GetFreeTalentPoints", "GetLifetimeKills", "GetMailItem",
-                                    "GetPhaseMaskForSpawn", "IsHonorOrXPTarget", "IsVisibleForPlayer"})
+    for (char const* name : {"GetFreeTalentPoints", "GetPhaseMaskForSpawn"})
     {
         INFO("method: " << name);
-        fl::CallResult r = rig.run("return stored:" + name + "()");
+        fl::CallResult r = rig.run(std::string("return stored:") + name + "()");
         REQUIRE_FALSE(r.ok);
-        CHECK(r.error.find(name + ": not available on this core") != std::string::npos);
+        CHECK(r.error.find(std::string(name) + ": not available on this core") != std::string::npos);
     }
 }
 
@@ -944,4 +973,336 @@ TEST_CASE("eluna player writes, round 2: a durability write ignores an item the 
     rig.ok("stored:DurabilityLoss(stored:GetItemByPos(1, 3), 10)");
     REQUIRE(state.durabilities.size() == ownFrom + 1);
     CHECK(state.durabilities.back().itemLow == 9401);
+}
+
+// ---- E7 long tail, round 3: remaining documented Player reads, writes, social ops and core stubs ----
+
+namespace
+{
+std::vector<std::string> const& round3Calls()
+{
+    static std::vector<std::string> const calls = {
+        "CanTitanGrip(stored:GetItemByPos(1, 3))",
+        "GetComboPoints()",
+        "GetComboTarget()",
+        "GetGossipTextId(mob)",
+        "HasRecruited(other)",
+        "IsRecruited()",
+        "AddComboPoints(mob, 2)",
+        "ClearComboPoints()",
+        "AddTalent(133, 0)",
+        "AdvanceAllSkills(5)",
+        "AdvanceSkill(164, 5)",
+        "AdvanceSkillsToMax()",
+        "BindToInstance()",
+        "UnbindInstance(36)",
+        "UnbindAllInstances()",
+        "GossipSendPOI(1.5, 2.5, 7, 0, 0, 'Point')",
+        "KilledPlayerCredit()",
+        "KillGOCredit(12345)",
+        "LeaveBattleground()",
+        "Mute(60)",
+        "RemovedInsignia(other)",
+        "RemoveFromBattlegroundRaid()",
+        "RemoveFromGroup()",
+        "RemovePet()",
+        "SummonPet(416, 1.0, 2.0, 3.0, 0.5, 0, 0)",
+        "SendAddonMessage('PRE', 'hello', 7, other)",
+        "SendAuctionMenu(mob)",
+        "SendQuestTemplate(100)",
+        "SendShowMailBox()",
+        "SendTabardVendorActivate(mob)",
+        "SetKnownTitle(7)",
+        "UnsetKnownTitle(7)",
+        "SetMovement(1)",
+        "SetPlayerLock(true)",
+        "SetQuestStatus(100, 1)",
+        "StartTaxi(25)",
+        "GroupCreate(other)",
+        "GroupInvite(other)",
+        "SendGuildInvite(other)",
+        "SetGuildRank(2)",
+        "RunCommand('gm on')"};
+    return calls;
+}
+}  // namespace
+
+TEST_CASE("eluna player round 3: every method reaches the host and a gone player raises")
+{
+    PlayerRig rig;
+    fl::HandleData p = FakeHost::player(201);
+    fl::HandleData mob = FakeHost::creature(202, 0, 0, 1600);
+    fl::HandleData other = FakeHost::player(203);
+    fl::ObjectInfo info;
+    info.name = "Round3";
+    rig.host.add(p, info);
+    info.entry = 1600;
+    rig.host.add(mob, info);
+    info.entry = 0;
+    rig.host.add(other, info);
+    storeHandles(rig, p, mob);
+    storeOther(rig, other);
+    rig.host.playerState(p).items.push_back(FakeHost::FakeItem{9501, 2589, 1, 3});
+
+    for (std::string const& call : round3Calls())
+    {
+        INFO("call: stored:" << call);
+        CHECK(rig.run("stored:" + call).ok);
+    }
+
+    rig.host.remove(p);
+    for (std::string const& call : round3Calls())
+    {
+        INFO("call: stored:" << call);
+        fl::CallResult r = rig.run("stored:" + call);
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("Player no longer exists") != std::string::npos);
+    }
+}
+
+TEST_CASE("eluna player round 3: reads, writes and social methods flow through fake player state")
+{
+    PlayerRig rig;
+    fl::HandleData p = FakeHost::player(211);
+    fl::HandleData mob = FakeHost::creature(212, 0, 0, 1700);
+    fl::HandleData other = FakeHost::player(213);
+    fl::ObjectInfo info;
+    info.name = "Round3Values";
+    rig.host.add(p, info);
+    info.entry = 1700;
+    rig.host.add(mob, info);
+    info.entry = 0;
+    rig.host.add(other, info);
+    storeHandles(rig, p, mob);
+    storeOther(rig, other);
+    FakeHost::FakePlayer& state = rig.host.playerState(p);
+    state.items.push_back(FakeHost::FakeItem{9601, 2589, 1, 3});
+
+    // reads
+    state.canTitanGrip = true;
+    state.gossipTextId = 777;
+    state.recruited = true;
+    state.recruitedPlayers.insert(other.guid.lo);
+    CHECK(rig.ok("return tostring(stored:CanTitanGrip(stored:GetItemByPos(1, 3)))") == "true");
+    CHECK(rig.ok("return stored:GetGossipTextId(mob)") == "777");
+    CHECK(rig.ok("return tostring(stored:IsRecruited()) .. ',' .. tostring(stored:HasRecruited(other))") ==
+          "true,true");
+
+    // combo points
+    rig.ok("stored:AddComboPoints(mob, 3)");
+    CHECK(rig.ok("return stored:GetComboPoints()") == "3");
+    CHECK(rig.ok("return stored:GetComboTarget():GetGUIDLow()") == "212");
+    rig.ok("stored:AddComboPoints(mob, -1)");
+    CHECK(rig.ok("return stored:GetComboPoints()") == "2");
+    rig.ok("stored:ClearComboPoints()");
+    CHECK(rig.ok("return stored:GetComboPoints()") == "0");
+    CHECK(rig.ok("return tostring(stored:GetComboTarget())") == "nil");
+
+    // talents and skills
+    CHECK(rig.ok("return tostring(stored:AddTalent(420, 1, false))") == "true");
+    CHECK(rig.ok("return tostring(stored:HasTalent(420, 1))") == "true");
+
+    state.skills[164] = FakeHost::FakeSkill{1, 50, 75, 0, 0, true};
+    state.skills[44] = FakeHost::FakeSkill{1, 10, 300, 0, 0, true};
+    state.weaponSkills.insert(44);
+    rig.ok("stored:AdvanceSkill(164, 10)");
+    CHECK(state.skills[164].cur == 60);
+    rig.ok("stored:AdvanceAllSkills(5)");
+    CHECK(state.skills[164].cur == 65);
+    CHECK(state.skills[44].cur == 15);
+    // A step larger than the room to the maximum is cut to the room by the host: the core truncates value + step to
+    // 16 bits before its clamp, so the unclamped 65535 would wrap and lower both skills.
+    rig.ok("stored:AdvanceSkill(164, 65535)");
+    CHECK(state.skills[164].cur == 75);
+    rig.ok("stored:AdvanceAllSkills(65535)");
+    CHECK(state.skills[164].cur == 75);
+    CHECK(state.skills[44].cur == 300);
+    rig.ok("stored:AdvanceSkillsToMax()");
+    CHECK(state.skills[44].cur == 300);
+
+    // instances
+    state.instanceBinds.insert({36, 0});
+    state.instanceBinds.insert({43, 0});
+    // the core's lock creation needs the instance script and lock: without either, nothing is bound
+    state.instanceHasData = false;
+    rig.ok("stored:BindToInstance()");
+    CHECK_FALSE(state.instanceBound);
+    state.instanceHasData = true;
+    state.instanceHasLock = false;
+    rig.ok("stored:BindToInstance()");
+    CHECK_FALSE(state.instanceBound);
+    state.instanceHasLock = true;
+    rig.ok("stored:BindToInstance()");
+    CHECK(state.instanceBound);
+    rig.ok("stored:UnbindInstance(36)");
+    CHECK(state.instanceBinds.count({36, 0}) == 0);
+    CHECK(state.instanceBinds.count({43, 0}) == 1);
+    rig.ok("stored:UnbindAllInstances()");
+    CHECK(state.instanceBinds.empty());
+
+    // titles, movement, lock, mute, quest status, taxi, pet
+    rig.ok("stored:SetKnownTitle(14)");
+    CHECK(rig.ok("return tostring(stored:HasTitle(14))") == "true");
+    rig.ok("stored:UnsetKnownTitle(14)");
+    CHECK(rig.ok("return tostring(stored:HasTitle(14))") == "false");
+    rig.ok("stored:SetMovement(3)");
+    CHECK(state.movementType == 3);
+    rig.ok("stored:SetPlayerLock()");
+    CHECK(state.playerLock);
+    rig.ok("stored:SetPlayerLock(false)");
+    CHECK_FALSE(state.playerLock);
+    rig.ok("stored:Mute(120)");
+    CHECK(state.muteTime == 120);
+    // a status is written only for a quest in the log: a quest without a slot gets no entry
+    rig.ok("stored:SetQuestStatus(300, 1)");
+    CHECK(state.questStatus.count(300) == 0);
+    state.questLog.insert(300);
+    rig.ok("stored:SetQuestStatus(300, 1)");
+    CHECK(state.questStatus[300] == 1);
+    rig.ok("stored:StartTaxi(42)");
+    CHECK(state.taxiPath == 42);
+    rig.ok("stored:SummonPet(416, 1.0, 2.0, 3.0, 0.5, 0, 1000)");
+    CHECK(state.activePetEntry == 416);
+    CHECK(state.activePetType == 0);
+    rig.ok("stored:RemovePet(2, true)");
+    CHECK(state.activePetEntry == 0);
+    CHECK(state.removedPetMode == 2);
+    CHECK(state.removedPetReagent);
+    rig.ok("stored:SummonPet(1713, 1.0, 2.0, 3.0, 0.5, 1, 0)");
+    CHECK(state.activePetEntry == 1713);
+    CHECK(state.activePetType == 1);
+
+    // group, guild, command, and action sends
+    state.createdGroupId = 888;
+    state.groupInviteResult = true;
+    state.inGroup = true;
+    state.inBgRaid = true;
+    CHECK(rig.ok("return tostring(stored:GroupCreate(other))") == "Guid-1-888");
+    CHECK(rig.ok("return tostring(stored:GroupInvite(other))") == "true");
+    rig.ok("stored:RemoveFromGroup()");
+    CHECK_FALSE(state.inGroup);
+    rig.ok("stored:RemoveFromBattlegroundRaid()");
+    CHECK_FALSE(state.inBgRaid);
+    rig.ok("stored:SetGuildRank(3)");
+    CHECK(rig.ok("return stored:GetGuildRank()") == "3");
+    rig.ok("stored:SetGuildRank(0)");  // rank 0 is the Guild Master: refused, the rank stays
+    CHECK(rig.ok("return stored:GetGuildRank()") == "3");
+    rig.ok("stored:RunCommand('.server info')");
+    REQUIRE(state.playerCommands.size() == 1);
+    CHECK(state.playerCommands[0] == ".server info");
+
+    std::size_t const from = state.actions.size();
+    rig.ok("stored:GossipSendPOI(10.5, 20.5, 6, 1, 0, 'Inn')");
+    rig.ok("stored:KilledPlayerCredit()");
+    rig.ok("stored:KillGOCredit(175924)");
+    rig.ok("stored:LeaveBattleground(false)");
+    rig.ok("stored:RemovedInsignia(other)");
+    rig.ok("stored:SendAddonMessage('TLUA', 'ping', 7, other)");
+    rig.ok("stored:SendAuctionMenu(mob)");
+    rig.ok("stored:SendGuildInvite(other)");
+    rig.ok("stored:SendQuestTemplate(100, false)");
+    rig.ok("stored:SendShowMailBox(other:GetGUID())");
+    rig.ok("stored:SendTabardVendorActivate(mob)");
+    REQUIRE(state.actions.size() == from + 11);
+    CHECK(state.actions[from].first == "player.gossipSendPOI");
+    CHECK(state.actions[from + 1].first == "player.killedPlayerCredit");
+    CHECK(state.actions[from + 2].first == "player.killGOCredit");
+    CHECK(state.actions[from + 3].first == "player.leaveBattleground");
+    CHECK(std::get<bool>(state.actions[from + 3].second[0].v) == false);
+    CHECK(state.actions[from + 4].first == "player.removedInsignia");
+    CHECK(state.actions[from + 5].first == "player.sendAddonMessage");
+    CHECK(state.actions[from + 6].first == "player.sendAuctionMenu");
+    CHECK(state.actions[from + 7].first == "player.sendGuildInvite");
+    CHECK(state.actions[from + 8].first == "player.sendQuestTemplate");
+    CHECK(std::get<bool>(state.actions[from + 8].second[1].v) == false);
+    CHECK(state.actions[from + 9].first == "player.sendShowMailBox");
+    CHECK(state.actions[from + 10].first == "player.sendTabardVendorActivate");
+}
+
+TEST_CASE("eluna player round 3: bad arguments raise before host and core stubs raise documented error")
+{
+    PlayerRig rig;
+    fl::HandleData p = FakeHost::player(221);
+    fl::HandleData mob = FakeHost::creature(222, 0, 0, 1800);
+    fl::HandleData other = FakeHost::player(223);
+    fl::ObjectInfo info;
+    info.name = "Round3Args";
+    rig.host.add(p, info);
+    info.entry = 1800;
+    rig.host.add(mob, info);
+    info.entry = 0;
+    rig.host.add(other, info);
+    storeHandles(rig, p, mob);
+    storeOther(rig, other);
+
+    auto errorOf = [&rig](std::string const& code)
+    {
+        fl::CallResult r = rig.run(code);
+        REQUIRE_FALSE(r.ok);
+        return r.error;
+    };
+    size_t const callsBefore = rig.host.gameCalls.size();
+
+    CHECK(errorOf("stored:CanTitanGrip(mob)").find("item is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:GetGossipTextId(5)").find("object expected") != std::string::npos);
+    CHECK(errorOf("stored:HasRecruited(mob)").find("recruit is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:AddComboPoints(mob, 128)").find("-127..127") != std::string::npos);
+    CHECK(errorOf("stored:AddComboPoints(mob, -128)").find("-127..127") != std::string::npos);
+    CHECK(errorOf("stored:AddTalent(1, 256)").find("spec must be an integer 0..255") != std::string::npos);
+    CHECK(errorOf("stored:RemovePet(-2)").find("-1..4") != std::string::npos);
+    CHECK(errorOf("stored:RemovePet(5)").find("-1..4") != std::string::npos);
+    CHECK(errorOf("stored:SetMovement(0)").find("1..4") != std::string::npos);
+    CHECK(errorOf("stored:SetMovement(5)").find("1..4") != std::string::npos);
+    CHECK(errorOf("stored:SetQuestStatus(100, 7)").find("0..6") != std::string::npos);
+    // skill ids and steps are 16-bit and a step is at least 1 (the core truncates a larger step and could lower a skill)
+    CHECK(errorOf("stored:AdvanceSkill(164, 65536)").find("skillStep must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceSkill(164, 0)").find("skillStep must be an integer 1..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceSkill(65536, 5)").find("skillId must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceSkill(164, -1)").find("skillStep must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceAllSkills(65536)").find("skillStep must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceAllSkills(0)").find("skillStep must be an integer 1..65535") != std::string::npos);
+    // strings are capped at what the packet field carries
+    CHECK(errorOf("stored:GossipSendPOI(1, 2, 6, 1, 0, string.rep('a', 64))").find("iconText must be at most 63") !=
+          std::string::npos);
+    CHECK(errorOf("stored:SendAddonMessage(string.rep('a', 32), 'M', 7, other)").find("prefix must be at most 31") !=
+          std::string::npos);
+    CHECK(errorOf("stored:SendAddonMessage('P', string.rep('a', 256), 7, other)").find("message must be at most 255") !=
+          std::string::npos);
+    CHECK(errorOf("stored:SetGuildRank(256)").find("rank must be an integer 0..255") != std::string::npos);
+    CHECK(errorOf("stored:GroupCreate(mob)").find("invited is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:GroupInvite(mob)").find("invited is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:SendGuildInvite(mob)").find("invitee is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:SendAuctionMenu(5)").find("sender expected") != std::string::npos);
+    CHECK(errorOf("stored:SendTabardVendorActivate(5)").find("sender expected") != std::string::npos);
+    CHECK(errorOf("stored:RemovedInsignia(mob)").find("looter is not of the expected kind") != std::string::npos);
+    CHECK(errorOf("stored:SendAddonMessage('P', 'M', 7, mob)").find("receiver is not of the expected kind") !=
+          std::string::npos);
+    CHECK(errorOf("stored:RunCommand({})").find("string expected") != std::string::npos);
+    CHECK(errorOf("stored:SummonPet(416, 1, 2, 3, 0, 2, 0)").find("petType must be 0 (SUMMON_PET) or 1 (HUNTER_PET)") !=
+          std::string::npos);
+    CHECK(errorOf("stored:SummonPet(416, 1, 2, 3, 0, -1, 0)").find("petType") != std::string::npos);
+    CHECK(errorOf("stored:GossipSendPOI(0/0, 2, 6, 1, 0, 'P')").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:GossipSendPOI(math.huge, 2, 6, 1, 0, 'P')").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:GossipSendPOI(1, -math.huge, 6, 1, 0, 'P')").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:GossipSendPOI(1e39, 2, 6, 1, 0, 'P')").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:SummonPet(416, math.huge, 2, 3, 0, 0, 0)").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:SummonPet(416, 1, -math.huge, 3, 0, 0, 0)").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:SummonPet(416, 1, 2, 0/0, 0, 0, 0)").find("finite number") != std::string::npos);
+    CHECK(errorOf("stored:SummonPet(416, 1, 2, 3, 1e39, 0, 0)").find("finite number") != std::string::npos);
+    CHECK(rig.host.gameCalls.size() == callsBefore);
+
+    // the largest allowed values still reach the host
+    rig.ok("stored:GossipSendPOI(1, 2, 6, 1, 0, string.rep('a', 63))");
+    rig.ok("stored:SendAddonMessage(string.rep('a', 31), string.rep('b', 255), 7, other)");
+    rig.ok("stored:AdvanceSkill(65535, 65535)");
+    CHECK(rig.host.gameCalls.size() == callsBefore + 3);
+
+    for (char const* name : {"AddLifetimeKills", "RemoveLifetimeKills", "SetLifetimeKills",
+                             "SetFreeTalentPoints", "LearnTalent", "ResetPetTalents", "SendAreaTriggerMessage"})
+    {
+        INFO("stub: " << name);
+        fl::CallResult r = rig.run(std::string("return stored:") + name + "()");
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find(std::string(name) + ": not available on this core") != std::string::npos);
+    }
 }

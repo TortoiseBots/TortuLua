@@ -58,7 +58,8 @@ class TestTypeHintsGenerator(unittest.TestCase):
         self.assertEqual(len(params), 2, f"Player:AddItem expected 2 parameters, got {params}")
         self.assertEqual(params[0], "entry")
         # Ensure 2 @param annotations precede AddItem
-        add_item_block = player_lua[max(0, m.start() - 200) : m.start()]
+        block_start = player_lua.rfind("\n\n", 0, m.start())
+        add_item_block = player_lua[0 if block_start == -1 else block_start : m.start()]
         self.assertEqual(add_item_block.count("---@param"), 2)
 
         # Player:SendBroadcastMessage(message) has 1 parameter
@@ -127,20 +128,23 @@ class TestTypeHintsGenerator(unittest.TestCase):
 
     def test_missing_name_absent(self):
         """Missing methods and globals from coverage.json are omitted."""
-        player_lua = self.files.get("Player.lua")
-        self.assertIsNotNone(player_lua)
-
-        # Verify missing Player methods from coverage.json are NOT in Player.lua
         cov = json.loads(self.cov_path.read_text(encoding="utf-8"))
-        player_methods = cov["classes"]["Player"]["methods"]
-        missing_player = [m for m, v in player_methods.items() if v.get("status") == "missing"]
-        self.assertTrue(len(missing_player) > 0)
+        # Verify missing methods from a partly covered class in coverage.json are NOT in its type file
+        cls_with_missing = next(
+            (c for c, info in cov["classes"].items() if any(v.get("status") == "missing" for v in info["methods"].values())),
+            None,
+        )
+        self.assertIsNotNone(cls_with_missing)
+        cls_lua = self.files.get(f"{cls_with_missing}.lua")
+        self.assertIsNotNone(cls_lua)
+        missing_methods = [m for m, v in cov["classes"][cls_with_missing]["methods"].items() if v.get("status") == "missing"]
+        self.assertTrue(len(missing_methods) > 0)
 
-        for m in missing_player:
+        for m in missing_methods:
             self.assertNotRegex(
-                player_lua,
-                rf"\bfunction\s+Player:{m}\b",
-                f"Missing method {m} must not be declared in Player.lua"
+                cls_lua,
+                rf"\bfunction\s+{cls_with_missing}:{m}\b",
+                f"Missing method {m} must not be declared in {cls_with_missing}.lua"
             )
 
         # Verify missing global functions are not in globals.lua

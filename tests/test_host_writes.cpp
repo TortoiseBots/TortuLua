@@ -3,6 +3,7 @@
 // lowest rank first and moved only to a rank that exists, and a guild that disbanded or a player that logged out before
 // the queued job ran leaves nothing written.
 #include "GuildWrite.h"
+#include "PlayerWrites.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -128,4 +129,45 @@ TEST_CASE("guild write: a guild disbanded or a player logged out before the queu
     CHECK(flh::applyGuildWrite(&guild, false, disband) == GuildWriteResult::Done);
     REQUIRE(guild.calls.size() == 1);
     CHECK(guild.calls[0] == "disband");
+}
+
+// The Player write decisions of src/host/PlayerWrites.h, which the host adapter applies before it calls the core.
+TEST_CASE("player writes: a quest status is written only for a quest in the log")
+{
+    CHECK(flh::questStatusWriteAllowed(true, 1, 7));
+    CHECK(flh::questStatusWriteAllowed(true, 0, 7));
+    CHECK_FALSE(flh::questStatusWriteAllowed(false, 1, 7));  // no log slot: the next save would read out of range
+    CHECK_FALSE(flh::questStatusWriteAllowed(true, 7, 7));
+    CHECK_FALSE(flh::questStatusWriteAllowed(true, -1, 7));
+}
+
+TEST_CASE("player writes: BindToInstance needs an instance map with its instance script and lock")
+{
+    CHECK(flh::bindToInstanceAllowed(true, true, true));
+    CHECK_FALSE(flh::bindToInstanceAllowed(false, false, false));  // a world map
+    CHECK_FALSE(flh::bindToInstanceAllowed(true, false, true));    // no instance script
+    CHECK_FALSE(flh::bindToInstanceAllowed(true, true, false));    // no instance lock
+}
+
+TEST_CASE("player writes: a skill step is cut to the room left before the core's 16-bit add")
+{
+    CHECK(flh::skillAdvanceStep(50, 75, 10) == 10);
+    CHECK(flh::skillAdvanceStep(50, 75, 25) == 25);
+    CHECK(flh::skillAdvanceStep(50, 75, 26) == 25);      // 50 + 26 would exceed the maximum
+    CHECK(flh::skillAdvanceStep(50, 75, 65535) == 25);   // unclamped, 50 + 65535 wraps to 49 and lowers the skill
+    CHECK(flh::skillAdvanceStep(75, 75, 10) == 0);       // at the maximum: UpdateSkillPro changes nothing
+    CHECK(flh::skillAdvanceStep(50, 75, 0) == 0);
+    CHECK(flh::skillAdvanceStep(0, 0, 10) == 0);         // an unknown skill
+}
+
+TEST_CASE("player writes: the chat tag is the AFK, DND and GM flag bits and a guild rank write refuses rank 0")
+{
+    CHECK(flh::chatTagBits(false, false, false) == 0);
+    CHECK(flh::chatTagBits(true, false, false) == 1);
+    CHECK(flh::chatTagBits(false, true, false) == 2);
+    CHECK(flh::chatTagBits(false, false, true) == 4);
+    CHECK(flh::chatTagBits(true, true, true) == 7);
+    CHECK_FALSE(flh::guildRankWriteAllowed(0));
+    CHECK(flh::guildRankWriteAllowed(1));
+    CHECK(flh::guildRankWriteAllowed(255));
 }

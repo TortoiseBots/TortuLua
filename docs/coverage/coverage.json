@@ -1385,37 +1385,45 @@
    "inherits": "Unit",
    "methods": {
     "AddComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AddItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "AddLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "AddQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "AddTalent": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AdvanceAllSkills": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AdvanceSkill": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AdvanceSkillsToMax": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AreaExploredOrEventHappens": {
      "status": "implemented",
      "declared": "Player"
     },
     "BindToInstance": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanBlock": {
      "status": "implemented",
@@ -1454,7 +1462,8 @@
      "declared": "Player"
     },
     "CanTitanGrip": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanUninviteFromGroup": {
      "status": "implemented",
@@ -1465,7 +1474,8 @@
      "declared": "Player"
     },
     "ClearComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CompleteQuest": {
      "status": "implemented",
@@ -1542,8 +1552,7 @@
      "declared": "Player"
     },
     "GetChatTag": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
+     "status": "implemented",
      "declared": "Player"
     },
     "GetClass": {
@@ -1555,10 +1564,12 @@
      "declared": "Player"
     },
     "GetComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetComboTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetCorpse": {
      "status": "implemented",
@@ -1598,7 +1609,8 @@
      "declared": "Player"
     },
     "GetGossipTextId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetGroup": {
      "status": "implemented",
@@ -1666,8 +1678,7 @@
      "declared": "Player"
     },
     "GetLifetimeKills": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
+     "status": "implemented",
      "declared": "Player"
     },
     "GetMailCount": {
@@ -1675,8 +1686,7 @@
      "declared": "Player"
     },
     "GetMailItem": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
+     "status": "implemented",
      "declared": "Player"
     },
     "GetManaBonusFromIntellect": {
@@ -1842,17 +1852,20 @@
      "declared": "Player"
     },
     "GossipSendPOI": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GroupCreate": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GroupEventHappens": {
      "status": "implemented",
      "declared": "Player"
     },
     "GroupInvite": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasAchieved": {
      "status": "stub",
@@ -1888,7 +1901,8 @@
      "declared": "Player"
     },
     "HasRecruited": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasSkill": {
      "status": "implemented",
@@ -1976,8 +1990,7 @@
      "declared": "Player"
     },
     "IsHonorOrXPTarget": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
+     "status": "implemented",
      "declared": "Player"
     },
     "IsHorde": {
@@ -2030,7 +2043,8 @@
      "declared": "Player"
     },
     "IsRecruited": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsRested": {
      "status": "implemented",
@@ -2046,8 +2060,7 @@
      "declared": "Player"
     },
     "IsVisibleForPlayer": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
+     "status": "implemented",
      "declared": "Player"
     },
     "KickPlayer": {
@@ -2059,10 +2072,12 @@
      "declared": "Player"
     },
     "KilledPlayerCredit": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "KillGOCredit": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "KillPlayer": {
      "status": "implemented",
@@ -2073,10 +2088,13 @@
      "declared": "Player"
     },
     "LearnTalent": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "LeaveBattleground": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "LogoutPlayer": {
      "status": "implemented",
@@ -2096,7 +2114,8 @@
      "declared": "Player"
     },
     "Mute": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveActiveQuest": {
      "status": "implemented",
@@ -2108,23 +2127,29 @@
      "declared": "Player"
     },
     "RemovedInsignia": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveFromBattlegroundRaid": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveFromGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "RemoveLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "RemovePet": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveQuest": {
      "status": "implemented",
@@ -2148,7 +2173,9 @@
      "declared": "Player"
     },
     "ResetPetTalents": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "ResetSpellCooldown": {
      "status": "implemented",
@@ -2175,7 +2202,8 @@
      "declared": "Player"
     },
     "RunCommand": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SaveToDB": {
      "status": "implemented",
@@ -2186,13 +2214,17 @@
      "declared": "Player"
     },
     "SendAddonMessage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendAreaTriggerMessage": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "SendAuctionMenu": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendBroadcastMessage": {
      "status": "implemented",
@@ -2203,7 +2235,8 @@
      "declared": "Player"
     },
     "SendGuildInvite": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendListInventory": {
      "status": "implemented",
@@ -2222,21 +2255,24 @@
      "declared": "Player"
     },
     "SendQuestTemplate": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendShowBank": {
      "status": "implemented",
      "declared": "Player"
     },
     "SendShowMailBox": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendSpiritResurrect": {
      "status": "implemented",
      "declared": "Player"
     },
     "SendTabardVendorActivate": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendTaxiMenu": {
      "status": "implemented",
@@ -2290,7 +2326,9 @@
      "declared": "Unit"
     },
     "SetFreeTalentPoints": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "SetGameMaster": {
      "status": "implemented",
@@ -2309,34 +2347,41 @@
      "declared": "Player"
     },
     "SetGuildRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetHonorPoints": {
      "status": "implemented",
      "declared": "Player"
     },
     "SetKnownTitle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetLevel": {
      "status": "implemented",
      "declared": "Unit"
     },
     "SetLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "SetMovement": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetPlayerLock": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetPvPDeath": {
      "status": "implemented",
      "declared": "Player"
     },
     "SetQuestStatus": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetReputation": {
      "status": "implemented",
@@ -2363,10 +2408,12 @@
      "declared": "Player"
     },
     "StartTaxi": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SummonPet": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SummonPlayer": {
      "status": "implemented",
@@ -2393,13 +2440,16 @@
      "declared": "Player"
     },
     "UnbindAllInstances": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "UnbindInstance": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "UnsetKnownTitle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "Whisper": {
      "status": "implemented",
@@ -6119,56 +6169,6 @@
  "missing": {
   "globals": [],
   "classes": {
-   "Player": [
-    "AddComboPoints",
-    "AddLifetimeKills",
-    "AddTalent",
-    "AdvanceAllSkills",
-    "AdvanceSkill",
-    "AdvanceSkillsToMax",
-    "BindToInstance",
-    "CanTitanGrip",
-    "ClearComboPoints",
-    "GetComboPoints",
-    "GetComboTarget",
-    "GetGossipTextId",
-    "GossipSendPOI",
-    "GroupCreate",
-    "GroupInvite",
-    "HasRecruited",
-    "IsRecruited",
-    "KilledPlayerCredit",
-    "KillGOCredit",
-    "LearnTalent",
-    "LeaveBattleground",
-    "Mute",
-    "RemovedInsignia",
-    "RemoveFromBattlegroundRaid",
-    "RemoveFromGroup",
-    "RemoveLifetimeKills",
-    "RemovePet",
-    "ResetPetTalents",
-    "RunCommand",
-    "SendAddonMessage",
-    "SendAreaTriggerMessage",
-    "SendAuctionMenu",
-    "SendGuildInvite",
-    "SendQuestTemplate",
-    "SendShowMailBox",
-    "SendTabardVendorActivate",
-    "SetFreeTalentPoints",
-    "SetGuildRank",
-    "SetKnownTitle",
-    "SetLifetimeKills",
-    "SetMovement",
-    "SetPlayerLock",
-    "SetQuestStatus",
-    "StartTaxi",
-    "SummonPet",
-    "UnbindAllInstances",
-    "UnbindInstance",
-    "UnsetKnownTitle"
-   ],
    "Creature": [
     "CanAggro",
     "CanCompleteQuest",

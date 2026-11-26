@@ -37,7 +37,7 @@ core without the optional C1-C4 core hooks.
 | Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 164 | 3 | 0 | 98% | 100% |
-| Player | 263 | 195 | 20 | 48 | 74% | 82% |
+| Player | 263 | 241 | 22 | 0 | 92% | 100% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
 | Item | 66 | 58 | 8 | 0 | 88% | 100% |
@@ -71,7 +71,7 @@ core without the optional C1-C4 core hooks.
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1247** | **114** | **82** | **86%** | **94%** |
+| **all** | **1443** | **1293** | **116** | **34** | **90%** | **98%** |
 
 `AuraEffect` and `ElunaProcInfo` are implemented on the engine and host, but unreachable from scripts until spell events land.
 
@@ -82,8 +82,8 @@ core without the optional C1-C4 core hooks.
   console. Read the [Security Model](knowledge/architecture/security.md) and [Limits](knowledge/architecture/limits.md)
   before enabling the module.
 * **Low-coverage classes.** Spell events are not implemented (0%, so `AuraEffect` and `ElunaProcInfo` are implemented
-  but unreachable until spell events land); Object (43%) and
-  Player (74%) are only partly covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG)
+  but unreachable until spell events land); Object (43%) is only partly
+  covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG)
   are documented stubs that raise an error; documented Object, WorldObject, Player, Item, Map, SpellInfo and
   ElunaProcInfo calls the core has no API for are stubs that raise `not available on this core`.
 * **Core hooks.** Some events need the optional core hooks C1-C4 (and further hooks for instance maps); without them

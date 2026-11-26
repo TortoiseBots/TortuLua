@@ -11,6 +11,7 @@
 #include "DataSql.h"
 #include "GuildWrite.h"
 #include "NearSearch.h"
+#include "PlayerWrites.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
@@ -27,6 +28,7 @@
 #include "GameEventMgr.h"
 #include "GameObject.h"
 #include "GameAccess.h"
+#include "GameTime.h"
 #include "GossipDef.h"
 #include "Group.h"
 #include "GridNotifiers.h"
@@ -34,6 +36,7 @@
 #include "GroupMgr.h"
 #include "Guild.h"
 #include "GuildMgr.h"
+#include "InstanceLockMgr.h"
 #include "Item.h"
 #include "ItemTemplate.h"
 #include "LootItemType.h"
@@ -41,6 +44,8 @@
 #include "Mail.h"
 #include "Map.h"
 #include "MotionMaster.h"
+#include "NPCPackets.h"
+#include "PartyPackets.h"
 #include "Waypoints/WaypointManager.h"
 #include "ObjectMgr.h"
 #include "ObjectAccessor.h"
@@ -5768,6 +5773,13 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(static_cast<int64_t>(result));
             return true;
         }
+        if (name == "player.getChatTag")
+        {
+            // The chat flag bits the core sends: AFK 1, DND 2, GM 4 (flh::chatTagBits).
+            out.emplace_back(static_cast<int64_t>(
+                flh::chatTagBits(player->isAFK(), player->isDND(), player->isGMChat())));
+            return true;
+        }
         if (name == "player.getChampioningFaction")
         {
             out.emplace_back(static_cast<int64_t>(player->GetChampioningFaction()));
@@ -5815,9 +5827,26 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(static_cast<int64_t>(player->GetInGameTime()));
             return true;
         }
+        if (name == "player.getLifetimeKills")
+        {
+            out.emplace_back(static_cast<int64_t>(player->m_activePlayerData->LifetimeHonorableKills));
+            return true;
+        }
         if (name == "player.getMailCount")
         {
             out.emplace_back(static_cast<int64_t>(player->GetMailSize()));
+            return true;
+        }
+        if (name == "player.getMailItem")
+        {
+            // A mailbox attachment is a live item while it sits in the mailbox: Player::GetMItem keys it by its low guid.
+            fl::Guid g;
+            if (fl::parseGuidText(sArg(args, 0), g))
+                if (Item* item = player->GetMItem(g.lo))
+                {
+                    rememberItem(item);
+                    pushHandle(out, handleForItem(item));
+                }
             return true;
         }
         if (name == "player.getManaBonusFromIntellect")
@@ -5946,6 +5975,14 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(player->isGMVisible());
             return true;
         }
+        if (name == "player.isHonorOrXPTarget")
+        {
+            HandleData other;
+            if (!args.empty() && asHandle(args[0], other))
+                if (Unit* victim = unitOf(other))
+                    out.emplace_back(player->isHonorOrXPTarget(victim));
+            return true;
+        }
         if (name == "player.isGroupVisibleFor" || name == "player.isInSameGroupWith" ||
             name == "player.isInSameRaidWith")
         {
@@ -5971,6 +6008,14 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "player.isOutdoorPvPActive")
         {
             out.emplace_back(player->IsOutdoorPvPActive());
+            return true;
+        }
+        if (name == "player.isVisibleForPlayer")
+        {
+            HandleData other;
+            if (!args.empty() && asHandle(args[0], other))
+                if (Player* target = playerOf(other))
+                    out.emplace_back(player->CanSeeOrDetect(target));
             return true;
         }
         if (name == "player.resetTalentsCost")
@@ -6131,6 +6176,580 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         {
             player->DurabilityRepair(static_cast<uint16>(iArg(args, 0)), bArg(args, 1, true),
                                      static_cast<float>(dArg(args, 2, 1.0)));
+            return true;
+        }
+
+        // ---- E7 long tail, round 3: remaining documented Player reads, writes and social ops ----
+        if (name == "player.canTitanGrip")
+        {
+            bool can = false;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Item* item = findItem(h))
+                    can = player->CanTitanGrip(item);
+            out.emplace_back(can);
+            return true;
+        }
+        if (name == "player.getComboPoints")
+        {
+            out.emplace_back(static_cast<int64_t>(std::max<int32>(0, player->GetPower(POWER_COMBO_POINTS))));
+            return true;
+        }
+        if (name == "player.getComboTarget")
+        {
+            ObjectGuid const targetGuid = player->GetClassicComboTarget();
+            if (!targetGuid.IsEmpty())
+                if (Unit* target = ObjectAccessor::GetUnit(*player, targetGuid))
+                    if (target->IsInWorld())
+                        pushHandle(out, handleFor(target));
+            return true;
+        }
+        if (name == "player.getGossipTextId")
+        {
+            uint32 textId = 0;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (WorldObject* src = woOf(h))
+                    textId = player->GetGossipTextId(src);
+            out.emplace_back(static_cast<int64_t>(textId));
+            return true;
+        }
+        if (name == "player.hasRecruited")
+        {
+            bool has = false;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Player* recruit = playerOf(h))
+                    if (player->GetSession() && recruit->GetSession())
+                    {
+                        uint32 const acct = player->GetSession()->GetAccountId();
+                        has = acct != 0 && recruit->GetSession()->GetRecruiterId() == acct;
+                    }
+            out.emplace_back(has);
+            return true;
+        }
+        if (name == "player.isRecruited")
+        {
+            out.emplace_back(player->GetSession() && player->GetSession()->GetRecruiterId() != 0);
+            return true;
+        }
+        if (name == "player.addComboPoints")
+        {
+            Unit* target = nullptr;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                target = unitOf(h);
+            int32 const count = static_cast<int32>(iArg(args, 1));
+            if (target)
+            {
+                if (count > 0 && player->GetClassicComboTarget() != target->GetGUID())
+                {
+                    player->SetPower(POWER_COMBO_POINTS, 0);
+                    player->SetClassicComboTarget(target->GetGUID());
+                }
+                if (count != 0 && (count > 0 || player->GetClassicComboTarget() == target->GetGUID()))
+                    player->ModifyPower(POWER_COMBO_POINTS, count);
+            }
+            return true;
+        }
+        if (name == "player.clearComboPoints")
+        {
+            player->SetPower(POWER_COMBO_POINTS, 0);
+            player->SetClassicComboTarget(ObjectGuid::Empty);
+            return true;
+        }
+        if (name == "player.addTalent")
+        {
+            uint32 const spellId = static_cast<uint32>(iArg(args, 0));
+            uint8 const spec = static_cast<uint8>(iArg(args, 1));
+            bool const learning = bArg(args, 2, true);
+            bool ok = false;
+            if (spec < MAX_SPECIALIZATIONS)
+                for (TalentEntry const* talent : sTalentStore)
+                    if (talent && talent->SpellID == spellId)
+                    {
+                        ok = player->AddTalent(talent, spec, learning);
+                        if (ok && spec == player->GetActiveTalentGroup())
+                            player->SendTalentsInfoData();
+                        break;
+                    }
+            out.emplace_back(ok);
+            return true;
+        }
+        if (name == "player.advanceAllSkills")
+        {
+            uint32 const step = static_cast<uint32>(iArg(args, 0));
+            if (step > 0 && step <= std::numeric_limits<uint16>::max())
+                for (uint32 i = 0; i < PLAYER_MAX_SKILLS; ++i)
+                    if (uint16 const skillId = player->GetSkillLineIdByPos(i))
+                        if (uint32 const room = flh::skillAdvanceStep(player->GetPureSkillValue(skillId),
+                                                                      player->GetPureMaxSkillValue(skillId), step))
+                            player->UpdateSkillPro(skillId, 1000, room);
+            return true;
+        }
+        if (name == "player.advanceSkill")
+        {
+            uint32 const skillId = static_cast<uint32>(iArg(args, 0));
+            uint32 const step = static_cast<uint32>(iArg(args, 1));
+            if (skillId <= std::numeric_limits<uint16>::max() && step > 0 &&
+                step <= std::numeric_limits<uint16>::max())
+                if (uint32 const room = flh::skillAdvanceStep(player->GetPureSkillValue(skillId),
+                                                              player->GetPureMaxSkillValue(skillId), step))
+                    player->UpdateSkillPro(static_cast<uint16>(skillId), 1000, room);
+            return true;
+        }
+        if (name == "player.advanceSkillsToMax")
+        {
+            for (uint32 i = 0; i < PLAYER_MAX_SKILLS; ++i)
+                if (uint16 const skillId = player->GetSkillLineIdByPos(i))
+                    if (SkillLineEntry const* sl = sSkillLineStore.LookupEntry(skillId))
+                        if (sl->CategoryID == SKILL_CATEGORY_WEAPON)
+                        {
+                            uint16 const cur = player->GetPureSkillValue(skillId);
+                            uint16 const maxVal = player->GetPureMaxSkillValue(skillId);
+                            if (cur < maxVal)
+                                player->UpdateSkillPro(skillId, 1000, maxVal - cur);
+                        }
+            return true;
+        }
+        if (name == "player.bindToInstance")
+        {
+            // The core's lock creation dereferences the instance script and the instance lock: an instance map without
+            // either (no instance script, no lock) is refused, never handed to it.
+            InstanceMap* imap = player->GetMap() ? player->GetMap()->ToInstanceMap() : nullptr;
+            if (flh::bindToInstanceAllowed(imap != nullptr, imap && imap->GetInstanceScript() != nullptr,
+                                           imap && imap->GetInstanceLock() != nullptr))
+                imap->CreateInstanceLockForPlayer(player);
+            else
+                log(fl::LogLevel::Warn, "ForeverLua: Player:BindToInstance refused: the map is not an instance with "
+                                        "instance data and a lock");
+            return true;
+        }
+        if (name == "player.unbindInstance" || name == "player.unbindAllInstances")
+        {
+            bool const single = name == "player.unbindInstance";
+            uint32 const mapId = single ? static_cast<uint32>(iArg(args, 0)) : 0;
+            uint32 const diffArg = single ? static_cast<uint32>(iArg(args, 1, 0)) : 0;
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            // ResetInstanceLocksForPlayer walks _instanceLocksByPlayer without locking, so run on the world thread.
+            auto job = [=]()
+            {
+                Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid));
+                if (!target)
+                    return;
+                if (single && target->GetMapId() == mapId)
+                    return;
+                Optional<uint32> mapOpt = single ? Optional<uint32>(mapId) : std::nullopt;
+                Optional<Difficulty> diffOpt =
+                    single && diffArg ? Optional<Difficulty>(static_cast<Difficulty>(diffArg)) : std::nullopt;
+                std::vector<InstanceLock const*> reset, failed;
+                sInstanceLockMgr.ResetInstanceLocksForPlayer(target->GetGUID(), mapOpt, diffOpt, &reset, &failed);
+            };
+            runSocialWrite("Instance unbind", job);
+            return true;
+        }
+        if (name == "player.gossipSendPOI")
+        {
+            if (player->GetSession())
+            {
+                float const x = static_cast<float>(dArg(args, 0));
+                float const y = static_cast<float>(dArg(args, 1));
+                float z = player->GetMapHeight(x, y, player->GetPositionZ() + 30.0f, true, 100.0f);
+                if (z <= INVALID_HEIGHT)
+                    z = player->GetPositionZ();
+                std::string const text = sArg(args, 5);
+                WorldPackets::NPC::GossipPOI packet;
+                packet.ID = 0;
+                packet.Flags = static_cast<uint32>(iArg(args, 3));
+                packet.Pos.Pos.Relocate(x, y, z);
+                packet.Icon = static_cast<int32>(iArg(args, 2));
+                packet.Importance = static_cast<int32>(iArg(args, 4));
+                packet.WMOGroupID = 0;
+                packet.Name = text;
+                player->GetSession()->SendPacket(packet.Write());
+            }
+            return true;
+        }
+        if (name == "player.killedPlayerCredit")
+        {
+            player->KilledPlayerCredit(player->GetTarget());
+            return true;
+        }
+        if (name == "player.killGOCredit")
+        {
+            player->KillCreditGO(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.leaveBattleground")
+        {
+            player->LeaveBattleground(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.mute")
+        {
+            if (WorldSession* s = player->GetSession())
+            {
+                uint32 const secs = static_cast<uint32>(iArg(args, 0));
+                s->m_muteTime = secs ? GameTime::GetGameTime() + secs : 0;
+            }
+            return true;
+        }
+        if (name == "player.removedInsignia")
+        {
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Player* looter = playerOf(h))
+                    player->RemovedInsignia(looter);
+            return true;
+        }
+        if (name == "player.removeFromBattlegroundRaid")
+        {
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            runSocialWrite("Battleground raid leave",
+                           [playerGuid]
+                           {
+                               if (Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid)))
+                                   target->RemoveFromBattlegroundOrBattlefieldRaid();
+                           });
+            return true;
+        }
+        if (name == "player.removeFromGroup")
+        {
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            runSocialWrite("Group leave",
+                           [playerGuid]
+                           {
+                               if (Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid)))
+                                   if (target->GetGroup())
+                                       target->RemoveFromGroup();
+                           });
+            return true;
+        }
+        if (name == "player.removePet")
+        {
+            if (Pet* pet = player->GetPet())
+            {
+                int64 const m = iArg(args, 0, -1);
+                PetSaveMode mode = PET_SAVE_AS_DELETED;
+                if (m == 0)
+                    mode = PET_SAVE_AS_CURRENT;
+                else if (m >= 1 && m <= 4)
+                    mode = static_cast<PetSaveMode>(PET_SAVE_FIRST_STABLE_SLOT + (m - 1));
+                player->RemovePet(pet, mode, bArg(args, 1, false));
+            }
+            return true;
+        }
+        if (name == "player.summonPet")
+        {
+            uint32 const entry = static_cast<uint32>(iArg(args, 0));
+            if (!entry)
+                return true;
+            float const x = static_cast<float>(dArg(args, 1));
+            float const y = static_cast<float>(dArg(args, 2));
+            float const z = static_cast<float>(dArg(args, 3));
+            float const o = static_cast<float>(dArg(args, 4));
+            int64 const petType = iArg(args, 5);
+            uint32 const despawnTime = static_cast<uint32>(iArg(args, 6));
+            if (petType == SUMMON_PET)
+                player->SummonPet(entry, {}, x, y, z, o, despawnTime);
+            else if (petType == HUNTER_PET && player->GetPetGUID().IsEmpty())
+            {
+                if (Pet* pet = player->CreateTamedPetFrom(entry))
+                {
+                    pet->Relocate(x, y, z, o);
+                    if (!pet->IsPositionValid())
+                    {
+                        delete pet;
+                        return true;
+                    }
+                    pet->GetMap()->AddToMap(pet->ToCreature());
+                    player->SetMinion(pet, true);
+                    if (despawnTime > 0)
+                        pet->SetDuration(despawnTime);
+                    pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+                    player->PetSpellInitialize();
+                }
+            }
+            return true;
+        }
+        if (name == "player.sendAddonMessage")
+        {
+            std::string const prefix = sArg(args, 0);
+            std::string const msg = sArg(args, 1);
+            int64 const ch = iArg(args, 2);
+            Player* receiver = nullptr;
+            if (HandleData h; args.size() > 3 && asHandle(args[3], h))
+                receiver = playerOf(h);
+            if (receiver && ch >= 0 && ch < MAX_CHAT_MSG_TYPE)
+            {
+                WorldPackets::Chat::Chat packet;
+                packet.Initialize(static_cast<ChatMsg>(ch), LANG_ADDON, player, receiver, msg, 0, "", DEFAULT_LOCALE,
+                                  prefix);
+                receiver->SendDirectMessage(packet.Write());
+            }
+            return true;
+        }
+        if (name == "player.sendAuctionMenu")
+        {
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Unit* sender = unitOf(h))
+                    if (player->GetSession())
+                        player->GetSession()->SendAuctionHello(sender->GetGUID(), sender);
+            return true;
+        }
+        if (name == "player.sendQuestTemplate")
+        {
+            if (player->PlayerTalkClass)
+                if (Quest const* quest = sObjectMgr->GetQuestTemplate(static_cast<uint32>(iArg(args, 0))))
+                    player->PlayerTalkClass->SendQuestGiverQuestDetails(quest, player->GetGUID(), bArg(args, 1, true),
+                                                                        false);
+            return true;
+        }
+        if (name == "player.sendShowMailBox")
+        {
+            if (player->GetSession())
+            {
+                ObjectGuid target = player->GetGUID();
+                if (!args.empty())
+                {
+                    ObjectGuid const parsed = guidArgAt(args, 0, LegacyGuid::Player);
+                    if (!parsed.IsEmpty())
+                        target = parsed;
+                }
+                player->GetSession()->SendShowMailBox(target);
+            }
+            return true;
+        }
+        if (name == "player.sendTabardVendorActivate")
+        {
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (WorldObject* sender = woOf(h))
+                    if (player->GetSession())
+                        player->GetSession()->SendTabardVendorActivate(sender->GetGUID(),
+                                                                       static_cast<TabardVendorType>(0));
+            return true;
+        }
+        if (name == "player.setKnownTitle" || name == "player.unsetKnownTitle")
+        {
+            if (CharTitlesEntry const* title = sCharTitlesStore.LookupEntry(static_cast<uint32>(iArg(args, 0))))
+                player->SetTitle(title, name == "player.unsetKnownTitle");
+            return true;
+        }
+        if (name == "player.setMovement")
+        {
+            switch (iArg(args, 0))
+            {
+                case 1: player->SetControlled(true, UNIT_STATE_ROOT); break;
+                case 2: player->SetControlled(false, UNIT_STATE_ROOT); break;
+                case 3: player->SetWaterWalking(true); break;
+                case 4: player->SetWaterWalking(false); break;
+                default: break;
+            }
+            return true;
+        }
+        if (name == "player.setPlayerLock")
+        {
+            player->SetClientControl(player, !bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.setQuestStatus")
+        {
+            // Only a quest that holds a slot in the quest log: a status entry made without one is read out of range
+            // by the next save (FindQuestSlot answers MAX_QUEST_LOG_SIZE for an entry with no slot).
+            int64 const status = iArg(args, 1);
+            uint32 const questId = static_cast<uint32>(iArg(args, 0));
+            if (flh::questStatusWriteAllowed(player->FindQuestSlot(questId) < MAX_QUEST_LOG_SIZE, status,
+                                             MAX_QUEST_STATUS))
+                player->SetQuestStatus(questId, static_cast<QuestStatus>(status));
+            else
+                log(fl::LogLevel::Warn, "ForeverLua: Player:SetQuestStatus refused: the quest is not in the player's "
+                                        "quest log");
+            return true;
+        }
+        if (name == "player.startTaxi")
+        {
+            player->ActivateTaxiPathTo(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.groupCreate")
+        {
+            HandleData invitedHandle;
+            if (args.empty() || !asHandle(args[0], invitedHandle))
+                return true;
+            HandleData const leaderHandle = self;
+            auto job = [=]() -> std::optional<HandleData>
+            {
+                Player* leader = playerOf(leaderHandle);
+                Player* invited = playerOf(invitedHandle);
+                // A pending invite holds a raw pointer in the inviting group's invitee set; AddMember only clears the
+                // player's side, so both participants must be free of one before a new group takes them.
+                if (!leader || !invited || leader == invited || leader->GetGroup() || invited->GetGroup() ||
+                    leader->GetGroupInvite() || invited->GetGroupInvite())
+                    return std::nullopt;
+                Group* group = new Group();
+                if (!group->Create(leader))
+                {
+                    delete group;
+                    return std::nullopt;
+                }
+                sGroupMgr->AddGroup(group);
+                if (!group->AddMember(invited))
+                {
+                    group->Disband();
+                    return std::nullopt;
+                }
+                HandleData gh;
+                gh.kind = ObjKind::Group;
+                gh.guid = fromGuid(group->GetGUID());
+                return gh;
+            };
+            if (rules().placeForWorld() == AccessRules::Place::Direct && socialWriteBlocked())
+            {
+                runSocialWrite("Group create", [job] { (void)job(); });
+                return true;
+            }
+            auto guarded = [this, job]() -> std::optional<HandleData>
+            {
+                struct Guard
+                {
+                    bool& flag;
+                    ~Guard() { flag = false; }
+                } reset{_socialWriteActive};
+                _socialWriteActive = true;
+                return job();
+            };
+            WorldCallResult how = WorldCallResult::Ran;
+            std::optional<std::optional<HandleData>> r =
+                callOnWorld<std::optional<HandleData>>(rules(), deferred(), guarded, &how);
+            if (how == WorldCallResult::Dropped)
+                log(fl::LogLevel::Warn, "ForeverLua: GroupCreate dropped: the world thread queue is full");
+            if (r && *r)
+                pushHandle(out, **r);
+            return true;
+        }
+        if (name == "player.groupInvite")
+        {
+            HandleData invitedHandle;
+            if (args.empty() || !asHandle(args[0], invitedHandle))
+                return true;
+            HandleData const inviterHandle = self;
+            auto job = [=]() -> bool
+            {
+                Player* inviter = playerOf(inviterHandle);
+                Player* invited = playerOf(invitedHandle);
+                if (!inviter || !invited || inviter == invited || invited->GetGroup() || invited->GetGroupInvite())
+                    return false;
+                Group* group = inviter->GetGroup();
+                if (!group)
+                    group = inviter->GetGroupInvite();
+                if (group)
+                {
+                    if ((!group->IsLeader(inviter->GetGUID()) && !group->IsAssistant(inviter->GetGUID())) ||
+                        group->IsFull())
+                        return false;
+                }
+                else
+                {
+                    group = new Group();
+                    if (!group->AddLeaderInvite(inviter))
+                    {
+                        delete group;
+                        return false;
+                    }
+                }
+                if (!group->AddInvite(invited))
+                {
+                    if (!group->IsCreated())
+                    {
+                        group->RemoveAllInvites();
+                        delete group;
+                    }
+                    return false;
+                }
+                WorldPackets::Party::PartyInvite partyInvite;
+                partyInvite.Initialize(inviter, 0, true);
+                invited->SendDirectMessage(partyInvite.Write());
+                if (inviter->GetSession())
+                    inviter->GetSession()->SendPartyResult(PARTY_OP_INVITE, invited->GetName(), ERR_PARTY_RESULT_OK);
+                return true;
+            };
+            if (rules().placeForWorld() == AccessRules::Place::Direct && socialWriteBlocked())
+            {
+                runSocialWrite("Group invite", [job] { (void)job(); });
+                return true;
+            }
+            auto guarded = [this, job]() -> bool
+            {
+                struct Guard
+                {
+                    bool& flag;
+                    ~Guard() { flag = false; }
+                } reset{_socialWriteActive};
+                _socialWriteActive = true;
+                return job();
+            };
+            WorldCallResult how = WorldCallResult::Ran;
+            std::optional<bool> r = callOnWorld<bool>(rules(), deferred(), guarded, &how);
+            if (how == WorldCallResult::Dropped)
+                log(fl::LogLevel::Warn, "ForeverLua: GroupInvite dropped: the world thread queue is full");
+            if (r)
+                out.emplace_back(*r);
+            return true;
+        }
+        if (name == "player.sendGuildInvite")
+        {
+            HandleData inviteeHandle;
+            if (args.empty() || !asHandle(args[0], inviteeHandle))
+                return true;
+            HandleData const inviterHandle = self;
+            runSocialWrite("Guild invite",
+                           [inviterHandle, inviteeHandle]
+                           {
+                               Player* inviter = findPlayer(inviterHandle);
+                               Player* invitee = findPlayer(inviteeHandle);
+                               if (inviter && invitee && inviter->GetSession())
+                                   if (Guild* guild = inviter->GetGuild())
+                                       guild->HandleInviteMember(inviter->GetSession(), invitee->GetName());
+                           });
+            return true;
+        }
+        if (name == "player.setGuildRank")
+        {
+            uint8 const rank = static_cast<uint8>(iArg(args, 0));
+            if (!flh::guildRankWriteAllowed(rank))
+            {
+                log(fl::LogLevel::Warn, "ForeverLua: Player:SetGuildRank refused: rank 0 is the Guild Master");
+                return true;
+            }
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            runSocialWrite("Guild rank change",
+                           [playerGuid, rank]
+                           {
+                               Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid));
+                               if (!target)
+                                   return;
+                               if (Guild* guild = target->GetGuild())
+                               {
+                                   CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                                   if (guild->ChangeMemberRank(trans, target->GetGUID(), static_cast<GuildRankId>(rank)))
+                                       CharacterDatabase.CommitTransaction(trans);
+                               }
+                           });
+            return true;
+        }
+        if (name == "player.runCommand")
+        {
+            std::string const line = sArg(args, 0);
+            if (line.empty())
+                return true;
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            auto job = [playerGuid, line]
+            {
+                Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid));
+                if (!target || !target->GetSession())
+                    return;
+                std::string cmd = (line[0] == '.' || line[0] == '!') ? line : ("." + line);
+                ChatHandler(target->GetSession()).ParseCommands(cmd);
+            };
+            // Through the social write path: a command may change a group or guild (.group disband), so it runs on the
+            // world thread, and from inside a hook of such a change or a core social action it waits for the next tick
+            // instead of re-entering the core.
+            runSocialWrite("Player command", job);
             return true;
         }
 
