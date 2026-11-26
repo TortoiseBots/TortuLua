@@ -176,6 +176,9 @@ int classicStubMethod(lua_State* L);
 // The same error for a method whose registration is a named function (the name is not an upvalue then).
 int classicStubMethodFor(lua_State* L, char const* name);
 void addStubMethod(lua_State* L, char const* className, char const* name);
+// A documented call the pinned core has no API for: raises "<Method>: not available on this core".
+int coreStubMethod(lua_State* L);
+void addCoreStubMethod(lua_State* L, char const* className, char const* name);
 // Installs the E3 tables (ForeverData in eluna mode, Data in test mode) and RegisterCommand/WorldDBQueryAsync & co.
 void registerGameGlobals(lua_State* L);
 }  // namespace flu

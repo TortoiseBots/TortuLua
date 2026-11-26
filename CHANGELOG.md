@@ -33,7 +33,7 @@ core without the optional C1-C4 core hooks.
 | Object | 30 | 14 | 0 | 16 | 47% | 47% |
 | WorldObject | 51 | 23 | 0 | 28 | 45% | 45% |
 | Unit | 167 | 132 | 3 | 32 | 79% | 81% |
-| Player | 263 | 129 | 13 | 121 | 49% | 54% |
+| Player | 263 | 195 | 20 | 48 | 74% | 82% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 9 | 0 | 11 | 45% | 45% |
 | Item | 66 | 56 | 4 | 6 | 85% | 91% |
@@ -67,7 +67,7 @@ core without the optional C1-C4 core hooks.
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **917** | **74** | **452** | **64%** | **69%** |
+| **all** | **1443** | **983** | **81** | **379** | **68%** | **74%** |
 
 ### Known limits
 
@@ -76,9 +76,10 @@ core without the optional C1-C4 core hooks.
   console. Read the [Security Model](knowledge/architecture/security.md) and [Limits](knowledge/architecture/limits.md)
   before enabling the module.
 * **Low-coverage classes.** AuraEffect, ElunaProcInfo and the spell events are not implemented (0%); Group (22%),
-  Guild (25%), Quest (31%), WorldPacket (39%), GameObject (45%), WorldObject (45%), Object (47%) and Player (49%) are
+  Guild (25%), Quest (31%), WorldPacket (39%), GameObject (45%), WorldObject (45%), Object (47%) and Player (74%) are
   only partly covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG) are documented
-  stubs that raise an error.
+  stubs that raise an error; a handful of documented Player calls the core has no API for are stubs that raise
+  `not available on this core`.
 * **Core hooks.** Some events need the optional core hooks C1-C4 (and further hooks for instance maps); without them
   they register and log `needs core hook Cn` once.
 * **The bot API needs a provider module.** Without a bot module that implements `BotProvider`, `IsBotApiAvailable()`

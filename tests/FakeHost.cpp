@@ -1951,7 +1951,34 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         "player.getDbLocaleIndex",    "player.getPlayerIP",          "player.getLatency",
         "player.getTotalPlayedTime",  "player.getLevelPlayedTime",   "player.logoutPlayer",
         "player.durabilityRepairAll", "unit.setPvP"};
-    if (!ops.count(op))
+    // E7 long tail, round 2: the documented reads.
+    static std::set<std::string> const readOps = {
+        "player.canBlock",              "player.canCompleteRepeatableQuest", "player.canFly",
+        "player.canParry",              "player.canShareQuest",             "player.canSpeak",
+        "player.canUninviteFromGroup",  "player.getChampioningFaction",     "player.getDbcLocale",
+        "player.getDifficulty",         "player.getDrunkValue",             "player.getGroupInvite",
+        "player.getGuildRank",          "player.getHealthBonusFromStamina", "player.getInGameTime",
+        "player.getMailCount",          "player.getManaBonusFromIntellect", "player.getNearbyGameObject",
+        "player.getNextRandomRaidMember", "player.getOriginalGroup",         "player.getOriginalSubGroup",
+        "player.getQuestLevel",         "player.getRecruiterId",            "player.getSelectedPlayer",
+        "player.getSelectedUnit",       "player.getShieldBlockValue",       "player.getSubGroup",
+        "player.getXPRestBonus",        "player.hasAtLoginFlag",            "player.hasPendingBind",
+        "player.hasTalent",             "player.hasTitle",                  "player.inArena",
+        "player.inBattlegroundQueue",   "player.isAcceptingWhispers",       "player.isARecruiter",
+        "player.isGMChat",              "player.isGMVisible",               "player.isGroupVisibleFor",
+        "player.isInSameGroupWith",     "player.isInSameRaidWith",          "player.isNeverVisible",
+        "player.isOutdoorPvPActive",    "player.resetTalentsCost"};
+    // E7 long tail, round 2: the writes.
+    static std::set<std::string> const writeOps = {
+        "player.sendCinematicStart",          "player.sendMovieStart",           "player.sendUpdateWorldState",
+        "player.sendSpiritResurrect",         "player.setAcceptWhispers",        "player.setAtLoginFlag",
+        "player.setDrunkValue",               "player.setFactionForRace",        "player.setGameMaster",
+        "player.setGender",                   "player.setGMChat",                "player.setGMVisible",
+        "player.setPvPDeath",                 "player.spawnBones",               "player.killPlayer",
+        "player.resetTalents",                "player.durabilityLoss",           "player.durabilityLossAll",
+        "player.durabilityPointLossForEquipSlot", "player.durabilityPointsLoss", "player.durabilityPointsLossAll",
+        "player.durabilityRepair"};
+    if (!ops.count(op) && !readOps.count(op) && !writeOps.count(op))
         return false;
 
     FakePlayer& p = playerState(self);
@@ -2256,6 +2283,212 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         p.repairTakeCost = boolAt(args, 0, true);
         p.repairDiscount = doubleAt(args, 1, 1.0);
         p.repairGuildBank = boolAt(args, 2, false);
+    }
+    // ---- E7 long tail, round 2: the documented reads ----
+    else if (op == "player.canBlock")
+        out.emplace_back(p.canBlock);
+    else if (op == "player.canCompleteRepeatableQuest")
+        out.emplace_back(p.canCompleteRepeatable);
+    else if (op == "player.canFly")
+        out.emplace_back(p.canFly);
+    else if (op == "player.canParry")
+        out.emplace_back(p.canParry);
+    else if (op == "player.canShareQuest")
+        out.emplace_back(p.canShare);
+    else if (op == "player.canSpeak")
+        out.emplace_back(p.canSpeak);
+    else if (op == "player.canUninviteFromGroup")
+        out.emplace_back(static_cast<int64_t>(p.partyResult));
+    else if (op == "player.getChampioningFaction")
+        out.emplace_back(static_cast<int64_t>(p.championing));
+    else if (op == "player.getDbcLocale")
+        out.emplace_back(static_cast<int64_t>(p.dbcLocale));
+    else if (op == "player.getDifficulty")
+        out.emplace_back(static_cast<int64_t>(p.difficulty));
+    else if (op == "player.getDrunkValue")
+        out.emplace_back(static_cast<int64_t>(p.drunk));
+    else if (op == "player.getGroupInvite")
+    {
+        if (p.groupInvite)
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::Group;
+            h.guid.lo = p.groupInvite;
+            out.emplace_back(h);
+        }
+    }
+    else if (op == "player.getGuildRank")
+        out.emplace_back(static_cast<int64_t>(p.guildRank));
+    else if (op == "player.getHealthBonusFromStamina")
+        out.emplace_back(p.healthBonus);
+    else if (op == "player.getInGameTime")
+        out.emplace_back(static_cast<int64_t>(p.inGameTime));
+    else if (op == "player.getMailCount")
+        out.emplace_back(static_cast<int64_t>(p.mailCount));
+    else if (op == "player.getManaBonusFromIntellect")
+        out.emplace_back(p.manaBonus);
+    else if (op == "player.getNearbyGameObject")
+    {
+        if (p.nearbyGameObject)
+            out.emplace_back(gameObject(p.nearbyGameObject));
+    }
+    else if (op == "player.getNextRandomRaidMember")
+    {
+        if (p.nextRaidMember)
+            out.emplace_back(player(p.nextRaidMember));
+    }
+    else if (op == "player.getOriginalGroup")
+    {
+        if (p.originalGroup)
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::Group;
+            h.guid.lo = p.originalGroup;
+            out.emplace_back(h);
+        }
+    }
+    else if (op == "player.getOriginalSubGroup")
+        out.emplace_back(static_cast<int64_t>(p.originalSubGroup));
+    else if (op == "player.getQuestLevel")
+        out.emplace_back(static_cast<int64_t>(p.questLevel));
+    else if (op == "player.getRecruiterId")
+        out.emplace_back(static_cast<int64_t>(p.recruiterId));
+    else if (op == "player.getSelectedPlayer")
+    {
+        if (p.selectedPlayer)
+            out.emplace_back(player(p.selectedPlayer));
+    }
+    else if (op == "player.getSelectedUnit")
+    {
+        if (p.selectedUnitCreature)
+            out.emplace_back(creature(p.selectedUnitCreature));
+    }
+    else if (op == "player.getShieldBlockValue")
+        out.emplace_back(static_cast<int64_t>(p.shieldBlockValue));
+    else if (op == "player.getSubGroup")
+        out.emplace_back(static_cast<int64_t>(p.subGroup));
+    else if (op == "player.getXPRestBonus")
+        out.emplace_back(static_cast<int64_t>(p.xpRestBonus));
+    else if (op == "player.hasAtLoginFlag")
+        out.emplace_back((p.atLoginFlags & static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "player.hasPendingBind")
+        out.emplace_back(p.pendingBind);
+    else if (op == "player.hasTalent")
+        out.emplace_back(p.talents.count({static_cast<uint32_t>(intAt(args, 0)),
+                                          static_cast<uint8_t>(intAt(args, 1))}) != 0);
+    else if (op == "player.hasTitle")
+        out.emplace_back(p.titles.count(static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "player.inArena")
+        out.emplace_back(p.inArena);
+    else if (op == "player.inBattlegroundQueue")
+        out.emplace_back(p.inBgQueue);
+    else if (op == "player.isAcceptingWhispers")
+        out.emplace_back(p.acceptWhispers);
+    else if (op == "player.isARecruiter")
+        out.emplace_back(p.isRecruiter);
+    else if (op == "player.isGMChat")
+        out.emplace_back(p.gmChat);
+    else if (op == "player.isGMVisible")
+        out.emplace_back(p.gmVisible);
+    else if (op == "player.isGroupVisibleFor" || op == "player.isInSameGroupWith" || op == "player.isInSameRaidWith")
+    {
+        fl::HandleData other;
+        if (handleAt(args, 0, other))
+        {
+            auto const& mates = op == "player.isGroupVisibleFor" ? p.visibleFor
+                               : op == "player.isInSameGroupWith" ? p.groupMates
+                                                                  : p.raidMates;
+            out.emplace_back(mates.count(other.guid.lo) != 0);
+        }
+    }
+    else if (op == "player.isNeverVisible")
+        out.emplace_back(p.neverVisible);
+    else if (op == "player.isOutdoorPvPActive")
+        out.emplace_back(p.outdoorPvp);
+    else if (op == "player.resetTalentsCost")
+        out.emplace_back(static_cast<int64_t>(p.resetTalentsCost));
+    // ---- E7 long tail, round 2: the writes ----
+    else if (op == "player.sendCinematicStart" || op == "player.sendMovieStart" ||
+             op == "player.sendUpdateWorldState" || op == "player.sendSpiritResurrect")
+        p.actions.emplace_back(op, args);
+    else if (op == "player.setAcceptWhispers")
+        p.acceptWhispers = boolAt(args, 0, true);
+    else if (op == "player.setAtLoginFlag")
+        p.atLoginFlags |= static_cast<uint32_t>(intAt(args, 0));
+    else if (op == "player.setDrunkValue")
+        p.drunk = static_cast<uint8_t>(intAt(args, 0));
+    else if (op == "player.setFactionForRace")
+        p.factionRace = static_cast<uint8_t>(intAt(args, 0));
+    else if (op == "player.setGameMaster")
+        p.gameMaster = boolAt(args, 0, false);
+    else if (op == "player.setGender")
+        p.gender = static_cast<uint8_t>(intAt(args, 0));
+    else if (op == "player.setGMChat")
+        p.gmChat = boolAt(args, 0, false);
+    else if (op == "player.setGMVisible")
+        p.gmVisible = boolAt(args, 0, true);
+    else if (op == "player.setPvPDeath")
+        p.pvpDeath = boolAt(args, 0, false);
+    else if (op == "player.spawnBones")
+        p.bonesSpawned = true;
+    else if (op == "player.killPlayer")
+        p.killed = true;
+    else if (op == "player.resetTalents")
+    {
+        ++p.resetTalentsCalls;
+        p.resetTalentsNoCost = boolAt(args, 0, false);
+        out.emplace_back(p.resetTalentsResult);
+    }
+    else if (op == "player.durabilityLoss" || op == "player.durabilityPointsLoss")
+    {
+        FakeDurability call;
+        call.op = op;
+        fl::HandleData item;
+        if (handleAt(args, 0, item))
+            call.itemLow = item.guid.lo;
+        // The module resolves the item through the receiver's own inventory, so a handle of another player's item
+        // reaches nothing here either.
+        bool owned = false;
+        for (FakeItem const& it : p.items)
+            if (it.low == call.itemLow)
+            {
+                owned = true;
+                break;
+            }
+        if (!owned)
+            return true;
+        if (op == "player.durabilityLoss")
+            call.percent = doubleAt(args, 1);
+        else
+            call.points = intAt(args, 1);
+        p.durabilities.push_back(call);
+    }
+    else if (op == "player.durabilityLossAll" || op == "player.durabilityPointsLossAll")
+    {
+        FakeDurability call;
+        call.op = op;
+        if (op == "player.durabilityLossAll")
+            call.percent = doubleAt(args, 0);
+        else
+            call.points = intAt(args, 0);
+        call.inventory = boolAt(args, 1, true);
+        p.durabilities.push_back(call);
+    }
+    else if (op == "player.durabilityPointLossForEquipSlot")
+    {
+        FakeDurability call;
+        call.op = op;
+        call.slot = intAt(args, 0);
+        p.durabilities.push_back(call);
+    }
+    else if (op == "player.durabilityRepair")
+    {
+        FakeDurability call;
+        call.op = op;
+        call.pos = intAt(args, 0);
+        call.takeCost = boolAt(args, 1, true);
+        call.discount = doubleAt(args, 2, 1.0);
+        p.durabilities.push_back(call);
     }
     return true;
 }

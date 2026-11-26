@@ -4522,6 +4522,379 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             return true;
         }
 
+        // ---- E7 long tail, round 2: the documented reads the core answers directly ----
+        if (name == "player.canBlock")
+        {
+            out.emplace_back(player->CanBlock());
+            return true;
+        }
+        if (name == "player.canCompleteRepeatableQuest")
+        {
+            Quest const* quest = sObjectMgr->GetQuestTemplate(static_cast<uint32>(iArg(args, 0)));
+            out.emplace_back(quest && player->CanCompleteRepeatableQuest(quest));
+            return true;
+        }
+        if (name == "player.canFly")
+        {
+            out.emplace_back(player->CanFly());
+            return true;
+        }
+        if (name == "player.canParry")
+        {
+            out.emplace_back(player->CanParry());
+            return true;
+        }
+        if (name == "player.canShareQuest")
+        {
+            out.emplace_back(player->CanShareQuest(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "player.canSpeak")
+        {
+            out.emplace_back(player->GetSession() && player->GetSession()->CanSpeak());
+            return true;
+        }
+        if (name == "player.canUninviteFromGroup")
+        {
+            fl::Guid guid;
+            // The docs' PartyResult: an unreadable guid is the "no such member" answer, not an error.
+            uint8 result = static_cast<uint8>(ERR_TARGET_NOT_IN_GROUP_S);
+            if (args.size() > 0 && fl::parseGuidText(sArg(args, 0), guid))
+                result = static_cast<uint8>(player->CanUninviteFromGroup(toGuid(guid), {}));
+            out.emplace_back(static_cast<int64_t>(result));
+            return true;
+        }
+        if (name == "player.getChampioningFaction")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetChampioningFaction()));
+            return true;
+        }
+        if (name == "player.getDbcLocale")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetSession() ? player->GetSession()->GetSessionDbcLocale()
+                                                                       : LOCALE_enUS));
+            return true;
+        }
+        if (name == "player.getDifficulty")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetMap()->GetDifficultyID()));
+            return true;
+        }
+        if (name == "player.getDrunkValue")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetDrunkValue()));
+            return true;
+        }
+        if (name == "player.getGroupInvite")
+        {
+            if (Group* g = player->GetGroupInvite())
+            {
+                HandleData h;
+                h.kind = ObjKind::Group;
+                h.guid = fromGuid(g->GetGUID());
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "player.getGuildRank")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetGuildRank()));
+            return true;
+        }
+        if (name == "player.getHealthBonusFromStamina")
+        {
+            out.emplace_back(static_cast<double>(player->GetHealthBonusFromStamina()));
+            return true;
+        }
+        if (name == "player.getInGameTime")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetInGameTime()));
+            return true;
+        }
+        if (name == "player.getMailCount")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetMailSize()));
+            return true;
+        }
+        if (name == "player.getManaBonusFromIntellect")
+        {
+            out.emplace_back(static_cast<double>(player->GetManaBonusFromIntellect()));
+            return true;
+        }
+        if (name == "player.getNearbyGameObject")
+        {
+            if (player->GetSession())
+                if (GameObject* go = ChatHandler(player->GetSession()).GetNearbyGameObject())
+                    if (go->IsInWorld())
+                        pushHandle(out, handleFor(go));
+            return true;
+        }
+        if (name == "player.getNextRandomRaidMember")
+        {
+            if (Player* member = player->GetNextRandomRaidMember(static_cast<float>(dArg(args, 0))))
+                pushHandle(out, handleFor(member));
+            return true;
+        }
+        if (name == "player.getOriginalGroup")
+        {
+            if (Group* g = player->GetOriginalGroup())
+            {
+                HandleData h;
+                h.kind = ObjKind::Group;
+                h.guid = fromGuid(g->GetGUID());
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "player.getOriginalSubGroup")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetOriginalSubGroup()));
+            return true;
+        }
+        if (name == "player.getQuestLevel")
+        {
+            Quest const* quest = sObjectMgr->GetQuestTemplate(static_cast<uint32>(iArg(args, 0)));
+            out.emplace_back(static_cast<int64_t>(quest ? player->GetQuestLevel(quest) : 0));
+            return true;
+        }
+        if (name == "player.getRecruiterId")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetSession() ? player->GetSession()->GetRecruiterId() : 0));
+            return true;
+        }
+        if (name == "player.getSelectedPlayer")
+        {
+            if (Player* selected = player->GetSelectedPlayer())
+                if (selected->IsInWorld())
+                    pushHandle(out, handleFor(selected));
+            return true;
+        }
+        if (name == "player.getSelectedUnit")
+        {
+            if (Unit* selected = player->GetSelectedUnit())
+                if (selected->IsInWorld())
+                    pushHandle(out, handleFor(selected));
+            return true;
+        }
+        if (name == "player.getShieldBlockValue")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetClassicShieldBlockValue()));
+            return true;
+        }
+        if (name == "player.getSubGroup")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetSubGroup()));
+            return true;
+        }
+        if (name == "player.getXPRestBonus")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetRestMgr().GetRestBonusFor(
+                REST_TYPE_XP, static_cast<uint32>(iArg(args, 0)))));
+            return true;
+        }
+        if (name == "player.hasAtLoginFlag")
+        {
+            out.emplace_back(player->HasAtLoginFlag(static_cast<AtLoginFlags>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "player.hasPendingBind")
+        {
+            out.emplace_back(player->HasPendingBind());
+            return true;
+        }
+        if (name == "player.hasTalent")
+        {
+            out.emplace_back(player->HasTalent(static_cast<uint32>(iArg(args, 0)), static_cast<uint8>(iArg(args, 1))));
+            return true;
+        }
+        if (name == "player.hasTitle")
+        {
+            out.emplace_back(player->HasTitle(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "player.inArena")
+        {
+            out.emplace_back(player->InArena());
+            return true;
+        }
+        if (name == "player.inBattlegroundQueue")
+        {
+            out.emplace_back(player->InBattlegroundQueue(bArg(args, 0, false)));
+            return true;
+        }
+        if (name == "player.isAcceptingWhispers")
+        {
+            out.emplace_back(player->isAcceptWhispers());
+            return true;
+        }
+        if (name == "player.isARecruiter")
+        {
+            out.emplace_back(player->GetSession() && player->GetSession()->IsARecruiter());
+            return true;
+        }
+        if (name == "player.isGMChat")
+        {
+            out.emplace_back(player->isGMChat());
+            return true;
+        }
+        if (name == "player.isGMVisible")
+        {
+            out.emplace_back(player->isGMVisible());
+            return true;
+        }
+        if (name == "player.isGroupVisibleFor" || name == "player.isInSameGroupWith" ||
+            name == "player.isInSameRaidWith")
+        {
+            HandleData other;
+            if (args.size() > 0 && asHandle(args[0], other))
+                if (Player* target = playerOf(other))
+                {
+                    if (name == "player.isGroupVisibleFor")
+                        out.emplace_back(player->IsGroupVisibleFor(target));
+                    else if (name == "player.isInSameGroupWith")
+                        out.emplace_back(player->IsInSameGroupWith(target));
+                    else
+                        out.emplace_back(player->IsInSameRaidWith(target));
+                }
+            return true;
+        }
+        if (name == "player.isNeverVisible")
+        {
+            // The core answers visibility per seer; the player itself is the seer a no-argument call means.
+            out.emplace_back(player->IsNeverVisibleFor(player, false));
+            return true;
+        }
+        if (name == "player.isOutdoorPvPActive")
+        {
+            out.emplace_back(player->IsOutdoorPvPActive());
+            return true;
+        }
+        if (name == "player.resetTalentsCost")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetNextResetTalentsCost()));
+            return true;
+        }
+
+        // ---- E7 long tail, round 2: the documented writes that only change the receiver ----
+        if (name == "player.sendCinematicStart")
+        {
+            player->SendCinematicStart(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.sendMovieStart")
+        {
+            player->SendMovieStart(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.sendUpdateWorldState")
+        {
+            player->SendUpdateWorldState(static_cast<uint32>(iArg(args, 0)), static_cast<uint32>(iArg(args, 1)),
+                                         bArg(args, 2, false));
+            return true;
+        }
+        if (name == "player.sendSpiritResurrect")
+        {
+            if (player->GetSession())
+                player->GetSession()->SendSpiritResurrect();
+            return true;
+        }
+        if (name == "player.setAcceptWhispers")
+        {
+            player->SetAcceptWhispers(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.setAtLoginFlag")
+        {
+            player->SetAtLoginFlag(static_cast<AtLoginFlags>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.setDrunkValue")
+        {
+            player->SetDrunkValue(static_cast<uint8>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.setFactionForRace")
+        {
+            player->SetFactionForRace(static_cast<uint8>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.setGameMaster")
+        {
+            player->SetGameMaster(bArg(args, 0, false));
+            return true;
+        }
+        if (name == "player.setGender")
+        {
+            player->SetGender(static_cast<Gender>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.setGMChat")
+        {
+            player->SetGMChat(bArg(args, 0, false));
+            return true;
+        }
+        if (name == "player.setGMVisible")
+        {
+            player->SetGMVisible(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.setPvPDeath")
+        {
+            player->SetPvPDeath(bArg(args, 0, false));
+            return true;
+        }
+        if (name == "player.spawnBones")
+        {
+            player->SpawnCorpseBones();
+            return true;
+        }
+        if (name == "player.killPlayer")
+        {
+            player->KillPlayer();
+            return true;
+        }
+        if (name == "player.resetTalents")
+        {
+            out.emplace_back(player->ResetTalents(bArg(args, 0, false)));
+            return true;
+        }
+        if (name == "player.durabilityLoss" || name == "player.durabilityPointsLoss")
+        {
+            // The item is resolved through the receiver's own inventory: an item of another player that a script
+            // holds a handle for is not this player's to damage.
+            HandleData itemHandle;
+            if (!args.empty() && asHandle(args[0], itemHandle))
+                if (Item* item = player->GetItemByGuid(toGuid(itemHandle.guid)))
+                {
+                    if (name == "player.durabilityLoss")
+                        player->DurabilityLoss(item, dArg(args, 1));
+                    else
+                        player->DurabilityPointsLoss(item, static_cast<int32>(iArg(args, 1)));
+                }
+            return true;
+        }
+        if (name == "player.durabilityLossAll")
+        {
+            player->DurabilityLossAll(dArg(args, 0), bArg(args, 1, true));
+            return true;
+        }
+        if (name == "player.durabilityPointLossForEquipSlot")
+        {
+            player->DurabilityPointLossForEquipSlot(static_cast<EquipmentSlots>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.durabilityPointsLossAll")
+        {
+            player->DurabilityPointsLossAll(static_cast<int32>(iArg(args, 0)), bArg(args, 1, true));
+            return true;
+        }
+        if (name == "player.durabilityRepair")
+        {
+            player->DurabilityRepair(static_cast<uint16>(iArg(args, 0)), bArg(args, 1, true),
+                                     static_cast<float>(dArg(args, 2, 1.0)));
+            return true;
+        }
+
         // ---- gossip (PlayerMenu) ----
         if (name == "gossip.addItem")
         {
