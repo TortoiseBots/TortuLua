@@ -49,11 +49,11 @@ function Guild:SendPacket() end
 ---@return any
 function Guild:SendPacketToRanked(arg1, rankId) end
 
----@deprecated not available (Classic 1.60)
+---@deprecated not available (Classic 1.60); Classic 1.60 has no guild bank (no client window and GUILD 9/11 never fire), so the core's Guild::SetBankTabText has no tab to name
 ---@return any
 function Guild:SetBankTabText() end
 
----@deprecated not available (this server)
+---@deprecated not available (this server); the pinned core changes a guild leader only through Guild::HandleSetNewGuildMaster, which needs the old leader's session and its client permission checks; there is no server-side setter (Guild::_SetLeader is private)
 ---@return any
 function Guild:SetLeader() end
 

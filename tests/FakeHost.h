@@ -261,6 +261,8 @@ public:
         bool canStartAttack = false;
         bool canStartAttackForce = true;
         uint64_t canStartAttackTargetLow = 0;
+        bool targetable = true;             // IsTargetableForAttack's answer
+        bool targetableCheckFakeDeath = true;
         bool tapped = false;
         uint64_t lastTappedLow = 0;
         std::vector<uint64_t> tapList;      // player low guids (HasLootRecipient/GetLootRecipient*)
@@ -283,7 +285,7 @@ public:
         double wanderRadius = 0;
         double homeX = 0, homeY = 0, homeZ = 0, homeO = 0;
         uint32_t respawnDelay = 0, corpseDelay = 0;
-        int corpseRemovals = 0;
+        int corpseRemovals = 0, removeFromWorlds = 0;
         uint32_t deathState = 0;
         uint32_t equipMain = 0, equipOff = 0, equipRanged = 0;
         // identity
@@ -304,6 +306,7 @@ public:
         // loot mode and quests
         uint32_t lootMode = 1;
         std::set<uint32_t> quests;
+        std::set<uint32_t> involvedQuests;  // the creature ends these (CanCompleteQuest)
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };

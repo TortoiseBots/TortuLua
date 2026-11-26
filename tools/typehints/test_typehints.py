@@ -129,23 +129,32 @@ class TestTypeHintsGenerator(unittest.TestCase):
     def test_missing_name_absent(self):
         """Missing methods and globals from coverage.json are omitted."""
         cov = json.loads(self.cov_path.read_text(encoding="utf-8"))
-        # Verify missing methods from a partly covered class in coverage.json are NOT in its type file
+        # Verify missing methods from a partly covered class in coverage.json are NOT in its type file.
+        # The checked-in report has no missing name at all now, so the omission rule is also exercised on a synthetic
+        # entry below; the real-data half then checks the report's own (empty) set.
         cls_with_missing = next(
             (c for c, info in cov["classes"].items() if any(v.get("status") == "missing" for v in info["methods"].values())),
             None,
         )
-        self.assertIsNotNone(cls_with_missing)
-        cls_lua = self.files.get(f"{cls_with_missing}.lua")
-        self.assertIsNotNone(cls_lua)
-        missing_methods = [m for m, v in cov["classes"][cls_with_missing]["methods"].items() if v.get("status") == "missing"]
-        self.assertTrue(len(missing_methods) > 0)
+        if cls_with_missing is not None:
+            cls_lua = self.files.get(f"{cls_with_missing}.lua")
+            self.assertIsNotNone(cls_lua)
+            missing_methods = [m for m, v in cov["classes"][cls_with_missing]["methods"].items() if v.get("status") == "missing"]
+            self.assertTrue(len(missing_methods) > 0)
 
-        for m in missing_methods:
-            self.assertNotRegex(
-                cls_lua,
-                rf"\bfunction\s+{cls_with_missing}:{m}\b",
-                f"Missing method {m} must not be declared in {cls_with_missing}.lua"
-            )
+            for m in missing_methods:
+                self.assertNotRegex(
+                    cls_lua,
+                    rf"\bfunction\s+{cls_with_missing}:{m}\b",
+                    f"Missing method {m} must not be declared in {cls_with_missing}.lua"
+                )
+
+        code, _ = generate_class_lua(
+            "TestMissing", None,
+            {"Gone": {"status": "missing", "declared": "TestMissing"}},
+            {}, scanner=None
+        )
+        self.assertNotIn("function TestMissing:Gone", code)
 
         # Verify missing global functions are not in globals.lua
         globals_lua = self.files.get("globals.lua")

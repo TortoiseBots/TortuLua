@@ -15,7 +15,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 164 | 3 | 0 | 98% | 100% |
 | Player | 263 | 241 | 22 | 0 | 92% | 100% |
-| Creature | 94 | 87 | 0 | 7 | 93% | 93% |
+| Creature | 94 | 90 | 4 | 0 | 96% | 100% |
 | GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
 | Item | 66 | 58 | 8 | 0 | 88% | 100% |
 | Group | 27 | 27 | 0 | 0 | 100% | 100% |
@@ -48,11 +48,11 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 23 | 0 | 0% | 100% |
-| **all** | **1443** | **1294** | **142** | **7** | **90%** | **100%** |
+| **all** | **1443** | **1297** | **146** | **0** | **90%** | **100%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
-Class notes: `AuraEffect` — implemented, but unreachable from scripts until core spell hooks exist; `ElunaProcInfo` — implemented, but unreachable from scripts until core spell hooks exist.
+Class notes: `Object` — the 17 update-field and flag stubs: this core stores typed update-field fragments, and the setter type is private to its entity classes (Object/Updates/UpdateField.h: UpdateFieldPrivateSetter), so there is no public by-index or by-flag reader/writer; `Map` — the two instance-data stubs: this core's InstanceScript has no generic data store; encounter state is boss-state and persistent-value members registered by C++ scripts (Instances/InstanceScript.h); `AuraEffect` — implemented, but unreachable from scripts until core spell hooks exist; `ElunaProcInfo` — implemented, but unreachable from scripts until core spell hooks exist.
 
 Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and are not part of the eluna surface (appendix A).
 
@@ -193,6 +193,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `require` | Lua sandbox module loader (Api.cpp registerCommon, both modes) |
 
 ### Class `Object`
+
+Note: the 17 update-field and flag stubs: this core stores typed update-field fragments, and the setter type is private to its entity classes (Object/Updates/UpdateField.h: UpdateFieldPrivateSetter), so there is no public by-index or by-flag reader/writer.
 
 | Documented method | Status | Note |
 |---|---|---|
@@ -728,13 +730,13 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `AttackStart` | implemented |  |
 | `CallAssistance` | implemented |  |
 | `CallForHelp` | implemented |  |
-| `CanAggro` | **missing** |  |
+| `CanAggro` | **stub** | stub: not available (this core); no core aggro predicate: eligibility is Creature::CanStartAttack(Unit const*, bool), which needs a target |
 | `CanAssistTo` | implemented |  |
-| `CanCompleteQuest` | **missing** |  |
+| `CanCompleteQuest` | implemented |  |
 | `CanFly` | implemented |  |
 | `CanStartAttack` | implemented |  |
 | `CanSwim` | implemented |  |
-| `CanWalk` | **missing** |  |
+| `CanWalk` | **stub** | stub: not available (this core); the core has IsWalking()/SetWalk() and the CreatureChaseMovementType::CanWalk chase mode, not a walking-capability query |
 | `ClearFixate` | implemented |  |
 | `ClearThreat` | implemented |  |
 | `ClearThreatList` | implemented |  |
@@ -777,7 +779,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HasSpellCooldown` | implemented |  |
 | `IsBoss` | implemented |  |
 | `IsCivilian` | implemented |  |
-| `IsDamageEnoughForLootingAndReward` | **missing** |  |
+| `IsDamageEnoughForLootingAndReward` | **stub** | stub: not available (this core); the core keeps Creature::m_PlayerDamageReq and the LowerPlayerDamageReq/ResetPlayerDamageReq helpers, but no loot/reward predicate |
 | `IsDungeonBoss` | implemented |  |
 | `IsElite` | implemented |  |
 | `IsGuard` | implemented |  |
@@ -786,19 +788,19 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsRegeneratingHealth` | implemented |  |
 | `IsReputationGainDisabled` | implemented |  |
 | `IsTappedBy` | implemented |  |
-| `IsTargetableForAttack` | **missing** |  |
+| `IsTargetableForAttack` | implemented |  |
 | `IsTrigger` | implemented |  |
 | `IsWorldBoss` | implemented |  |
 | `MoveWaypoint` | implemented |  |
 | `RemoveCorpse` | implemented |  |
-| `RemoveFromWorld` | **missing** |  |
+| `RemoveFromWorld` | implemented |  |
 | `RemoveLootMode` | implemented |  |
 | `ResetAllThreat` | implemented |  |
 | `ResetLootMode` | implemented |  |
 | `Respawn` | implemented |  |
 | `SaveToDB` | implemented |  |
 | `SelectVictim` | implemented |  |
-| `SetAggroEnabled` | **missing** |  |
+| `SetAggroEnabled` | **stub** | stub: not available (this core); no aggro-enabled flag; Creature::SetReactState(REACT_PASSIVE) is the core's control |
 | `SetDeathState` | implemented |  |
 | `SetDefaultMovementType` | implemented |  |
 | `SetDisableGravity` | implemented |  |
@@ -875,8 +877,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetOwner` | implemented |  |
 | `GetOwnerGUID` | implemented |  |
 | `GetQuality` | implemented |  |
-| `GetRandomProperty` | **stub** | stub: not available (this core) |
-| `GetRandomSuffix` | **stub** | stub: not available (this core) |
+| `GetRandomProperty` | **stub** | stub: not available (this core); this core has no legacy random property id: items carry ItemRandomBonusListId (Item::GetItemRandomBonusListId, m_randomBonusListId) |
+| `GetRandomSuffix` | **stub** | stub: not available (this core); this core has no legacy random suffix id: items carry ItemRandomBonusListId (Item::GetItemRandomBonusListId, m_randomBonusListId) |
 | `GetRequiredLevel` | implemented |  |
 | `GetSellPrice` | implemented |  |
 | `GetSlot` | implemented |  |
@@ -904,13 +906,13 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsRefundExpired` | implemented |  |
 | `IsSoulBound` | implemented |  |
 | `IsWeaponVellum` | **stub** | stub: not available (Classic 1.60) |
-| `SaveToDB` | **stub** | stub: not available (this server) |
+| `SaveToDB` | **stub** | stub: not available (this server); Item::SaveToDB takes a CharacterDatabaseTransaction that the caller commits synchronously: the write would block the game thread |
 | `SetBinding` | implemented |  |
 | `SetCount` | implemented |  |
 | `SetEnchantment` | implemented |  |
-| `SetOwner` | **stub** | stub: not available (this server) |
-| `SetRandomProperty` | **stub** | stub: not available (this core) |
-| `SetRandomSuffix` | **stub** | stub: not available (this core) |
+| `SetOwner` | **stub** | stub: not available (this server); the core keeps an item in its owner's inventory, update queue and database rows; rewriting only the owner guid would leave the item in the old owner's bag |
+| `SetRandomProperty` | **stub** | stub: not available (this core); this core has no legacy random property id: items carry ItemRandomBonusListId (Item::SetItemRandomBonusList, m_randomBonusListId) |
+| `SetRandomSuffix` | **stub** | stub: not available (this core); this core has no legacy random suffix id: items carry ItemRandomBonusListId (Item::SetItemRandomBonusList, m_randomBonusListId) |
 ### Class `Group`
 
 | Documented method | Status | Note |
@@ -959,8 +961,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetName` | implemented |  |
 | `SendPacket` | implemented |  |
 | `SendPacketToRanked` | implemented |  |
-| `SetBankTabText` | **stub** | stub: not available (Classic 1.60) |
-| `SetLeader` | **stub** | stub: not available (this server) |
+| `SetBankTabText` | **stub** | stub: not available (Classic 1.60); Classic 1.60 has no guild bank (no client window and GUILD 9/11 never fire), so the core's Guild::SetBankTabText has no tab to name |
+| `SetLeader` | **stub** | stub: not available (this server); the pinned core changes a guild leader only through Guild::HandleSetNewGuildMaster, which needs the old leader's session and its client permission checks; there is no server-side setter (Guild::_SetLeader is private) |
 | `SetMemberRank` | implemented |  |
 ### Class `Quest`
 
@@ -1043,13 +1045,15 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetStackAmount` | implemented |  |
 ### Class `Map`
 
+Note: the two instance-data stubs: this core's InstanceScript has no generic data store; encounter state is boss-state and persistent-value members registered by C++ scripts (Instances/InstanceScript.h).
+
 | Documented method | Status | Note |
 |---|---|---|
 | `Data` | implemented |  |
 | `GetAreaId` | implemented |  |
 | `GetDifficulty` | implemented |  |
 | `GetHeight` | implemented |  |
-| `GetInstanceData` | **stub** | stub: not available (this core) |
+| `GetInstanceData` | **stub** | stub: not available (this core); no generic instance data store to read (see the Map class note) |
 | `GetInstanceId` | implemented |  |
 | `GetMapId` | implemented |  |
 | `GetName` | implemented |  |
@@ -1062,7 +1066,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsEmpty` | implemented |  |
 | `IsHeroic` | implemented |  |
 | `IsRaid` | implemented |  |
-| `SaveInstanceData` | **stub** | stub: not available (this core) |
+| `SaveInstanceData` | **stub** | stub: not available (this core); no generic instance data store to save (see the Map class note) |
 | `SetWeather` | implemented |  |
 ### Class `ElunaQuery`
 

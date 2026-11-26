@@ -69,6 +69,7 @@ std::vector<std::string> const& roundCalls()
         "GetAttackDistance(stored)",
         "CanAssistTo(stored, stored)",
         "CanStartAttack(stored)",
+        "IsTargetableForAttack()",
         "IsTappedBy(stored)",
         "HasLootRecipient()",
         "GetLootRecipient()",
@@ -137,6 +138,8 @@ std::vector<std::string> const& roundCalls()
         "RemoveLootMode(2)",
         "ResetLootMode()",
         "HasQuest(100)",
+        "CanCompleteQuest(100)",
+        "RemoveFromWorld()",
     };
     return calls;
 }
@@ -228,6 +231,11 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     c.canStartAttack = true;
     CHECK(rig.ok("return tostring(mob:CanStartAttack(stored, false))") == "true");
     CHECK_FALSE(c.canStartAttackForce);
+    c.targetable = false;
+    CHECK(rig.ok("return tostring(mob:IsTargetableForAttack())") == "false");
+    c.targetable = true;
+    CHECK(rig.ok("return tostring(mob:IsTargetableForAttack(false))") == "true");
+    CHECK_FALSE(c.targetableCheckFakeDeath);   // the optional flag reaches the core call
     c.tapped = true;
     CHECK(rig.ok("return tostring(mob:IsTappedBy(stored))") == "true");
     CHECK(c.lastTappedLow == p.guid.lo);
@@ -312,6 +320,8 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     CHECK(rig.ok("return mob:GetRespawnDelay() .. ',' .. mob:GetCorpseDelay()") == "300,60");
     rig.ok("mob:RemoveCorpse()");
     CHECK(c.corpseRemovals == 1);
+    rig.ok("mob:RemoveFromWorld()");
+    CHECK(c.removeFromWorlds == 1);
     rig.ok("mob:SetDeathState(1)");
     CHECK(c.deathState == 1);
     rig.ok("mob:SetDeathState(3)");
@@ -361,6 +371,9 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     CHECK(c.lootMode == 1);
     c.quests = {100};
     CHECK(rig.ok("return tostring(mob:HasQuest(100)) .. tostring(mob:HasQuest(101))") == "truefalse");
+    // the end relation is separate from the starter relation
+    c.involvedQuests = {102};
+    CHECK(rig.ok("return tostring(mob:CanCompleteQuest(102)) .. tostring(mob:CanCompleteQuest(100))") == "truefalse");
 }
 
 TEST_CASE("eluna creature long tail: a bad argument raises before the host is called")
@@ -406,6 +419,7 @@ TEST_CASE("eluna creature long tail: a bad argument raises before the host is ca
     CHECK(errorOf("mob:SetLootMode(65536)").find("lootMode must be an integer 0..65535") != std::string::npos);
     CHECK(errorOf("mob:AddLootMode(-1)").find("lootMode must be an integer 0..65535") != std::string::npos);
     CHECK(errorOf("mob:SetDisableGravity()").find("bad argument") != std::string::npos);
+    CHECK(errorOf("mob:CanCompleteQuest(-1)").find("questId must be an integer 0..4294967295") != std::string::npos);
     // a handle of the wrong kind
     CHECK(errorOf("mob:AttackStart(5)").find("bad argument") != std::string::npos);
     CHECK(errorOf("mob:CanAssistTo(5, stored)").find("bad argument") != std::string::npos);
@@ -484,4 +498,25 @@ TEST_CASE("eluna creature long tail: the host's refusals raise with the method's
           std::string::npos);
     CHECK(errorOf("mob:AddThreat(stored, 10, 1)").find("needs the spell entry") != std::string::npos);
     CHECK(errorOf("mob:AddThreat(stored, 10, 0, 9999)").find("needs the spell entry") != std::string::npos);
+}
+
+TEST_CASE("eluna creature: the four documented calls the core cannot answer are honest stubs")
+{
+    CreatureRig rig;
+    fl::HandleData mob = FakeHost::creature(112, 0, 0, 900);
+    fl::ObjectInfo info;
+    info.name = "Stubs";
+    rig.host.add(mob, info);
+    prepare(rig.host, mob);
+    storeHandles(rig, FakeHost::player(111), mob);
+
+    // Each name is in the class table (the call resolves) and raises the documented core error.
+    for (std::string const& call : {"CanAggro()", "CanWalk()", "IsDamageEnoughForLootingAndReward()",
+                                    "SetAggroEnabled(true)"})
+    {
+        INFO("call: mob:" << call);
+        fl::CallResult r = rig.run("mob:" + call);
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("not available on this core") != std::string::npos);
+    }
 }

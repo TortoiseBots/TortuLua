@@ -880,7 +880,7 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
         "creature.fleeToGetAssistance", "creature.setNoCallAssistance", "creature.setNoSearchAssistance",
         "creature.hasSearchedAssistance", "creature.isInEvadeMode", "creature.setInCombatWithZone",
         "creature.getAggroRange", "creature.getAttackDistance", "creature.canAssistTo", "creature.canStartAttack",
-        "creature.isTappedBy", "creature.hasLootRecipient", "creature.getLootRecipient",
+        "creature.isTargetableForAttack", "creature.isTappedBy", "creature.hasLootRecipient", "creature.getLootRecipient",
         "creature.getLootRecipientGroup", "creature.addThreat", "creature.getThreat", "creature.clearThreat",
         "creature.clearThreatList", "creature.resetAllThreat", "creature.fixateTarget", "creature.clearFixate",
         "creature.getAITargets", "creature.getAITargetsCount", "creature.isCivilian", "creature.isGuard",
@@ -891,13 +891,13 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
         "creature.getWaypointPath", "creature.getCurrentWaypointId", "creature.moveWaypoint",
         "creature.getDefaultMovementType", "creature.setDefaultMovementType", "creature.getWanderRadius",
         "creature.setWanderRadius", "creature.setHomePosition", "creature.getRespawnDelay",
-        "creature.getCorpseDelay", "creature.removeCorpse", "creature.setDeathState",
+        "creature.getCorpseDelay", "creature.removeCorpse", "creature.removeFromWorld", "creature.setDeathState",
         "creature.setEquipmentSlots", "creature.getCreatureFamily", "creature.getNPCFlags",
         "creature.setNPCFlags", "creature.getExtraFlags", "creature.getRank", "creature.getDBTableGUIDLow",
         "creature.getAIName", "creature.getScriptId", "creature.updateEntry", "creature.hasSpell",
         "creature.hasSpellCooldown", "creature.hasCategoryCooldown", "creature.getSpellCooldownDelay",
         "creature.getLootMode", "creature.hasLootMode", "creature.setLootMode", "creature.addLootMode",
-        "creature.removeLootMode", "creature.resetLootMode", "creature.hasQuest"};
+        "creature.removeLootMode", "creature.resetLootMode", "creature.hasQuest", "creature.canCompleteQuest"};
     if (!ops.count(op))
         return false;
 
@@ -991,6 +991,11 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
             c.canStartAttackTargetLow = target.guid.lo;
         c.canStartAttackForce = unitBoolAt(args, 1, true);
         out.emplace_back(c.canStartAttack);
+    }
+    else if (op == "creature.isTargetableForAttack")
+    {
+        c.targetableCheckFakeDeath = unitBoolAt(args, 0, true);
+        out.emplace_back(c.targetable);
     }
     else if (op == "creature.isTappedBy")
     {
@@ -1149,6 +1154,8 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
         out.emplace_back(static_cast<int64_t>(c.corpseDelay));
     else if (op == "creature.removeCorpse")
         ++c.corpseRemovals;
+    else if (op == "creature.removeFromWorld")
+        ++c.removeFromWorlds;
     else if (op == "creature.setDeathState")
     {
         if (unitIntAt(args, 0) == 0 && c.healthZero)
@@ -1252,6 +1259,8 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
         c.lootMode &= ~static_cast<uint32_t>(unitIntAt(args, 0));
     else if (op == "creature.resetLootMode")
         c.lootMode = 1;
+    else if (op == "creature.canCompleteQuest")
+        out.emplace_back(c.involvedQuests.count(static_cast<uint32_t>(unitIntAt(args, 0))) != 0);
     else  // creature.hasQuest
         out.emplace_back(c.quests.count(static_cast<uint32_t>(unitIntAt(args, 0))) != 0);
     (void)action;

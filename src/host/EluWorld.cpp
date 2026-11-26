@@ -4348,6 +4348,11 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                     out.emplace_back(creature->CanStartAttack(target, bArg(args, 1, true)));
             return true;
         }
+        if (name == "creature.isTargetableForAttack")
+        {
+            out.emplace_back(creature->isTargetableForAttack(bArg(args, 0, true)));
+            return true;
+        }
         if (name == "creature.isTappedBy")
         {
             HandleData other;
@@ -4616,6 +4621,13 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             creature->RemoveCorpse();
             return true;
         }
+        if (name == "creature.removeFromWorld")
+        {
+            // the map's own removal path: it unlinks the creature on its thread and fires the removal hooks, where a
+            // direct RemoveFromWorld() would pull it out while the map may still be iterating it
+            creature->AddObjectToRemoveList();
+            return true;
+        }
         if (name == "creature.setDeathState")
         {
             DeathState const state = static_cast<DeathState>(iArg(args, 0));
@@ -4828,6 +4840,12 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "creature.hasQuest")
         {
             out.emplace_back(creature->hasQuest(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "creature.canCompleteQuest")
+        {
+            // the end-relation of the creature's quests (Creature::hasInvolvedQuest)
+            out.emplace_back(creature->hasInvolvedQuest(static_cast<uint32>(iArg(args, 0))));
             return true;
         }
     }

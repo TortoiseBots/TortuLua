@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* **Eluna API coverage (0.3.0, part of #17):** `Creature` 87 -> 90 implemented, 0 -> 4 stubs, 7 -> 0 missing
+  (93% -> 96% implemented, 93% -> 100% resolvable). The seven documented Creature methods are implemented or honest
+  core stubs, and every remaining `Object`, `Item`, `Guild` and `Map` stub is re-checked against the pinned core with
+  its reason recorded in `docs/COVERAGE.md`.
+
 ## 0.2.0-beta
 
 Second beta release of TortuLua, expanding Eluna API coverage across object, world, spell, packet, and event families,
