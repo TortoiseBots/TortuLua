@@ -566,9 +566,17 @@ TEST_CASE("eluna player reads, round 2: the values flow through the fake player 
           "4242,3,47");
     CHECK(rig.ok("return stored:ResetTalentsCost()") == "50000");
 
-    state.chatTag = 1;
+    state.afk = true;
     state.lifetimeKills = 42;
     CHECK(rig.ok("return stored:GetChatTag() .. ',' .. stored:GetLifetimeKills()") == "1,42");
+    // The chat flag bits, as the core sends them: AFK 1, DND 2, GM 4 (GM chat alone no longer collides with AFK).
+    state.afk = false;
+    state.gmChat = true;
+    CHECK(rig.ok("return stored:GetChatTag()") == "4");
+    state.dnd = true;
+    CHECK(rig.ok("return stored:GetChatTag()") == "6");
+    state.afk = true;
+    CHECK(rig.ok("return stored:GetChatTag()") == "7");
     state.items.push_back(FakeHost::FakeItem{9551, 2589, 0, 0});
     state.mailedItems.insert(9551);
     CHECK(rig.ok("return stored:GetMailItem(9551):GetGUIDLow()") == "9551");
@@ -1102,12 +1110,28 @@ TEST_CASE("eluna player round 3: reads, writes and social methods flow through f
     rig.ok("stored:AdvanceAllSkills(5)");
     CHECK(state.skills[164].cur == 65);
     CHECK(state.skills[44].cur == 15);
+    // A step larger than the room to the maximum is cut to the room by the host: the core truncates value + step to
+    // 16 bits before its clamp, so the unclamped 65535 would wrap and lower both skills.
+    rig.ok("stored:AdvanceSkill(164, 65535)");
+    CHECK(state.skills[164].cur == 75);
+    rig.ok("stored:AdvanceAllSkills(65535)");
+    CHECK(state.skills[164].cur == 75);
+    CHECK(state.skills[44].cur == 300);
     rig.ok("stored:AdvanceSkillsToMax()");
     CHECK(state.skills[44].cur == 300);
 
     // instances
     state.instanceBinds.insert({36, 0});
     state.instanceBinds.insert({43, 0});
+    // the core's lock creation needs the instance script and lock: without either, nothing is bound
+    state.instanceHasData = false;
+    rig.ok("stored:BindToInstance()");
+    CHECK_FALSE(state.instanceBound);
+    state.instanceHasData = true;
+    state.instanceHasLock = false;
+    rig.ok("stored:BindToInstance()");
+    CHECK_FALSE(state.instanceBound);
+    state.instanceHasLock = true;
     rig.ok("stored:BindToInstance()");
     CHECK(state.instanceBound);
     rig.ok("stored:UnbindInstance(36)");
@@ -1129,6 +1153,10 @@ TEST_CASE("eluna player round 3: reads, writes and social methods flow through f
     CHECK_FALSE(state.playerLock);
     rig.ok("stored:Mute(120)");
     CHECK(state.muteTime == 120);
+    // a status is written only for a quest in the log: a quest without a slot gets no entry
+    rig.ok("stored:SetQuestStatus(300, 1)");
+    CHECK(state.questStatus.count(300) == 0);
+    state.questLog.insert(300);
     rig.ok("stored:SetQuestStatus(300, 1)");
     CHECK(state.questStatus[300] == 1);
     rig.ok("stored:StartTaxi(42)");
@@ -1156,6 +1184,8 @@ TEST_CASE("eluna player round 3: reads, writes and social methods flow through f
     rig.ok("stored:RemoveFromBattlegroundRaid()");
     CHECK_FALSE(state.inBgRaid);
     rig.ok("stored:SetGuildRank(3)");
+    CHECK(rig.ok("return stored:GetGuildRank()") == "3");
+    rig.ok("stored:SetGuildRank(0)");  // rank 0 is the Guild Master: refused, the rank stays
     CHECK(rig.ok("return stored:GetGuildRank()") == "3");
     rig.ok("stored:RunCommand('.server info')");
     REQUIRE(state.playerCommands.size() == 1);
@@ -1224,6 +1254,20 @@ TEST_CASE("eluna player round 3: bad arguments raise before host and core stubs 
     CHECK(errorOf("stored:SetMovement(0)").find("1..4") != std::string::npos);
     CHECK(errorOf("stored:SetMovement(5)").find("1..4") != std::string::npos);
     CHECK(errorOf("stored:SetQuestStatus(100, 7)").find("0..6") != std::string::npos);
+    // skill ids and steps are 16-bit and a step is at least 1 (the core truncates a larger step and could lower a skill)
+    CHECK(errorOf("stored:AdvanceSkill(164, 65536)").find("skillStep must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceSkill(164, 0)").find("skillStep must be an integer 1..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceSkill(65536, 5)").find("skillId must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceSkill(164, -1)").find("skillStep must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceAllSkills(65536)").find("skillStep must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:AdvanceAllSkills(0)").find("skillStep must be an integer 1..65535") != std::string::npos);
+    // strings are capped at what the packet field carries
+    CHECK(errorOf("stored:GossipSendPOI(1, 2, 6, 1, 0, string.rep('a', 64))").find("iconText must be at most 63") !=
+          std::string::npos);
+    CHECK(errorOf("stored:SendAddonMessage(string.rep('a', 32), 'M', 7, other)").find("prefix must be at most 31") !=
+          std::string::npos);
+    CHECK(errorOf("stored:SendAddonMessage('P', string.rep('a', 256), 7, other)").find("message must be at most 255") !=
+          std::string::npos);
     CHECK(errorOf("stored:SetGuildRank(256)").find("rank must be an integer 0..255") != std::string::npos);
     CHECK(errorOf("stored:GroupCreate(mob)").find("invited is not of the expected kind") != std::string::npos);
     CHECK(errorOf("stored:GroupInvite(mob)").find("invited is not of the expected kind") != std::string::npos);
@@ -1246,6 +1290,12 @@ TEST_CASE("eluna player round 3: bad arguments raise before host and core stubs 
     CHECK(errorOf("stored:SummonPet(416, 1, 2, 0/0, 0, 0, 0)").find("finite number") != std::string::npos);
     CHECK(errorOf("stored:SummonPet(416, 1, 2, 3, 1e39, 0, 0)").find("finite number") != std::string::npos);
     CHECK(rig.host.gameCalls.size() == callsBefore);
+
+    // the largest allowed values still reach the host
+    rig.ok("stored:GossipSendPOI(1, 2, 6, 1, 0, string.rep('a', 63))");
+    rig.ok("stored:SendAddonMessage(string.rep('a', 31), string.rep('b', 255), 7, other)");
+    rig.ok("stored:AdvanceSkill(65535, 65535)");
+    CHECK(rig.host.gameCalls.size() == callsBefore + 3);
 
     for (char const* name : {"AddLifetimeKills", "RemoveLifetimeKills", "SetLifetimeKills",
                              "SetFreeTalentPoints", "LearnTalent", "ResetPetTalents", "SendAreaTriggerMessage"})

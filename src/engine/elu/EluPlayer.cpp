@@ -837,16 +837,32 @@ int pAddTalent(lua_State* L)
                   {EventValue(static_cast<int64_t>(argUInt(L, 2, "spellId"))),
                    EventValue(static_cast<int64_t>(argU8(L, 3, "spec"))), EventValue(optBool(L, 4, true))});
 }
+// A string the packet field behind it can carry: a longer one would be masked to a malformed packet, so it is refused.
+std::string argStrMax(lua_State* L, int idx, char const* what, size_t maxLen)
+{
+    std::string value = argStr(L, idx, what);
+    if (value.size() > maxLen)
+        luaL_error(L, "%s must be at most %d characters", what, static_cast<int>(maxLen));
+    return value;
+}
+// The core adds the step to a 16-bit skill value before it clamps to the maximum, so a step above 65535 wraps and can
+// lower a skill: the step is 1..65535 (0 changes nothing and is refused).
 int pAdvanceAllSkills(lua_State* L)
 {
+    uint32_t const skillStep = argU16(L, 2, "skillStep");
+    if (skillStep == 0)
+        luaL_error(L, "skillStep must be an integer 1..65535");
     return actionOp(L, kPlayer, "player.advanceAllSkills", "AdvanceAllSkills",
-                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "skillStep")))});
+                    {EventValue(static_cast<int64_t>(skillStep))});
 }
 int pAdvanceSkill(lua_State* L)
 {
+    uint32_t const skillId = argU16(L, 2, "skillId");
+    uint32_t const skillStep = argU16(L, 3, "skillStep");
+    if (skillStep == 0)
+        luaL_error(L, "skillStep must be an integer 1..65535");
     return actionOp(L, kPlayer, "player.advanceSkill", "AdvanceSkill",
-                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "skillId"))),
-                     EventValue(static_cast<int64_t>(argUInt(L, 3, "skillStep")))});
+                    {EventValue(static_cast<int64_t>(skillId)), EventValue(static_cast<int64_t>(skillStep))});
 }
 int pAdvanceSkillsToMax(lua_State* L)
 {
@@ -871,7 +887,7 @@ int pGossipSendPOI(lua_State* L)
                      EventValue(static_cast<int64_t>(argUInt(L, 4, "icon"))),
                      EventValue(static_cast<int64_t>(argUInt(L, 5, "flags"))),
                      EventValue(static_cast<int64_t>(argUInt(L, 6, "data"))),
-                     EventValue(argStr(L, 7, "iconText"))});
+                     EventValue(argStrMax(L, 7, "iconText", 63))});
 }
 int pKilledPlayerCredit(lua_State* L)
 {
@@ -926,8 +942,9 @@ int pSummonPet(lua_State* L)
 }
 int pSendAddonMessage(lua_State* L)
 {
-    std::string const prefix = argStr(L, 2, "prefix");
-    std::string const message = argStr(L, 3, "message");
+    // The packet fields: prefix 5 bits of length (31), text 12 bits (4095); an addon message is at most 255 characters.
+    std::string const prefix = argStrMax(L, 2, "prefix", 31);
+    std::string const message = argStrMax(L, 3, "message", 255);
     uint32_t const channel = argU8(L, 4, "channel");
     fl::HandleData const& receiver = objArg(L, 5, kPlayer, "receiver");
     return actionOp(L, kPlayer, "player.sendAddonMessage", "SendAddonMessage",

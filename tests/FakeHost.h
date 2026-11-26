@@ -578,7 +578,6 @@ public:
         bool pendingBind = false, inArena = false, inBgQueue = false, acceptWhispers = false, isRecruiter = false;
         bool gmChat = false, gmVisible = true, neverVisible = false, outdoorPvp = false;
         uint32_t resetTalentsCost = 0;
-        uint8_t chatTag = 0;
         uint32_t lifetimeKills = 0;
         std::set<uint64_t> mailedItems;                  // GetMailItem: the low guid of a mailbox item
         bool honorXpTarget = false, seesPlayer = false;  // IsHonorOrXPTarget / IsVisibleForPlayer
@@ -603,11 +602,15 @@ public:
         bool addTalentResult = true;
         std::set<uint32_t> weaponSkills;
         bool instanceBound = false;
+        // The map is an instance map; the core's lock creation needs its instance script and lock (flh::bindToInstanceAllowed).
+        bool instanceHasData = true, instanceHasLock = true;
         std::set<std::pair<uint32_t, uint32_t>> instanceBinds;
         uint32_t muteTime = 0;
         bool playerLock = false;
         int32_t movementType = 0;
         std::map<uint32_t, uint32_t> questStatus;
+        // The quests in the quest log: a status is written only for one of these (flh::questStatusWriteAllowed).
+        std::set<uint32_t> questLog;
         uint32_t taxiPath = 0;
         uint64_t createdGroupId = 0;
         bool groupInviteResult = true;

@@ -11,6 +11,7 @@
 #include "DataSql.h"
 #include "GuildWrite.h"
 #include "NearSearch.h"
+#include "PlayerWrites.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
@@ -5774,8 +5775,9 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.getChatTag")
         {
-            // The documented call is the active GM chat tag; this core keeps the GM chat toggle and no tag byte.
-            out.emplace_back(static_cast<int64_t>(player->isGMChat() ? 1 : 0));
+            // The chat flag bits the core sends: AFK 1, DND 2, GM 4 (flh::chatTagBits).
+            out.emplace_back(static_cast<int64_t>(
+                flh::chatTagBits(player->isAFK(), player->isDND(), player->isGMChat())));
             return true;
         }
         if (name == "player.getChampioningFaction")
@@ -6273,18 +6275,23 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "player.advanceAllSkills")
         {
             uint32 const step = static_cast<uint32>(iArg(args, 0));
-            if (step > 0)
+            if (step > 0 && step <= std::numeric_limits<uint16>::max())
                 for (uint32 i = 0; i < PLAYER_MAX_SKILLS; ++i)
                     if (uint16 const skillId = player->GetSkillLineIdByPos(i))
-                        player->UpdateSkillPro(skillId, 1000, step);
+                        if (uint32 const room = flh::skillAdvanceStep(player->GetPureSkillValue(skillId),
+                                                                      player->GetPureMaxSkillValue(skillId), step))
+                            player->UpdateSkillPro(skillId, 1000, room);
             return true;
         }
         if (name == "player.advanceSkill")
         {
             uint32 const skillId = static_cast<uint32>(iArg(args, 0));
             uint32 const step = static_cast<uint32>(iArg(args, 1));
-            if (skillId <= std::numeric_limits<uint16>::max() && step > 0)
-                player->UpdateSkillPro(static_cast<uint16>(skillId), 1000, step);
+            if (skillId <= std::numeric_limits<uint16>::max() && step > 0 &&
+                step <= std::numeric_limits<uint16>::max())
+                if (uint32 const room = flh::skillAdvanceStep(player->GetPureSkillValue(skillId),
+                                                              player->GetPureMaxSkillValue(skillId), step))
+                    player->UpdateSkillPro(static_cast<uint16>(skillId), 1000, room);
             return true;
         }
         if (name == "player.advanceSkillsToMax")
@@ -6303,8 +6310,15 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.bindToInstance")
         {
-            if (InstanceMap* imap = player->GetMap()->ToInstanceMap())
+            // The core's lock creation dereferences the instance script and the instance lock: an instance map without
+            // either (no instance script, no lock) is refused, never handed to it.
+            InstanceMap* imap = player->GetMap() ? player->GetMap()->ToInstanceMap() : nullptr;
+            if (flh::bindToInstanceAllowed(imap != nullptr, imap && imap->GetInstanceScript() != nullptr,
+                                           imap && imap->GetInstanceLock() != nullptr))
                 imap->CreateInstanceLockForPlayer(player);
+            else
+                log(fl::LogLevel::Warn, "ForeverLua: Player:BindToInstance refused: the map is not an instance with "
+                                        "instance data and a lock");
             return true;
         }
         if (name == "player.unbindInstance" || name == "player.unbindAllInstances")
@@ -6535,9 +6549,16 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.setQuestStatus")
         {
+            // Only a quest that holds a slot in the quest log: a status entry made without one is read out of range
+            // by the next save (FindQuestSlot answers MAX_QUEST_LOG_SIZE for an entry with no slot).
             int64 const status = iArg(args, 1);
-            if (status >= 0 && status < MAX_QUEST_STATUS)
-                player->SetQuestStatus(static_cast<uint32>(iArg(args, 0)), static_cast<QuestStatus>(status));
+            uint32 const questId = static_cast<uint32>(iArg(args, 0));
+            if (flh::questStatusWriteAllowed(player->FindQuestSlot(questId) < MAX_QUEST_LOG_SIZE, status,
+                                             MAX_QUEST_STATUS))
+                player->SetQuestStatus(questId, static_cast<QuestStatus>(status));
+            else
+                log(fl::LogLevel::Warn, "ForeverLua: Player:SetQuestStatus refused: the quest is not in the player's "
+                                        "quest log");
             return true;
         }
         if (name == "player.startTaxi")
@@ -6690,6 +6711,11 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "player.setGuildRank")
         {
             uint8 const rank = static_cast<uint8>(iArg(args, 0));
+            if (!flh::guildRankWriteAllowed(rank))
+            {
+                log(fl::LogLevel::Warn, "ForeverLua: Player:SetGuildRank refused: rank 0 is the Guild Master");
+                return true;
+            }
             fl::Guid const playerGuid = fromGuid(player->GetGUID());
             runSocialWrite("Guild rank change",
                            [playerGuid, rank]
@@ -6720,10 +6746,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 std::string cmd = (line[0] == '.' || line[0] == '!') ? line : ("." + line);
                 ChatHandler(target->GetSession()).ParseCommands(cmd);
             };
-            if (rules().placeForWorld() == AccessRules::Place::Direct)
-                job();
-            else if (!deferred().push(job))
-                log(fl::LogLevel::Warn, "ForeverLua: Player:RunCommand dropped: the world thread queue is full");
+            // Through the social write path: a command may change a group or guild (.group disband), so it runs on the
+            // world thread, and from inside a hook of such a change or a core social action it waits for the next tick
+            // instead of re-entering the core.
+            runSocialWrite("Player command", job);
             return true;
         }
 

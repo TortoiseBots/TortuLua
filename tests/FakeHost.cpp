@@ -2,6 +2,7 @@
 
 #include "CreatureLookup.h"
 #include "NearSearch.h"
+#include "PlayerWrites.h"
 
 #include "engine/GuidText.h"
 
@@ -2876,7 +2877,7 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
     else if (op == "player.canUninviteFromGroup")
         out.emplace_back(static_cast<int64_t>(p.partyResult));
     else if (op == "player.getChatTag")
-        out.emplace_back(static_cast<int64_t>(p.chatTag));
+        out.emplace_back(static_cast<int64_t>(flh::chatTagBits(p.afk, p.dnd, p.gmChat)));
     else if (op == "player.getChampioningFaction")
         out.emplace_back(static_cast<int64_t>(p.championing));
     else if (op == "player.getDbcLocale")
@@ -3156,15 +3157,28 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
     else if (op == "player.advanceSkill")
     {
         FakeSkill& s = p.skills[static_cast<uint32_t>(intAt(args, 0))];
-        if (s.known && s.max > 0)
-            s.cur = std::min(s.max, s.cur + static_cast<uint32_t>(intAt(args, 1)));
+        uint32_t const step = flh::skillAdvanceStep(s.cur, s.max, static_cast<uint32_t>(intAt(args, 1)));
+        if (s.known && s.max > 0 && step > 0)
+        {
+            // The core's UpdateSkillPro adds the step to a 16-bit value, then clamps (Player.cpp).
+            s.cur = static_cast<uint16_t>(s.cur + step);
+            if (s.cur > s.max)
+                s.cur = s.max;
+        }
     }
     else if (op == "player.advanceAllSkills")
     {
-        uint32_t const step = static_cast<uint32_t>(intAt(args, 0));
+        uint32_t const requested = static_cast<uint32_t>(intAt(args, 0));
         for (auto& [id, s] : p.skills)
-            if (s.known && s.max > 0)
-                s.cur = std::min(s.max, s.cur + step);
+        {
+            uint32_t const step = flh::skillAdvanceStep(s.cur, s.max, requested);
+            if (s.known && s.max > 0 && step > 0)
+            {
+                s.cur = static_cast<uint16_t>(s.cur + step);
+                if (s.cur > s.max)
+                    s.cur = s.max;
+            }
+        }
     }
     else if (op == "player.advanceSkillsToMax")
     {
@@ -3176,7 +3190,10 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         }
     }
     else if (op == "player.bindToInstance")
-        p.instanceBound = true;
+    {
+        if (flh::bindToInstanceAllowed(true, p.instanceHasData, p.instanceHasLock))
+            p.instanceBound = true;
+    }
     else if (op == "player.unbindInstance")
         p.instanceBinds.erase({static_cast<uint32_t>(intAt(args, 0)), static_cast<uint32_t>(intAt(args, 1, 0))});
     else if (op == "player.unbindAllInstances")
@@ -3208,7 +3225,11 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
     else if (op == "player.setPlayerLock")
         p.playerLock = boolAt(args, 0, true);
     else if (op == "player.setQuestStatus")
-        p.questStatus[static_cast<uint32_t>(intAt(args, 0))] = static_cast<uint32_t>(intAt(args, 1));
+    {
+        uint32_t const quest = static_cast<uint32_t>(intAt(args, 0));
+        if (flh::questStatusWriteAllowed(p.questLog.count(quest) != 0, intAt(args, 1), 7))
+            p.questStatus[quest] = static_cast<uint32_t>(intAt(args, 1));
+    }
     else if (op == "player.startTaxi")
         p.taxiPath = static_cast<uint32_t>(intAt(args, 0));
     else if (op == "player.groupCreate")
@@ -3225,7 +3246,10 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
     else if (op == "player.groupInvite")
         out.emplace_back(p.groupInviteResult);
     else if (op == "player.setGuildRank")
-        p.guildRank = static_cast<uint8_t>(intAt(args, 0));
+    {
+        if (flh::guildRankWriteAllowed(static_cast<uint32_t>(intAt(args, 0))))
+            p.guildRank = static_cast<uint8_t>(intAt(args, 0));
+    }
     else if (op == "player.runCommand")
         p.playerCommands.push_back(stringAt(args, 0));
     else if (op == "player.gossipSendPOI" || op == "player.killedPlayerCredit" || op == "player.killGOCredit" ||
