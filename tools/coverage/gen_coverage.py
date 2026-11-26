@@ -154,8 +154,8 @@ METHOD_NOTES = {
                                  "(Item::SetItemRandomBonusList, m_randomBonusListId)",
     ("Item", "SetOwner"): "the core keeps an item in its owner's inventory, update queue and database rows; rewriting "
                           "only the owner guid would leave the item in the old owner's bag",
-    ("Item", "SaveToDB"): "Item::SaveToDB takes a CharacterDatabaseTransaction that the caller commits synchronously: the "
-                          "write would block the game thread",
+    ("Item", "SaveToDB"): "Item::SaveToDB called without a CharacterDatabaseTransaction begins and commits its own "
+                          "synchronous transaction: the write would block the game thread",
     ("Guild", "SetLeader"): "the pinned core changes a guild leader only through Guild::HandleSetNewGuildMaster, which "
                             "needs the old leader's session and its client permission checks; there is no server-side "
                             "setter (Guild::_SetLeader is private)",

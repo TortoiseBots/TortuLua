@@ -906,7 +906,7 @@ Note: the 17 update-field and flag stubs: this core stores typed update-field fr
 | `IsRefundExpired` | implemented |  |
 | `IsSoulBound` | implemented |  |
 | `IsWeaponVellum` | **stub** | stub: not available (Classic 1.60) |
-| `SaveToDB` | **stub** | stub: not available (this server); Item::SaveToDB takes a CharacterDatabaseTransaction that the caller commits synchronously: the write would block the game thread |
+| `SaveToDB` | **stub** | stub: not available (this server); Item::SaveToDB called without a CharacterDatabaseTransaction begins and commits its own synchronous transaction: the write would block the game thread |
 | `SetBinding` | implemented |  |
 | `SetCount` | implemented |  |
 | `SetEnchantment` | implemented |  |

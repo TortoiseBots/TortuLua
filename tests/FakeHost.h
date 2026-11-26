@@ -242,7 +242,13 @@ public:
     struct FakeCreature
     {
         bool hasAi = true;
-        bool isPet = false;                 // a pet / player-controlled creature: the creature-AI-only calls refuse
+        // Ownership, as the host's tests see it: IsPet(), IsControlledByPlayer() and the charmer/owner player lookup.
+        bool isPet = false;                 // a pet: IsPet(), and the creature-AI-only calls' player-controlled refusal
+        bool controlledByPlayer = false;    // Unit::IsControlledByPlayer (a player's guardian, minion or charm)
+        bool charmedByPlayer = false;       // GetCharmerOrOwnerPlayerOrPlayerItself: charmed by a player
+        bool ownedByPlayer = false;         // GetCharmerOrOwnerPlayerOrPlayerItself: owned by a player
+        bool petOrControlled() const { return isPet || controlledByPlayer; }   // IsPet() || IsControlledByPlayer()
+        bool playerOwned() const { return petOrControlled() || charmedByPlayer || ownedByPlayer; }
         bool regenForbidden = false;        // the template forbids health regeneration (SetRegeneratingHealth(true) refused)
         bool healthZero = false;            // a dead creature: SetDeathState(ALIVE) would leave it alive at 0 health
         std::set<uint32_t> noModelEntries;  // entries whose template has no usable model (UpdateEntry refused)

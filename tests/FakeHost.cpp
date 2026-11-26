@@ -943,7 +943,7 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
     }
     else if (op == "creature.fleeToGetAssistance")
     {
-        if (c.isPet)
+        if (c.petOrControlled())
         {
             out.emplace_back(false);
             return true;
@@ -960,7 +960,7 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
         out.emplace_back(c.evadeMode);
     else if (op == "creature.setInCombatWithZone")
     {
-        if (c.isPet)
+        if (c.petOrControlled())
         {
             out.emplace_back(false);
             return true;
@@ -1130,7 +1130,7 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
         out.emplace_back(static_cast<int64_t>(c.defaultMovementType));
     else if (op == "creature.setDefaultMovementType")
     {
-        if (c.isPet)
+        if (c.petOrControlled())
         {
             out.emplace_back(false);
             return true;
@@ -1157,7 +1157,7 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
     else if (op == "creature.removeFromWorld")
     {
         // a player-owned creature (pet, guardian, minion, charm) is refused: its owner's pet lifecycle removes it
-        if (c.isPet)
+        if (c.playerOwned())
         {
             out.emplace_back(false);
             return true;

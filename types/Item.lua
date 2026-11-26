@@ -193,7 +193,7 @@ function Item:IsSoulBound() end
 ---@return any
 function Item:IsWeaponVellum() end
 
----@deprecated not available (this server); Item::SaveToDB takes a CharacterDatabaseTransaction that the caller commits synchronously: the write would block the game thread
+---@deprecated not available (this server); Item::SaveToDB called without a CharacterDatabaseTransaction begins and commits its own synchronous transaction: the write would block the game thread
 ---@return any
 function Item:SaveToDB() end
 
