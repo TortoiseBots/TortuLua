@@ -795,18 +795,51 @@ TEST_CASE("eluna player writes, round 2: the arguments reach the fake player sta
     CHECK(state.resetTalentsCalls == 1);
     CHECK(state.resetTalentsNoCost);
 
-    // durability: each call reaches the host with its arguments
-    rig.ok("stored:DurabilityLoss(stored:GetItemByPos(1, 3), 5.5)");
-    rig.ok("stored:DurabilityLossAll(7.5, false)");
+    // ResetTalents: paid reset requires enough money and deducts cost; noCost=true resets free
+    state.resetTalentsResult = true;
+    state.resetTalentsCalls = 0;
+    state.resetTalentsCost = 10000;
+    state.money = 9999;
+    CHECK(rig.ok("return tostring(stored:ResetTalents())") == "false");
+    CHECK(state.resetTalentsCalls == 0);
+    CHECK(state.money == 9999);
+    CHECK(rig.ok("return tostring(stored:ResetTalents(false))") == "false");
+    CHECK(state.resetTalentsCalls == 0);
+    CHECK(state.money == 9999);
+    CHECK(rig.ok("return tostring(stored:ResetTalents(true))") == "true");
+    CHECK(state.resetTalentsCalls == 1);
+    CHECK(state.resetTalentsNoCost);
+    CHECK(state.money == 9999);
+    state.money = 12500;
+    CHECK(rig.ok("return tostring(stored:ResetTalents(false))") == "true");
+    CHECK(state.resetTalentsCalls == 2);
+    CHECK_FALSE(state.resetTalentsNoCost);
+    CHECK(state.money == 2500);
+
+    // SetFactionForRace: unknown race is refused and leaves factionRace untouched
+    state.factionRace = 3;
+    CHECK(rig.run("stored:SetFactionForRace(0)").ok == false);
+    CHECK(rig.run("stored:SetFactionForRace(99)").ok == false);
+    CHECK(state.factionRace == 3);
+    rig.ok("stored:SetFactionForRace(11)");
+    CHECK(state.factionRace == 11);
+
+    // durability: each call reaches the host with its arguments (percent clamped to [0, 1])
+    rig.ok("stored:DurabilityLoss(stored:GetItemByPos(1, 3), 0.5)");
+    rig.ok("stored:DurabilityLossAll(0.75, false)");
     rig.ok("stored:DurabilityPointLossForEquipSlot(3)");
     rig.ok("stored:DurabilityPointsLoss(stored:GetItemByPos(1, 3), 12)");
     rig.ok("stored:DurabilityPointsLossAll(13)");
     rig.ok("stored:DurabilityRepair(4, false, 0.5)");
-    REQUIRE(state.durabilities.size() == 6);
+    rig.ok("stored:DurabilityLoss(stored:GetItemByPos(1, 3), -0.5)");
+    rig.ok("stored:DurabilityLoss(stored:GetItemByPos(1, 3), 5.5)");
+    rig.ok("stored:DurabilityLossAll(-0.2, true)");
+    rig.ok("stored:DurabilityLossAll(7.5, false)");
+    REQUIRE(state.durabilities.size() == 10);
     CHECK(state.durabilities[0].op == "player.durabilityLoss");
     CHECK(state.durabilities[0].itemLow == 9201);
-    CHECK(state.durabilities[0].percent == 5.5);
-    CHECK(state.durabilities[1].percent == 7.5);
+    CHECK(state.durabilities[0].percent == 0.5);
+    CHECK(state.durabilities[1].percent == 0.75);
     CHECK_FALSE(state.durabilities[1].inventory);
     CHECK(state.durabilities[2].slot == 3);
     CHECK(state.durabilities[3].points == 12);
@@ -815,6 +848,12 @@ TEST_CASE("eluna player writes, round 2: the arguments reach the fake player sta
     CHECK(state.durabilities[5].pos == 4);
     CHECK_FALSE(state.durabilities[5].takeCost);
     CHECK(state.durabilities[5].discount == 0.5);
+    CHECK(state.durabilities[6].percent == 0.0);
+    CHECK(state.durabilities[7].percent == 1.0);
+    CHECK(state.durabilities[8].percent == 0.0);
+    CHECK(state.durabilities[8].inventory);
+    CHECK(state.durabilities[9].percent == 1.0);
+    CHECK_FALSE(state.durabilities[9].inventory);
 }
 
 TEST_CASE("eluna player writes, round 2: a bad argument raises before the host is called")
@@ -826,6 +865,7 @@ TEST_CASE("eluna player writes, round 2: a bad argument raises before the host i
     rig.host.add(p, info);
     storeHandles(rig, p, FakeHost::creature(162, 0, 0, 1400));
     rig.host.playerState(p).items.push_back(FakeHost::FakeItem{9301, 2589, 1, 3});
+    rig.ok("ownedItem = stored:GetItemByPos(1, 3)");
 
     auto errorOf = [&rig](std::string const& code)
     {
@@ -837,10 +877,24 @@ TEST_CASE("eluna player writes, round 2: a bad argument raises before the host i
 
     CHECK(errorOf("stored:SetGameMaster('yes')").find("boolean expected") != std::string::npos);
     CHECK(errorOf("stored:SetDrunkValue(256)").find("value must be an integer 0..255") != std::string::npos);
+    CHECK(errorOf("stored:SetGender(-1)").find("gender must be an integer 0..1") != std::string::npos);
+    CHECK(errorOf("stored:SetGender(2)").find("gender must be an integer 0..1") != std::string::npos);
+    CHECK(errorOf("stored:SetGender(256)").find("gender must be an integer 0..1") != std::string::npos);
     CHECK(errorOf("stored:SendMovieStart(-1)").find("movieId must be an integer 0..4294967295") != std::string::npos);
     CHECK(errorOf("stored:SendUpdateWorldState(1)").find("bad argument") != std::string::npos);
     CHECK(errorOf("stored:DurabilityRepair(70000)").find("pos must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepair(4, false, 0/0)").find("discount must not be NaN") != std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepairAll(false, 0/0)").find("discount must not be NaN") != std::string::npos);
     CHECK(errorOf("stored:DurabilityLoss(5, 1)").find("item expected") != std::string::npos);
+    CHECK(errorOf("stored:DurabilityLoss(ownedItem, 0/0)").find("percent must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityLoss(ownedItem, 1/0)").find("percent must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityLoss(ownedItem, -1/0)").find("percent must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityLossAll(0/0)").find("percent must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:DurabilityLossAll(1/0)").find("percent must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:DurabilityLossAll(-1/0)").find("percent must be a finite number") != std::string::npos);
     CHECK(errorOf("stored:DurabilityPointsLoss(mob, 1)").find("item is not of the expected kind") != std::string::npos);
     CHECK(rig.host.gameCalls.size() == callsBefore);   // nothing reached the host
 }

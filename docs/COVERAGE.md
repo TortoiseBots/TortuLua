@@ -682,7 +682,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetBindPoint` | implemented |  |
 | `SetCoinage` | implemented |  |
 | `SetDrunkValue` | implemented |  |
-| `SetFactionForRace` | implemented |  |
+| `SetFactionForRace` | implemented | refuses a race id the core's race store does not know with an error and leaves team and faction unchanged |
 | `SetFFA` | implemented |  |
 | `SetFreeTalentPoints` | **missing** |  |
 | `SetGameMaster` | implemented |  |

@@ -2418,7 +2418,15 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
     else if (op == "player.setDrunkValue")
         p.drunk = static_cast<uint8_t>(intAt(args, 0));
     else if (op == "player.setFactionForRace")
-        p.factionRace = static_cast<uint8_t>(intAt(args, 0));
+    {
+        uint32_t const race = static_cast<uint32_t>(intAt(args, 0));
+        if (race < 1 || race > 11)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        p.factionRace = static_cast<uint8_t>(race);
+    }
     else if (op == "player.setGameMaster")
         p.gameMaster = boolAt(args, 0, false);
     else if (op == "player.setGender")
@@ -2435,8 +2443,17 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         p.killed = true;
     else if (op == "player.resetTalents")
     {
+        bool const noCost = boolAt(args, 0, false);
+        int64_t const cost = noCost ? 0 : static_cast<int64_t>(p.resetTalentsCost);
+        if (!noCost && p.money < cost)
+        {
+            out.emplace_back(false);
+            return true;
+        }
         ++p.resetTalentsCalls;
-        p.resetTalentsNoCost = boolAt(args, 0, false);
+        p.resetTalentsNoCost = noCost;
+        if (p.resetTalentsResult && !noCost)
+            p.money -= cost;
         out.emplace_back(p.resetTalentsResult);
     }
     else if (op == "player.durabilityLoss" || op == "player.durabilityPointsLoss")

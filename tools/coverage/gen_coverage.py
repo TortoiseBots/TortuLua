@@ -115,6 +115,8 @@ METHOD_NOTES = {
                             "lowest rank and a warning is logged (the call is queued, so it cannot return the refusal)",
     ("Object", "GetGUID"): "returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the "
                            "type, entry and map live in the high half",
+    ("Player", "SetFactionForRace"): "refuses a race id the core's race store does not know with an error and leaves "
+                                     "team and faction unchanged",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
 }
 GLOBAL_NOTES = {

@@ -62,14 +62,14 @@ function Player:CanUseItem(arg1) end
 function Player:CompleteQuest(entry) end
 
 ---@param item any
----@param percent any
----@return any
-function Player:DurabilityLoss(item, percent) end
-
----@param percent any
 ---@param arg2 any
 ---@return any
-function Player:DurabilityLossAll(percent, arg2) end
+function Player:DurabilityLoss(item, arg2) end
+
+---@param arg1 any
+---@param arg2 any
+---@return any
+function Player:DurabilityLossAll(arg1, arg2) end
 
 ---@param slot any
 ---@return any
@@ -87,15 +87,15 @@ function Player:DurabilityPointsLossAll(points, arg2) end
 
 ---@param pos any
 ---@param arg2 any
----@param arg3 any
+---@param discount any
 ---@return any
-function Player:DurabilityRepair(pos, arg2, arg3) end
+function Player:DurabilityRepair(pos, arg2, discount) end
 
 ---@param arg1 any
----@param arg2 any
+---@param discount any
 ---@param arg3 any
 ---@return any
-function Player:DurabilityRepairAll(arg1, arg2, arg3) end
+function Player:DurabilityRepairAll(arg1, discount, arg3) end
 
 ---@param arg1 any
 ---@param slot any
@@ -720,6 +720,7 @@ function Player:SetCoinage(copperAmt) end
 ---@return any
 function Player:SetDrunkValue(value) end
 
+---refuses a race id the core's race store does not know with an error and leaves team and faction unchanged
 ---@param race any
 ---@return any
 function Player:SetFactionForRace(race) end
@@ -732,9 +733,9 @@ function Player:SetFFA(arg1) end
 ---@return any
 function Player:SetGameMaster(on) end
 
----@param gender any
+---@param arg1 any
 ---@return any
-function Player:SetGender(gender) end
+function Player:SetGender(arg1) end
 
 ---@param on any
 ---@return any

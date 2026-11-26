@@ -4815,7 +4815,13 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.setFactionForRace")
         {
-            player->SetFactionForRace(static_cast<uint8>(iArg(args, 0)));
+            uint8 const race = static_cast<uint8>(iArg(args, 0));
+            if (!sChrRacesStore.LookupEntry(race))
+            {
+                out.emplace_back(false);
+                return true;
+            }
+            player->SetFactionForRace(race);
             return true;
         }
         if (name == "player.setGameMaster")
@@ -4825,7 +4831,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.setGender")
         {
-            player->SetGender(static_cast<Gender>(iArg(args, 0)));
+            int64_t const gender = iArg(args, 0);
+            if (gender != 0 && gender != 1)
+                return false;
+            player->SetGender(static_cast<Gender>(gender));
             return true;
         }
         if (name == "player.setGMChat")
@@ -4855,7 +4864,25 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.resetTalents")
         {
-            out.emplace_back(player->ResetTalents(bArg(args, 0, false)));
+            bool const noCost = bArg(args, 0, false);
+            int64 const cost = noCost ? 0 : static_cast<int64>(player->GetNextResetTalentsCost());
+            if (!noCost && !player->HasEnoughMoney(cost))
+            {
+                out.emplace_back(false);
+                return true;
+            }
+            // The core's flag marks an involuntary reset (sending TalentsInvoluntarilyReset) and does not charge.
+            bool const ok = player->ResetTalents(false);
+            if (ok)
+            {
+                if (!noCost)
+                {
+                    player->ModifyMoney(-cost);
+                    player->IncreaseResetTalentsCostAndCounters(static_cast<uint32>(cost));
+                }
+                player->SendTalentsInfoData();
+            }
+            out.emplace_back(ok);
             return true;
         }
         if (name == "player.durabilityLoss" || name == "player.durabilityPointsLoss")
@@ -4867,7 +4894,12 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 if (Item* item = player->GetItemByGuid(toGuid(itemHandle.guid)))
                 {
                     if (name == "player.durabilityLoss")
-                        player->DurabilityLoss(item, dArg(args, 1));
+                    {
+                        double const pct = dArg(args, 1);
+                        if (!std::isfinite(pct))
+                            return false;
+                        player->DurabilityLoss(item, std::clamp(pct, 0.0, 1.0));
+                    }
                     else
                         player->DurabilityPointsLoss(item, static_cast<int32>(iArg(args, 1)));
                 }
@@ -4875,7 +4907,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "player.durabilityLossAll")
         {
-            player->DurabilityLossAll(dArg(args, 0), bArg(args, 1, true));
+            double const pct = dArg(args, 0);
+            if (!std::isfinite(pct))
+                return false;
+            player->DurabilityLossAll(std::clamp(pct, 0.0, 1.0), bArg(args, 1, true));
             return true;
         }
         if (name == "player.durabilityPointLossForEquipSlot")

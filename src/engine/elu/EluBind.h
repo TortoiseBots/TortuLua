@@ -87,6 +87,7 @@ bool optBool(lua_State* L, int idx, bool def);
 // A required boolean (a documented argument with no default).
 bool argBool(lua_State* L, int idx, char const* what);
 int32_t optInt(lua_State* L, int idx, int32_t def, char const* what);
+float optFloat(lua_State* L, int idx, float def, char const* what);
 // A guid argument: the 32-hex string of Object:GetGUID(), or an integer (the low 64 bits, high half 0: `*legacyLow`).
 bool argGuid(lua_State* L, int idx, fl::Guid& out, bool* legacyLow = nullptr);
 uint64_t optUInt(lua_State* L, int idx, uint64_t def);

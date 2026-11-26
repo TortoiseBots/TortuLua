@@ -2184,7 +2184,8 @@
     },
     "SetFactionForRace": {
      "status": "implemented",
-     "declared": "Player"
+     "declared": "Player",
+     "note": "refuses a race id the core's race store does not know with an error and leaves team and faction unchanged"
     },
     "SetFFA": {
      "status": "implemented",

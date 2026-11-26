@@ -6,11 +6,22 @@
 #include <lauxlib.h>
 #include <lua.h>
 
+#include <algorithm>
+#include <cmath>
+
 namespace flu
 {
 namespace
 {
 using fl::EventValue;
+
+double durabilityPercentArg(lua_State* L, int idx)
+{
+    lua_Number const v = luaL_checknumber(L, idx);
+    if (!std::isfinite(v))
+        luaL_error(L, "percent must be a finite number");
+    return std::clamp(static_cast<double>(v), 0.0, 1.0);
+}
 
 int pSendBroadcastMessage(lua_State* L)
 {
@@ -534,7 +545,8 @@ int pDurabilityRepairAll(lua_State* L)
 {
     return actionOp(L, kPlayer, "player.durabilityRepairAll", "DurabilityRepairAll",
                     {EventValue(optBool(L, 2, true)),
-                     EventValue(static_cast<double>(luaL_optnumber(L, 3, 1.0))), EventValue(optBool(L, 4, false))});
+                     EventValue(static_cast<double>(optFloat(L, 3, 1.0f, "discount"))),
+                     EventValue(optBool(L, 4, false))});
 }
 
 // ---- E7 long tail, round 2: the documented reads that the core answers directly (docs Player/index.html). None of them
@@ -692,8 +704,12 @@ int pSetDrunkValue(lua_State* L)
 }
 int pSetFactionForRace(lua_State* L)
 {
-    return actionOp(L, kPlayer, "player.setFactionForRace", "SetFactionForRace",
-                    {EventValue(static_cast<int64_t>(argU8(L, 2, "race")))});
+    uint32_t const race = argU8(L, 2, "race");
+    fl::HandleData const& h = self(L, kPlayer);
+    std::vector<EventValue> out;
+    gameCall(L, h, "player.setFactionForRace", {EventValue(static_cast<int64_t>(race))}, out, "SetFactionForRace");
+    requireHostOk(L, out, "SetFactionForRace", "unknown race");
+    return 0;
 }
 int pSetGameMaster(lua_State* L)
 {
@@ -701,7 +717,10 @@ int pSetGameMaster(lua_State* L)
 }
 int pSetGender(lua_State* L)
 {
-    return actionOp(L, kPlayer, "player.setGender", "SetGender", {EventValue(static_cast<int64_t>(argU8(L, 2, "gender")))});
+    lua_Integer const gender = luaL_checkinteger(L, 2);
+    if (gender < 0 || gender > 1)
+        luaL_error(L, "gender must be an integer 0..1");
+    return actionOp(L, kPlayer, "player.setGender", "SetGender", {EventValue(static_cast<int64_t>(gender))});
 }
 int pSetGMChat(lua_State* L)
 {
@@ -726,12 +745,12 @@ int pResetTalents(lua_State* L)
 int pDurabilityLoss(lua_State* L)
 {
     return actionOp(L, kPlayer, "player.durabilityLoss", "DurabilityLoss",
-                    {EventValue(objArg(L, 2, kItem, "item")), EventValue(static_cast<double>(argFloat(L, 3, "percent")))});
+                    {EventValue(objArg(L, 2, kItem, "item")), EventValue(durabilityPercentArg(L, 3))});
 }
 int pDurabilityLossAll(lua_State* L)
 {
     return actionOp(L, kPlayer, "player.durabilityLossAll", "DurabilityLossAll",
-                    {EventValue(static_cast<double>(argFloat(L, 2, "percent"))), EventValue(optBool(L, 3, true))});
+                    {EventValue(durabilityPercentArg(L, 2)), EventValue(optBool(L, 3, true))});
 }
 int pDurabilityPointLossForEquipSlot(lua_State* L)
 {
@@ -752,7 +771,7 @@ int pDurabilityRepair(lua_State* L)
 {
     return actionOp(L, kPlayer, "player.durabilityRepair", "DurabilityRepair",
                     {EventValue(static_cast<int64_t>(argU16(L, 2, "pos"))), EventValue(optBool(L, 3, true)),
-                     EventValue(static_cast<double>(luaL_optnumber(L, 4, 1.0)))});
+                     EventValue(static_cast<double>(optFloat(L, 4, 1.0f, "discount")))});
 }
 }  // namespace
 
