@@ -110,6 +110,8 @@ EVENT_NOTES = {
 
 # Engine caveats of a documented name, from README.md ('Eluna mode') and knowledge/modes/eluna-mode.md.
 METHOD_NOTES = {
+    ("Guild", "AddMember"): "an explicit rankId the guild has no rank for is refused and nothing is written (the "
+                            "core would otherwise store it and leave the member without a rank)",
     ("Object", "GetGUID"): "returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the "
                            "type, entry and map live in the high half",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",

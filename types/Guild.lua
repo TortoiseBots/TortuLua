@@ -3,6 +3,7 @@
 ---@class Guild
 local Guild = {}
 
+---an explicit rankId the guild has no rank for is refused and nothing is written (the core would otherwise store it and leave the member without a rank)
 ---@param player any
 ---@param rankId any
 ---@return any

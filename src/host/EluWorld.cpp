@@ -9,6 +9,7 @@
 #include "CellImpl.h"
 #include "CharacterCache.h"
 #include "DataSql.h"
+#include "GuildWrite.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
@@ -1319,43 +1320,63 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         fl::Guid const guildId = self.guid;
         HandleData player;
         bool const hasPlayer = asHandle(args.empty() ? EventValue() : args[0], player);
-        bool const hasRank = name == "guild.addMember" ? bArg(args, 2, false) : name != "guild.deleteMember";
-        int const rank = iArg(args, 1);
-        bool const isDisbanding = name == "guild.deleteMember" && bArg(args, 1, false);
+        flh::GuildWrite write;
+        if (name == "guild.addMember")
+        {
+            write.kind = flh::GuildWriteKind::AddMember;
+            write.hasRank = bArg(args, 2, false);
+            write.rank = static_cast<uint32_t>(iArg(args, 1));
+        }
+        else if (name == "guild.deleteMember")
+        {
+            write.kind = flh::GuildWriteKind::DeleteMember;
+            write.isDisbanding = bArg(args, 1, false);
+        }
+        else if (name == "guild.setMemberRank")
+        {
+            write.kind = flh::GuildWriteKind::ChangeRank;
+            write.rank = static_cast<uint32_t>(iArg(args, 1));
+        }
         auto job = [=]()
         {
             Guild* g = sGuildMgr->GetGuildById(static_cast<uint32>(guildId.lo));
-            if (!g)
-                return;
-            if (name == "guild.disband")
+            bool const needsPlayer = write.kind != flh::GuildWriteKind::Disband;
+            Player* p = g && needsPlayer && hasPlayer ? findPlayer(player) : nullptr;
+            // The core calls of the job, behind the game-free rule of GuildWrite.h.
+            struct CoreGuild
             {
-                g->Disband();   // frees the guild: nothing below touches g afterwards
-                return;
-            }
-            Player* p = hasPlayer ? findPlayer(player) : nullptr;
-            if (!p)
-                return;
-            if (name == "guild.addMember")
-            {
-                CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-                Optional<GuildRankId> rankId;
-                if (hasRank)
-                    rankId = static_cast<GuildRankId>(rank);
-                if (g->AddMember(trans, p->GetGUID(), rankId))
+                Guild* guild;
+                ObjectGuid guid;
+                bool RankExists(uint32_t rank) const
+                {
+                    return guild->GetRankInfo(static_cast<GuildRankId>(rank)) != nullptr;
+                }
+                void AddMember(bool hasRank, uint32_t rank)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    Optional<GuildRankId> rankId;
+                    if (hasRank)
+                        rankId = static_cast<GuildRankId>(rank);
+                    if (guild->AddMember(trans, guid, rankId))
+                        CharacterDatabase.CommitTransaction(trans);
+                }
+                void DeleteMember(bool isDisbanding)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    guild->DeleteMember(trans, guid, isDisbanding);
                     CharacterDatabase.CommitTransaction(trans);
-            }
-            else if (name == "guild.deleteMember")
-            {
-                CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-                g->DeleteMember(trans, p->GetGUID(), isDisbanding);
-                CharacterDatabase.CommitTransaction(trans);
-            }
-            else
-            {
-                CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-                if (g->ChangeMemberRank(trans, p->GetGUID(), static_cast<GuildRankId>(rank)))
-                    CharacterDatabase.CommitTransaction(trans);
-            }
+                }
+                void ChangeRank(uint32_t rank)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    if (guild->ChangeMemberRank(trans, guid, static_cast<GuildRankId>(rank)))
+                        CharacterDatabase.CommitTransaction(trans);
+                }
+                void Disband() { guild->Disband(); }
+            } target{g, p ? p->GetGUID() : ObjectGuid::Empty};
+            if (flh::applyGuildWrite(g ? &target : nullptr, p != nullptr, write) == flh::GuildWriteResult::UnknownRank)
+                log(fl::LogLevel::Warn, "ForeverLua: Guild change: the guild has no rank " + std::to_string(write.rank) +
+                                            "; the member was not added");
         };
         runSocialWrite("Guild change", job);
         return true;

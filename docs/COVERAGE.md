@@ -944,7 +944,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 | Documented method | Status | Note |
 |---|---|---|
-| `AddMember` | implemented |  |
+| `AddMember` | implemented | an explicit rankId the guild has no rank for is refused and nothing is written (the core would otherwise store it and leave the member without a rank) |
 | `DeleteMember` | implemented |  |
 | `Disband` | implemented |  |
 | `GetId` | implemented |  |

@@ -301,7 +301,7 @@ TEST_CASE("e2 Guild methods: name, members, leader, send packet")
     CHECK(errorOf(rig, "return guild:GetName()").find("Guild no longer exists") != std::string::npos);
 }
 
-TEST_CASE("e2 Group long tail: guid, counts, member queries, flags, subgroups, leadership, writes")
+TEST_CASE("e2 Group long tail: guid, counts, member queries, flags and subgroups")
 {
     ElunaRig rig;
     fl::HandleData g = groupHandle(5);
@@ -311,27 +311,9 @@ TEST_CASE("e2 Group long tail: guid, counts, member queries, flags, subgroups, l
     addObject(rig, a, "A");
     addObject(rig, b, "B");
 
-    struct Write
-    {
-        std::string op;
-        std::vector<fl::EventValue> args;
-    };
-    std::vector<Write> writes;
     auto text = [](fl::EventValue const& v) {
         auto const* s = std::get_if<std::string>(&v.v);
         return s ? *s : std::string();
-    };
-    auto number = [](fl::EventValue const& v) {
-        auto const* i = std::get_if<int64_t>(&v.v);
-        return i ? *i : int64_t(-999);
-    };
-    auto flag = [](fl::EventValue const& v) {
-        auto const* b = std::get_if<bool>(&v.v);
-        return b && *b;
-    };
-    auto handleText = [](fl::EventValue const& v) {
-        auto const* h = std::get_if<fl::HandleData>(&v.v);
-        return h ? fl::guidText(h->guid) : std::string();
     };
     rig.host.onGameCall = [&](fl::HandleData const&, std::string const& op, std::vector<fl::EventValue> const& args,
                               std::vector<fl::EventValue>& out) {
@@ -353,13 +335,6 @@ TEST_CASE("e2 Group long tail: guid, counts, member queries, flags, subgroups, l
             out = {fl::EventValue(true)};
         else if (op == "group.isBgGroup" || op == "group.isBfGroup" || op == "group.isFull")
             out = {fl::EventValue(false)};
-        else if (op == "group.convertToLfg" || op == "group.convertToRaid" || op == "group.disband" ||
-                 op == "group.setLeader" || op == "group.setMemberFlag" || op == "group.setMembersGroup" ||
-                 op == "group.setTargetIcon")
-        {
-            writes.push_back({op, args});
-            return true;
-        }
         else
             return false;
         return true;
@@ -386,32 +361,8 @@ TEST_CASE("e2 Group long tail: guid, counts, member queries, flags, subgroups, l
     CHECK(rig.ok("return tostring(lfg) .. ',' .. tostring(bg) .. ',' .. tostring(bf) .. ',' .. tostring(full)") ==
           "true,false,false,false");
 
-    rig.ok("group:ConvertToLFG() group:ConvertToRaid() group:SetLeader(b:GetGUID()) "
-           "group:SetMemberFlag(a:GetGUID(), true, 1) group:SetMembersGroup(a:GetGUID(), 2) "
-           "group:SetTargetIcon(7, b:GetGUID(), a:GetGUID()) group:Disband()");
-    REQUIRE(writes.size() == 7);
-    CHECK(writes[0].op == "group.convertToLfg");
-    CHECK(writes[1].op == "group.convertToRaid");
-    CHECK(writes[2].op == "group.setLeader");
-    CHECK(text(writes[2].args[0]) == fl::guidText(b.guid));
-    CHECK(writes[3].op == "group.setMemberFlag");
-    CHECK(text(writes[3].args[0]) == fl::guidText(a.guid));
-    CHECK(flag(writes[3].args[1]));
-    CHECK(number(writes[3].args[2]) == 1);
-    CHECK(writes[4].op == "group.setMembersGroup");
-    CHECK(text(writes[4].args[0]) == fl::guidText(a.guid));
-    CHECK(number(writes[4].args[1]) == 2);
-    CHECK(writes[5].op == "group.setTargetIcon");
-    CHECK(number(writes[5].args[0]) == 7);
-    CHECK(text(writes[5].args[1]) == fl::guidText(b.guid));
-    CHECK(text(writes[5].args[2]) == fl::guidText(a.guid));
-    CHECK(writes[6].op == "group.disband");
-
-    // The subgroup index and the icon index bound the core's arrays; the flag set is the documented one.
+    // The subgroup index bounds the core's array.
     CHECK(errorOf(rig, "return group:HasFreeSlotSubGroup(8)").find("0..7") != std::string::npos);
-    CHECK(errorOf(rig, "return group:SetMembersGroup(a:GetGUID(), 8)").find("0..7") != std::string::npos);
-    CHECK(errorOf(rig, "return group:SetTargetIcon(8, 0, 0)").find("0..7") != std::string::npos);
-    CHECK(errorOf(rig, "return group:SetMemberFlag(a:GetGUID(), true, 3)").find("1, 2 or 4") != std::string::npos);
 
     // A map-thread handler must not walk a membership that the world thread may be changing.
     rig.host.worldReadOk = false;
@@ -428,23 +379,33 @@ TEST_CASE("e2 Group long tail: guid, counts, member queries, flags, subgroups, l
     CHECK(errorOf(rig, "return group:GetMembersCount()").find("Group no longer exists") != std::string::npos);
 }
 
-TEST_CASE("e2 Guild long tail: id, info, motd, leader, count, membership writes, ranked send")
+TEST_CASE("e2 Group writes: each write is dispatched with its documented arguments")
 {
     ElunaRig rig;
-    fl::HandleData g = guildHandle(9);
+    fl::HandleData g = groupHandle(5);
     fl::HandleData a = FakeHost::player(1);
     fl::HandleData b = FakeHost::player(2);
-    addObject(rig, g, "Knights");
-    addObject(rig, a, "Leader");
-    addObject(rig, b, "Member");
+    addObject(rig, g, "Party");
+    addObject(rig, a, "A");
+    addObject(rig, b, "B");
 
-    struct Write
-    {
-        std::string op;
-        std::vector<fl::EventValue> args;
+    std::string op;
+    std::vector<fl::EventValue> args;
+    rig.host.onGameCall = [&](fl::HandleData const&, std::string const& name, std::vector<fl::EventValue> const& a,
+                              std::vector<fl::EventValue>&) {
+        op = name;
+        args = a;
+        return true;
     };
-    std::vector<Write> writes;
-    bool leaderOnline = true;
+    setGlobal(rig, "group", g);
+    setGlobal(rig, "a", a);
+    setGlobal(rig, "b", b);
+    auto call = [&](char const* lua) {
+        op.clear();
+        args.clear();
+        rig.ok(lua);
+        return op;
+    };
     auto text = [](fl::EventValue const& v) {
         auto const* s = std::get_if<std::string>(&v.v);
         return s ? *s : std::string();
@@ -457,10 +418,74 @@ TEST_CASE("e2 Guild long tail: id, info, motd, leader, count, membership writes,
         auto const* b = std::get_if<bool>(&v.v);
         return b && *b;
     };
-    auto handleText = [](fl::EventValue const& v) {
-        auto const* h = std::get_if<fl::HandleData>(&v.v);
-        return h ? fl::guidText(h->guid) : std::string();
-    };
+
+    SECTION("ConvertToLFG")
+    {
+        CHECK(call("group:ConvertToLFG()") == "group.convertToLfg");
+    }
+    SECTION("ConvertToRaid")
+    {
+        CHECK(call("group:ConvertToRaid()") == "group.convertToRaid");
+    }
+    SECTION("SetLeader")
+    {
+        CHECK(call("group:SetLeader(b:GetGUID())") == "group.setLeader");
+        CHECK(text(args[0]) == fl::guidText(b.guid));
+    }
+    SECTION("SetMemberFlag")
+    {
+        CHECK(call("group:SetMemberFlag(a:GetGUID(), true, 1)") == "group.setMemberFlag");
+        CHECK(text(args[0]) == fl::guidText(a.guid));
+        CHECK(flag(args[1]));
+        CHECK(number(args[2]) == 1);
+        // The flag set is the documented one.
+        CHECK(errorOf(rig, "return group:SetMemberFlag(a:GetGUID(), true, 3)").find("1, 2 or 4") != std::string::npos);
+    }
+    SECTION("SetMembersGroup")
+    {
+        CHECK(call("group:SetMembersGroup(a:GetGUID(), 2)") == "group.setMembersGroup");
+        CHECK(text(args[0]) == fl::guidText(a.guid));
+        CHECK(number(args[1]) == 2);
+        // The subgroup index bounds the core's array.
+        CHECK(errorOf(rig, "return group:SetMembersGroup(a:GetGUID(), 8)").find("0..7") != std::string::npos);
+    }
+    SECTION("SetTargetIcon")
+    {
+        CHECK(call("group:SetTargetIcon(7, b:GetGUID(), a:GetGUID())") == "group.setTargetIcon");
+        CHECK(number(args[0]) == 7);
+        CHECK(text(args[1]) == fl::guidText(b.guid));
+        CHECK(text(args[2]) == fl::guidText(a.guid));
+        // The icon index bounds the core's array.
+        CHECK(errorOf(rig, "return group:SetTargetIcon(8, 0, 0)").find("0..7") != std::string::npos);
+    }
+    SECTION("Disband")
+    {
+        CHECK(call("group:Disband()") == "group.disband");
+    }
+}
+
+TEST_CASE("e2 Group write: a group disbanded before the call refuses the write and dispatches nothing")
+{
+    ElunaRig rig;
+    fl::HandleData g = groupHandle(5);
+    addObject(rig, g, "Party");
+    setGlobal(rig, "group", g);
+    rig.host.remove(g);
+    CHECK(errorOf(rig, "return group:Disband()").find("Group no longer exists") != std::string::npos);
+    CHECK(rig.host.gameCalls.empty());
+}
+
+TEST_CASE("e2 Guild long tail: id, info, motd, leader, count and a ranked send")
+{
+    ElunaRig rig;
+    fl::HandleData g = guildHandle(9);
+    fl::HandleData a = FakeHost::player(1);
+    fl::HandleData b = FakeHost::player(2);
+    addObject(rig, g, "Knights");
+    addObject(rig, a, "Leader");
+    addObject(rig, b, "Member");
+
+    bool leaderOnline = true;
     rig.host.onGameCall = [&](fl::HandleData const&, std::string const& op, std::vector<fl::EventValue> const& args,
                               std::vector<fl::EventValue>& out) {
         if (op == "guild.getId")
@@ -475,12 +500,6 @@ TEST_CASE("e2 Guild long tail: id, info, motd, leader, count, membership writes,
         {
             if (leaderOnline)
                 out = {fl::EventValue(a)};
-        }
-        else if (op == "guild.addMember" || op == "guild.deleteMember" || op == "guild.disband" ||
-                 op == "guild.setMemberRank")
-        {
-            writes.push_back({op, args});
-            return true;
         }
         else
             return false;
@@ -507,28 +526,6 @@ TEST_CASE("e2 Guild long tail: id, info, motd, leader, count, membership writes,
     leaderOnline = false;
     CHECK(rig.ok("return tostring(guild:GetLeader())") == "nil");
 
-    rig.ok("guild:AddMember(a, 3) guild:AddMember(b) guild:DeleteMember(a, true) guild:SetMemberRank(b, 2) "
-           "guild:Disband()");
-    REQUIRE(writes.size() == 5);
-    CHECK(writes[0].op == "guild.addMember");
-    CHECK(handleText(writes[0].args[0]) == fl::guidText(a.guid));
-    CHECK(number(writes[0].args[1]) == 3);
-    CHECK(flag(writes[0].args[2]));
-    CHECK(writes[1].op == "guild.addMember");
-    CHECK(handleText(writes[1].args[0]) == fl::guidText(b.guid));
-    CHECK(number(writes[1].args[1]) == 0);
-    CHECK(!flag(writes[1].args[2]));   // no rank: the core assigns the lowest
-    CHECK(writes[2].op == "guild.deleteMember");
-    CHECK(handleText(writes[2].args[0]) == fl::guidText(a.guid));
-    CHECK(flag(writes[2].args[1]));
-    CHECK(writes[3].op == "guild.setMemberRank");
-    CHECK(handleText(writes[3].args[0]) == fl::guidText(b.guid));
-    CHECK(number(writes[3].args[1]) == 2);
-    CHECK(writes[4].op == "guild.disband");
-
-    // The core changes a guild leader only from the old leader's client session: the method is a documented stub here.
-    CHECK(errorOf(rig, "return guild:SetLeader(a)").find("not available on this server") != std::string::npos);
-
     rig.host.worldReadOk = false;
     CHECK(errorOf(rig, "return guild:GetMemberCount()").find("only available on the world thread") != std::string::npos);
     CHECK(errorOf(rig, "return guild:GetLeader()").find("only available on the world thread") != std::string::npos);
@@ -538,6 +535,102 @@ TEST_CASE("e2 Guild long tail: id, info, motd, leader, count, membership writes,
 
     rig.host.remove(g);
     CHECK(errorOf(rig, "return guild:GetId()").find("Guild no longer exists") != std::string::npos);
+}
+
+TEST_CASE("e2 Guild writes: each membership write is dispatched with its documented arguments")
+{
+    ElunaRig rig;
+    fl::HandleData g = guildHandle(9);
+    fl::HandleData a = FakeHost::player(1);
+    fl::HandleData b = FakeHost::player(2);
+    addObject(rig, g, "Knights");
+    addObject(rig, a, "Leader");
+    addObject(rig, b, "Member");
+
+    std::string op;
+    std::vector<fl::EventValue> args;
+    rig.host.onGameCall = [&](fl::HandleData const&, std::string const& name, std::vector<fl::EventValue> const& a,
+                              std::vector<fl::EventValue>&) {
+        op = name;
+        args = a;
+        return true;
+    };
+    setGlobal(rig, "guild", g);
+    setGlobal(rig, "a", a);
+    setGlobal(rig, "b", b);
+    auto call = [&](char const* lua) {
+        op.clear();
+        args.clear();
+        rig.ok(lua);
+        return op;
+    };
+    auto text = [](fl::EventValue const& v) {
+        auto const* s = std::get_if<std::string>(&v.v);
+        return s ? *s : std::string();
+    };
+    auto number = [](fl::EventValue const& v) {
+        auto const* i = std::get_if<int64_t>(&v.v);
+        return i ? *i : int64_t(-999);
+    };
+    auto flag = [](fl::EventValue const& v) {
+        auto const* b = std::get_if<bool>(&v.v);
+        return b && *b;
+    };
+    auto handleText = [](fl::EventValue const& v) {
+        auto const* h = std::get_if<fl::HandleData>(&v.v);
+        return h ? fl::guidText(h->guid) : std::string();
+    };
+
+    SECTION("AddMember with a rank")
+    {
+        CHECK(call("guild:AddMember(a, 3)") == "guild.addMember");
+        CHECK(handleText(args[0]) == fl::guidText(a.guid));
+        CHECK(number(args[1]) == 3);
+        CHECK(flag(args[2]));
+    }
+    SECTION("AddMember without a rank")
+    {
+        CHECK(call("guild:AddMember(b)") == "guild.addMember");
+        CHECK(handleText(args[0]) == fl::guidText(b.guid));
+        CHECK(number(args[1]) == 0);
+        CHECK(!flag(args[2]));   // no rank: the core assigns the lowest
+    }
+    SECTION("DeleteMember")
+    {
+        CHECK(call("guild:DeleteMember(a, true)") == "guild.deleteMember");
+        CHECK(handleText(args[0]) == fl::guidText(a.guid));
+        CHECK(flag(args[1]));
+    }
+    SECTION("SetMemberRank")
+    {
+        CHECK(call("guild:SetMemberRank(b, 2)") == "guild.setMemberRank");
+        CHECK(handleText(args[0]) == fl::guidText(b.guid));
+        CHECK(number(args[1]) == 2);
+    }
+    SECTION("Disband")
+    {
+        CHECK(call("guild:Disband()") == "guild.disband");
+    }
+    SECTION("SetLeader is a documented stub")
+    {
+        // The core changes a guild leader only from the old leader's client session.
+        CHECK(errorOf(rig, "return guild:SetLeader(a)").find("not available on this server") != std::string::npos);
+        CHECK(rig.host.gameCalls.empty());
+    }
+}
+
+TEST_CASE("e2 Guild write: a guild disbanded before the call refuses the write and dispatches nothing")
+{
+    ElunaRig rig;
+    fl::HandleData g = guildHandle(9);
+    fl::HandleData a = FakeHost::player(1);
+    addObject(rig, g, "Knights");
+    addObject(rig, a, "Leader");
+    setGlobal(rig, "guild", g);
+    setGlobal(rig, "a", a);
+    rig.host.remove(g);
+    CHECK(errorOf(rig, "return guild:AddMember(a, 1)").find("Guild no longer exists") != std::string::npos);
+    CHECK(rig.host.gameCalls.empty());
 }
 
 TEST_CASE("e2 Quest methods: id, level, title, daily, and a quest that is gone")
