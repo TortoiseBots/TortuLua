@@ -242,7 +242,13 @@ public:
     struct FakeCreature
     {
         bool hasAi = true;
-        bool isPet = false;                 // a pet / player-controlled creature: the creature-AI-only calls refuse
+        // Ownership, as the host's tests see it: IsPet(), IsControlledByPlayer() and the charmer/owner player lookup.
+        bool isPet = false;                 // a pet: IsPet(), and the creature-AI-only calls' player-controlled refusal
+        bool controlledByPlayer = false;    // Unit::IsControlledByPlayer (a player's guardian, minion or charm)
+        bool charmedByPlayer = false;       // GetCharmerOrOwnerPlayerOrPlayerItself: charmed by a player
+        bool ownedByPlayer = false;         // GetCharmerOrOwnerPlayerOrPlayerItself: owned by a player
+        bool petOrControlled() const { return isPet || controlledByPlayer; }   // IsPet() || IsControlledByPlayer()
+        bool playerOwned() const { return petOrControlled() || charmedByPlayer || ownedByPlayer; }
         bool regenForbidden = false;        // the template forbids health regeneration (SetRegeneratingHealth(true) refused)
         bool healthZero = false;            // a dead creature: SetDeathState(ALIVE) would leave it alive at 0 health
         std::set<uint32_t> noModelEntries;  // entries whose template has no usable model (UpdateEntry refused)
@@ -261,6 +267,8 @@ public:
         bool canStartAttack = false;
         bool canStartAttackForce = true;
         uint64_t canStartAttackTargetLow = 0;
+        bool targetable = true;             // IsTargetableForAttack's answer
+        bool targetableCheckFakeDeath = true;
         bool tapped = false;
         uint64_t lastTappedLow = 0;
         std::vector<uint64_t> tapList;      // player low guids (HasLootRecipient/GetLootRecipient*)
@@ -283,7 +291,7 @@ public:
         double wanderRadius = 0;
         double homeX = 0, homeY = 0, homeZ = 0, homeO = 0;
         uint32_t respawnDelay = 0, corpseDelay = 0;
-        int corpseRemovals = 0;
+        int corpseRemovals = 0, removeFromWorlds = 0;
         uint32_t deathState = 0;
         uint32_t equipMain = 0, equipOff = 0, equipRanged = 0;
         // identity
@@ -304,6 +312,7 @@ public:
         // loot mode and quests
         uint32_t lootMode = 1;
         std::set<uint32_t> quests;
+        std::set<uint32_t> involvedQuests;  // the creature ends these (CanCompleteQuest)
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };

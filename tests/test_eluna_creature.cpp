@@ -69,6 +69,7 @@ std::vector<std::string> const& roundCalls()
         "GetAttackDistance(stored)",
         "CanAssistTo(stored, stored)",
         "CanStartAttack(stored)",
+        "IsTargetableForAttack()",
         "IsTappedBy(stored)",
         "HasLootRecipient()",
         "GetLootRecipient()",
@@ -137,6 +138,8 @@ std::vector<std::string> const& roundCalls()
         "RemoveLootMode(2)",
         "ResetLootMode()",
         "HasQuest(100)",
+        "CanCompleteQuest(100)",
+        "RemoveFromWorld()",
     };
     return calls;
 }
@@ -228,6 +231,11 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     c.canStartAttack = true;
     CHECK(rig.ok("return tostring(mob:CanStartAttack(stored, false))") == "true");
     CHECK_FALSE(c.canStartAttackForce);
+    c.targetable = false;
+    CHECK(rig.ok("return tostring(mob:IsTargetableForAttack())") == "false");
+    c.targetable = true;
+    CHECK(rig.ok("return tostring(mob:IsTargetableForAttack(false))") == "true");
+    CHECK_FALSE(c.targetableCheckFakeDeath);   // the optional flag reaches the core call
     c.tapped = true;
     CHECK(rig.ok("return tostring(mob:IsTappedBy(stored))") == "true");
     CHECK(c.lastTappedLow == p.guid.lo);
@@ -312,6 +320,8 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     CHECK(rig.ok("return mob:GetRespawnDelay() .. ',' .. mob:GetCorpseDelay()") == "300,60");
     rig.ok("mob:RemoveCorpse()");
     CHECK(c.corpseRemovals == 1);
+    rig.ok("mob:RemoveFromWorld()");
+    CHECK(c.removeFromWorlds == 1);
     rig.ok("mob:SetDeathState(1)");
     CHECK(c.deathState == 1);
     rig.ok("mob:SetDeathState(3)");
@@ -361,6 +371,66 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     CHECK(c.lootMode == 1);
     c.quests = {100};
     CHECK(rig.ok("return tostring(mob:HasQuest(100)) .. tostring(mob:HasQuest(101))") == "truefalse");
+    // the end relation is separate from the starter relation
+    c.involvedQuests = {102};
+    CHECK(rig.ok("return tostring(mob:CanCompleteQuest(102)) .. tostring(mob:CanCompleteQuest(100))") == "truefalse");
+}
+
+TEST_CASE("eluna creature: RemoveFromWorld refuses a creature a player owns")
+{
+    CreatureRig rig;
+    fl::HandleData mob = FakeHost::creature(112, 0, 0, 900);
+    fl::HandleData pet = FakeHost::pet(113, 0, 0, 299);
+    fl::ObjectInfo mobInfo, petInfo;
+    mobInfo.name = "Plain";
+    petInfo.name = "Wolf";
+    petInfo.entry = 299;
+    rig.host.add(mob, mobInfo);
+    rig.host.add(pet, petInfo);
+    prepare(rig.host, mob);
+    rig.host.creatureState(pet).isPet = true;
+
+    rig.ok("RegisterCreatureEvent(1, 5, function(ev, c) mob = c end)");
+    rig.ok("RegisterCreatureEvent(299, 5, function(ev, c) pet = c end)");
+    rig.e().emitEluna(fl::EluKind::Creature, 1, 5, {fl::EventValue(mob)});
+    rig.e().emitEluna(fl::EluKind::Creature, 299, 5, {fl::EventValue(pet)});
+
+    // A pet handle is refused; nothing is queued for removal and the handle's world object data survives.
+    rig.ok("pet:Data().kept = true");
+    fl::CallResult petCall = rig.run("pet:RemoveFromWorld()");
+    REQUIRE_FALSE(petCall.ok);
+    CHECK(petCall.error.find("RemoveFromWorld: a creature owned by a player") != std::string::npos);
+    CHECK(rig.host.creatureState(pet).removeFromWorlds == 0);
+    CHECK(rig.ok("return tostring(pet:Data().kept)") == "true");
+
+    // Every ownership the host recognises is refused on its own: a pet, a creature the player controls (a guardian,
+    // minion or charm), a creature charmed by a player and a creature owned by a player. Nothing is queued and the
+    // handle's world object data survives each refusal.
+    rig.ok("mob:Data().kept = true");
+    using OwnerFlag = bool FakeHost::FakeCreature::*;
+    std::vector<std::pair<std::string, OwnerFlag>> const ownership = {
+        {"pet", &FakeHost::FakeCreature::isPet},
+        {"player-controlled", &FakeHost::FakeCreature::controlledByPlayer},
+        {"charmed by a player", &FakeHost::FakeCreature::charmedByPlayer},
+        {"owned by a player", &FakeHost::FakeCreature::ownedByPlayer}};
+    for (auto const& [what, flag] : ownership)
+    {
+        INFO("ownership: " << what);
+        FakeHost::FakeCreature& state = rig.host.creatureState(mob);
+        state.*flag = true;
+        fl::CallResult refused = rig.run("mob:RemoveFromWorld()");
+        REQUIRE_FALSE(refused.ok);
+        CHECK(refused.error.find("RemoveFromWorld: a creature owned by a player") != std::string::npos);
+        CHECK(state.removeFromWorlds == 0);
+        state.*flag = false;
+    }
+    CHECK(rig.ok("return tostring(mob:Data().kept)") == "true");
+
+    // An ordinary world creature is still removed and its data pruned.
+    rig.ok("mob:RemoveFromWorld()");
+    CHECK(rig.host.creatureState(mob).removeFromWorlds == 1);
+    rig.host.add(mob, mobInfo);
+    CHECK(rig.ok("return tostring(mob:Data().kept)") == "nil");
 }
 
 TEST_CASE("eluna creature long tail: a bad argument raises before the host is called")
@@ -406,6 +476,7 @@ TEST_CASE("eluna creature long tail: a bad argument raises before the host is ca
     CHECK(errorOf("mob:SetLootMode(65536)").find("lootMode must be an integer 0..65535") != std::string::npos);
     CHECK(errorOf("mob:AddLootMode(-1)").find("lootMode must be an integer 0..65535") != std::string::npos);
     CHECK(errorOf("mob:SetDisableGravity()").find("bad argument") != std::string::npos);
+    CHECK(errorOf("mob:CanCompleteQuest(-1)").find("questId must be an integer 0..4294967295") != std::string::npos);
     // a handle of the wrong kind
     CHECK(errorOf("mob:AttackStart(5)").find("bad argument") != std::string::npos);
     CHECK(errorOf("mob:CanAssistTo(5, stored)").find("bad argument") != std::string::npos);
@@ -484,4 +555,25 @@ TEST_CASE("eluna creature long tail: the host's refusals raise with the method's
           std::string::npos);
     CHECK(errorOf("mob:AddThreat(stored, 10, 1)").find("needs the spell entry") != std::string::npos);
     CHECK(errorOf("mob:AddThreat(stored, 10, 0, 9999)").find("needs the spell entry") != std::string::npos);
+}
+
+TEST_CASE("eluna creature: the four documented calls the core cannot answer are honest stubs")
+{
+    CreatureRig rig;
+    fl::HandleData mob = FakeHost::creature(112, 0, 0, 900);
+    fl::ObjectInfo info;
+    info.name = "Stubs";
+    rig.host.add(mob, info);
+    prepare(rig.host, mob);
+    storeHandles(rig, FakeHost::player(111), mob);
+
+    // Each name is in the class table (the call resolves) and raises the documented core error.
+    for (std::string const& call : {"CanAggro()", "CanWalk()", "IsDamageEnoughForLootingAndReward()",
+                                    "SetAggroEnabled(true)"})
+    {
+        INFO("call: mob:" << call);
+        fl::CallResult r = rig.run("mob:" + call);
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("not available on this core") != std::string::npos);
+    }
 }

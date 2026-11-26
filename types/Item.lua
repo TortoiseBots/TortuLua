@@ -97,11 +97,11 @@ function Item:GetOwnerGUID() end
 ---@return any
 function Item:GetQuality() end
 
----@deprecated not available (this core)
+---@deprecated not available (this core); this core has no legacy random property id: items carry ItemRandomBonusListId (Item::GetItemRandomBonusListId, m_randomBonusListId)
 ---@return any
 function Item:GetRandomProperty() end
 
----@deprecated not available (this core)
+---@deprecated not available (this core); this core has no legacy random suffix id: items carry ItemRandomBonusListId (Item::GetItemRandomBonusListId, m_randomBonusListId)
 ---@return any
 function Item:GetRandomSuffix() end
 
@@ -193,7 +193,7 @@ function Item:IsSoulBound() end
 ---@return any
 function Item:IsWeaponVellum() end
 
----@deprecated not available (this server)
+---@deprecated not available (this server); Item::SaveToDB called without a CharacterDatabaseTransaction begins and commits its own synchronous transaction: the write would block the game thread
 ---@return any
 function Item:SaveToDB() end
 
@@ -210,14 +210,14 @@ function Item:SetCount(count) end
 ---@return any
 function Item:SetEnchantment(enchantId, arg2) end
 
----@deprecated not available (this server)
+---@deprecated not available (this server); the core keeps an item in its owner's inventory, update queue and database rows; rewriting only the owner guid would leave the item in the old owner's bag
 ---@return any
 function Item:SetOwner() end
 
----@deprecated not available (this core)
+---@deprecated not available (this core); this core has no legacy random property id: items carry ItemRandomBonusListId (Item::SetItemRandomBonusList, m_randomBonusListId)
 ---@return any
 function Item:SetRandomProperty() end
 
----@deprecated not available (this core)
+---@deprecated not available (this core); this core has no legacy random suffix id: items carry ItemRandomBonusListId (Item::SetItemRandomBonusList, m_randomBonusListId)
 ---@return any
 function Item:SetRandomSuffix() end

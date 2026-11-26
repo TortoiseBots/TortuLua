@@ -20,7 +20,7 @@ function Map:GetDifficulty() end
 ---@return any
 function Map:GetHeight(arg1, arg2) end
 
----@deprecated not available (this core)
+---@deprecated not available (this core); no generic instance data store to read (see the Map class note)
 ---@return any
 function Map:GetInstanceData() end
 
@@ -61,7 +61,7 @@ function Map:IsHeroic() end
 ---@return any
 function Map:IsRaid() end
 
----@deprecated not available (this core)
+---@deprecated not available (this core); no generic instance data store to save (see the Map class note)
 ---@return any
 function Map:SaveInstanceData() end
 

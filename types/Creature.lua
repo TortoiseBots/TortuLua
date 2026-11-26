@@ -25,11 +25,19 @@ function Creature:CallAssistance() end
 ---@return any
 function Creature:CallForHelp(radius) end
 
+---@deprecated not available (this core); no core aggro predicate: eligibility is Creature::CanStartAttack(Unit const*, bool), which needs a target
+---@return any
+function Creature:CanAggro() end
+
 ---@param friend any
 ---@param enemy any
 ---@param arg3 any
 ---@return any
 function Creature:CanAssistTo(friend, enemy, arg3) end
+
+---@param questId any
+---@return any
+function Creature:CanCompleteQuest(questId) end
 
 ---@return any
 function Creature:CanFly() end
@@ -41,6 +49,10 @@ function Creature:CanStartAttack(target, arg2) end
 
 ---@return any
 function Creature:CanSwim() end
+
+---@deprecated not available (this core); the core has IsWalking()/SetWalk() and the CreatureChaseMovementType::CanWalk chase mode, not a walking-capability query
+---@return any
+function Creature:CanWalk() end
 
 ---@return any
 function Creature:ClearFixate() end
@@ -185,6 +197,10 @@ function Creature:IsBoss() end
 ---@return any
 function Creature:IsCivilian() end
 
+---@deprecated not available (this core); the core keeps Creature::m_PlayerDamageReq and the LowerPlayerDamageReq/ResetPlayerDamageReq helpers, but no loot/reward predicate
+---@return any
+function Creature:IsDamageEnoughForLootingAndReward() end
+
 ---@return any
 function Creature:IsDungeonBoss() end
 
@@ -210,6 +226,10 @@ function Creature:IsReputationGainDisabled() end
 ---@return any
 function Creature:IsTappedBy(player) end
 
+---@param arg1 any
+---@return any
+function Creature:IsTargetableForAttack(arg1) end
+
 ---@return any
 function Creature:IsTrigger() end
 
@@ -221,6 +241,10 @@ function Creature:MoveWaypoint() end
 
 ---@return any
 function Creature:RemoveCorpse() end
+
+---ordinary world creatures only: a creature owned by a player (a pet, guardian, minion, totem or charm) is refused, its owner's pet lifecycle removes it
+---@return any
+function Creature:RemoveFromWorld() end
 
 ---@param lootMode any
 ---@return any
@@ -240,6 +264,10 @@ function Creature:SaveToDB() end
 
 ---@return any
 function Creature:SelectVictim() end
+
+---@deprecated not available (this core); no aggro-enabled flag; Creature::SetReactState(REACT_PASSIVE) is the core's control
+---@return any
+function Creature:SetAggroEnabled() end
 
 ---@param arg1 any
 ---@return any

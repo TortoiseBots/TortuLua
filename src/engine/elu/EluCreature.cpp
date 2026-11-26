@@ -207,6 +207,12 @@ int cIsTappedBy(lua_State* L)
     fl::HandleData const& player = objArg(L, 2, kPlayer, "player");
     return readOp(L, kCreature, "creature.isTappedBy", "IsTappedBy", {EventValue(player)});
 }
+// The core's Unit::isTargetableForAttack(checkFakeDeath): alive, not flagged unattackable and not feigning death.
+int cIsTargetableForAttack(lua_State* L)
+{
+    return readOp(L, kCreature, "creature.isTargetableForAttack", "IsTargetableForAttack",
+                  {EventValue(optBool(L, 2, true))});
+}
 int cHasLootRecipient(lua_State* L) { return readOp(L, kCreature, "creature.hasLootRecipient", "HasLootRecipient"); }
 int cGetLootRecipient(lua_State* L)
 {
@@ -345,6 +351,20 @@ int cSetHomePosition(lua_State* L)
 int cGetRespawnDelay(lua_State* L) { return readOp(L, kCreature, "creature.getRespawnDelay", "GetRespawnDelay"); }
 int cGetCorpseDelay(lua_State* L) { return readOp(L, kCreature, "creature.getCorpseDelay", "GetCorpseDelay"); }
 int cRemoveCorpse(lua_State* L) { return actionOp(L, kCreature, "creature.removeCorpse", "RemoveCorpse"); }
+// The core removes objects through its deferred removal list (WorldObject::AddObjectToRemoveList); the world object data
+// of the handle is dropped with it, like GameObject:RemoveFromWorld. A creature a player owns is refused: it is removed
+// through the owner's pet lifecycle (Pet::Remove -> Player::RemovePet saves it and updates the stable), not by a script.
+int cRemoveFromWorld(lua_State* L)
+{
+    fl::HandleData const& h = self(L, kCreature);
+    std::vector<EventValue> out;
+    gameCall(L, h, "creature.removeFromWorld", {}, out, "RemoveFromWorld");
+    requireHostOk(L, out, "RemoveFromWorld",
+                  "a creature owned by a player (a pet, guardian, minion or charm) is removed through its owner; "
+                  "only an ordinary world creature can be removed");
+    eng(L).removeWorldObjectData(h);
+    return 0;
+}
 int cSetDeathState(lua_State* L)
 {
     uint32_t const state = deathStateArg(L, 2);
@@ -459,6 +479,13 @@ int cHasQuest(lua_State* L)
     return readOp(L, kCreature, "creature.hasQuest", "HasQuest",
                   {EventValue(static_cast<int64_t>(argUInt(L, 2, "questId")))});
 }
+// The core keeps two quest relations: hasQuest (the creature starts the quest) and hasInvolvedQuest (the creature ends
+// it), the second being the documented CanCompleteQuest.
+int cCanCompleteQuest(lua_State* L)
+{
+    return readOp(L, kCreature, "creature.canCompleteQuest", "CanCompleteQuest",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "questId")))});
+}
 
 // The core writes the spawn through a synchronous WorldDatabase transaction, which must not run on a game thread.
 int cSaveToDB(lua_State* L)
@@ -491,6 +518,7 @@ void registerCreatureMethods(lua_State* L)
         {"IsInEvadeMode", fl::safe<cIsInEvadeMode>},      {"SetInCombatWithZone", fl::safe<cSetInCombatWithZone>},
         {"GetAggroRange", fl::safe<cGetAggroRange>},      {"GetAttackDistance", fl::safe<cGetAttackDistance>},
         {"CanAssistTo", fl::safe<cCanAssistTo>},          {"CanStartAttack", fl::safe<cCanStartAttack>},
+        {"IsTargetableForAttack", fl::safe<cIsTargetableForAttack>},
         {"IsTappedBy", fl::safe<cIsTappedBy>},            {"HasLootRecipient", fl::safe<cHasLootRecipient>},
         {"GetLootRecipient", fl::safe<cGetLootRecipient>},
         {"GetLootRecipientGroup", fl::safe<cGetLootRecipientGroup>},
@@ -517,6 +545,7 @@ void registerCreatureMethods(lua_State* L)
         {"GetWanderRadius", fl::safe<cGetWanderRadius>},  {"SetWanderRadius", fl::safe<cSetWanderRadius>},
         {"SetHomePosition", fl::safe<cSetHomePosition>},  {"GetRespawnDelay", fl::safe<cGetRespawnDelay>},
         {"GetCorpseDelay", fl::safe<cGetCorpseDelay>},    {"RemoveCorpse", fl::safe<cRemoveCorpse>},
+        {"RemoveFromWorld", fl::safe<cRemoveFromWorld>},
         {"SetDeathState", fl::safe<cSetDeathState>},      {"SetEquipmentSlots", fl::safe<cSetEquipmentSlots>},
         {"GetCreatureFamily", fl::safe<cGetCreatureFamily>}, {"GetNPCFlags", fl::safe<cGetNPCFlags>},
         {"SetNPCFlags", fl::safe<cSetNPCFlags>},          {"GetExtraFlags", fl::safe<cGetExtraFlags>},
@@ -529,7 +558,8 @@ void registerCreatureMethods(lua_State* L)
         {"GetLootMode", fl::safe<cGetLootMode>},          {"HasLootMode", fl::safe<cHasLootMode>},
         {"SetLootMode", fl::safe<cSetLootMode>},          {"AddLootMode", fl::safe<cAddLootMode>},
         {"RemoveLootMode", fl::safe<cRemoveLootMode>},    {"ResetLootMode", fl::safe<cResetLootMode>},
-        {"HasQuest", fl::safe<cHasQuest>},                {"SaveToDB", fl::safe<cSaveToDB>},
+        {"HasQuest", fl::safe<cHasQuest>},                {"CanCompleteQuest", fl::safe<cCanCompleteQuest>},
+        {"SaveToDB", fl::safe<cSaveToDB>},
         {nullptr, nullptr}};
     addMethods(L, "Creature", regs);
 }

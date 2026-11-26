@@ -491,7 +491,8 @@
      "note": "stub: not available (this core)",
      "declared": "Object"
     }
-   }
+   },
+   "note": "the 17 update-field and flag stubs: this core stores typed update-field fragments, and the setter type is private to its entity classes (Object/Updates/UpdateField.h: UpdateFieldPrivateSetter), so there is no public by-index or by-flag reader/writer"
   },
   "WorldObject": {
    "inherits": "Object",
@@ -2485,14 +2486,17 @@
      "declared": "Creature"
     },
     "CanAggro": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core); no core aggro predicate: eligibility is Creature::CanStartAttack(Unit const*, bool), which needs a target",
+     "declared": "Creature"
     },
     "CanAssistTo": {
      "status": "implemented",
      "declared": "Creature"
     },
     "CanCompleteQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Creature"
     },
     "CanFly": {
      "status": "implemented",
@@ -2507,7 +2511,9 @@
      "declared": "Creature"
     },
     "CanWalk": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core); the core has IsWalking()/SetWalk() and the CreatureChaseMovementType::CanWalk chase mode, not a walking-capability query",
+     "declared": "Creature"
     },
     "ClearFixate": {
      "status": "implemented",
@@ -2678,7 +2684,9 @@
      "declared": "Creature"
     },
     "IsDamageEnoughForLootingAndReward": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core); the core keeps Creature::m_PlayerDamageReq and the LowerPlayerDamageReq/ResetPlayerDamageReq helpers, but no loot/reward predicate",
+     "declared": "Creature"
     },
     "IsDungeonBoss": {
      "status": "implemented",
@@ -2713,7 +2721,8 @@
      "declared": "Creature"
     },
     "IsTargetableForAttack": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Creature"
     },
     "IsTrigger": {
      "status": "implemented",
@@ -2732,7 +2741,9 @@
      "declared": "Creature"
     },
     "RemoveFromWorld": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Creature",
+     "note": "ordinary world creatures only: a creature owned by a player (a pet, guardian, minion, totem or charm) is refused, its owner's pet lifecycle removes it"
     },
     "RemoveLootMode": {
      "status": "implemented",
@@ -2759,7 +2770,9 @@
      "declared": "Creature"
     },
     "SetAggroEnabled": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core); no aggro-enabled flag; Creature::SetReactState(REACT_PASSIVE) is the core's control",
+     "declared": "Creature"
     },
     "SetDeathState": {
      "status": "implemented",
@@ -3046,12 +3059,12 @@
     },
     "GetRandomProperty": {
      "status": "stub",
-     "note": "stub: not available (this core)",
+     "note": "stub: not available (this core); this core has no legacy random property id: items carry ItemRandomBonusListId (Item::GetItemRandomBonusListId, m_randomBonusListId)",
      "declared": "Item"
     },
     "GetRandomSuffix": {
      "status": "stub",
-     "note": "stub: not available (this core)",
+     "note": "stub: not available (this core); this core has no legacy random suffix id: items carry ItemRandomBonusListId (Item::GetItemRandomBonusListId, m_randomBonusListId)",
      "declared": "Item"
     },
     "GetRequiredLevel": {
@@ -3166,7 +3179,7 @@
     },
     "SaveToDB": {
      "status": "stub",
-     "note": "stub: not available (this server)",
+     "note": "stub: not available (this server); Item::SaveToDB called without a CharacterDatabaseTransaction begins and commits its own synchronous transaction: the write would block the game thread",
      "declared": "Item"
     },
     "SetBinding": {
@@ -3183,17 +3196,17 @@
     },
     "SetOwner": {
      "status": "stub",
-     "note": "stub: not available (this server)",
+     "note": "stub: not available (this server); the core keeps an item in its owner's inventory, update queue and database rows; rewriting only the owner guid would leave the item in the old owner's bag",
      "declared": "Item"
     },
     "SetRandomProperty": {
      "status": "stub",
-     "note": "stub: not available (this core)",
+     "note": "stub: not available (this core); this core has no legacy random property id: items carry ItemRandomBonusListId (Item::SetItemRandomBonusList, m_randomBonusListId)",
      "declared": "Item"
     },
     "SetRandomSuffix": {
      "status": "stub",
-     "note": "stub: not available (this core)",
+     "note": "stub: not available (this core); this core has no legacy random suffix id: items carry ItemRandomBonusListId (Item::SetItemRandomBonusList, m_randomBonusListId)",
      "declared": "Item"
     }
    }
@@ -3369,12 +3382,12 @@
     },
     "SetBankTabText": {
      "status": "stub",
-     "note": "stub: not available (Classic 1.60)",
+     "note": "stub: not available (Classic 1.60); Classic 1.60 has no guild bank (no client window and GUILD 9/11 never fire), so the core's Guild::SetBankTabText has no tab to name",
      "declared": "Guild"
     },
     "SetLeader": {
      "status": "stub",
-     "note": "stub: not available (this server)",
+     "note": "stub: not available (this server); the pinned core changes a guild leader only through Guild::HandleSetNewGuildMaster, which needs the old leader's session and its client permission checks; there is no server-side setter (Guild::_SetLeader is private)",
      "declared": "Guild"
     },
     "SetMemberRank": {
@@ -3687,7 +3700,7 @@
     },
     "GetInstanceData": {
      "status": "stub",
-     "note": "stub: not available (this core)",
+     "note": "stub: not available (this core); no generic instance data store to read (see the Map class note)",
      "declared": "Map"
     },
     "GetInstanceId": {
@@ -3740,14 +3753,15 @@
     },
     "SaveInstanceData": {
      "status": "stub",
-     "note": "stub: not available (this core)",
+     "note": "stub: not available (this core); no generic instance data store to save (see the Map class note)",
      "declared": "Map"
     },
     "SetWeather": {
      "status": "implemented",
      "declared": "Map"
     }
-   }
+   },
+   "note": "the two instance-data stubs: this core's InstanceScript has no generic data store; encounter state is boss-state and persistent-value members registered by C++ scripts (Instances/InstanceScript.h)"
   },
   "ElunaQuery": {
    "inherits": null,
@@ -6221,18 +6235,7 @@
   }
  },
  "missing": {
-  "globals": [],
-  "classes": {
-   "Creature": [
-    "CanAggro",
-    "CanCompleteQuest",
-    "CanWalk",
-    "IsDamageEnoughForLootingAndReward",
-    "IsTargetableForAttack",
-    "RemoveFromWorld",
-    "SetAggroEnabled"
-   ]
-  }
+  "globals": []
  },
  "extra": {
   "globals": {

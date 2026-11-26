@@ -4348,6 +4348,11 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                     out.emplace_back(creature->CanStartAttack(target, bArg(args, 1, true)));
             return true;
         }
+        if (name == "creature.isTargetableForAttack")
+        {
+            out.emplace_back(creature->isTargetableForAttack(bArg(args, 0, true)));
+            return true;
+        }
         if (name == "creature.isTappedBy")
         {
             HandleData other;
@@ -4616,6 +4621,23 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             creature->RemoveCorpse();
             return true;
         }
+        if (name == "creature.removeFromWorld")
+        {
+            // A creature a player owns (a pet, guardian, minion, totem or charmed unit) belongs to that player's
+            // lifecycle: the core removes a live pet through Pet::Remove -> Player::RemovePet, which saves it, updates
+            // the stable and notifies the owner. The removal list below would delete the live pet and skip all of that,
+            // so a player-owned creature is refused (the script removes only ordinary world creatures).
+            if (creature->IsPet() || creature->IsControlledByPlayer() ||
+                creature->GetCharmerOrOwnerPlayerOrPlayerItself() != nullptr)
+            {
+                out.emplace_back(false);
+                return true;
+            }
+            // the map's own removal path: it unlinks the creature on its thread and fires the removal hooks, where a
+            // direct RemoveFromWorld() would pull it out while the map may still be iterating it
+            creature->AddObjectToRemoveList();
+            return true;
+        }
         if (name == "creature.setDeathState")
         {
             DeathState const state = static_cast<DeathState>(iArg(args, 0));
@@ -4828,6 +4850,12 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "creature.hasQuest")
         {
             out.emplace_back(creature->hasQuest(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "creature.canCompleteQuest")
+        {
+            // the end-relation of the creature's quests (Creature::hasInvolvedQuest)
+            out.emplace_back(creature->hasInvolvedQuest(static_cast<uint32>(iArg(args, 0))));
             return true;
         }
     }

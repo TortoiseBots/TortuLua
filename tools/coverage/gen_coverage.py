@@ -113,6 +113,11 @@ EVENT_NOTES = {
 CLASS_NOTES = {
     "AuraEffect": "implemented, but unreachable from scripts until core spell hooks exist",
     "ElunaProcInfo": "implemented, but unreachable from scripts until core spell hooks exist",
+    "Object": "the 17 update-field and flag stubs: this core stores typed update-field fragments, and the setter type "
+              "is private to its entity classes (Object/Updates/UpdateField.h: UpdateFieldPrivateSetter), so there is no "
+              "public by-index or by-flag reader/writer",
+    "Map": "the two instance-data stubs: this core's InstanceScript has no generic data store; encounter state is "
+           "boss-state and persistent-value members registered by C++ scripts (Instances/InstanceScript.h)",
 }
 
 METHOD_NOTES = {
@@ -128,6 +133,36 @@ METHOD_NOTES = {
     ("SpellInfo", "GetEffectDieSides"): "returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing "
                                         "effects; 0 for others)",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
+    # 0.3.0 stub re-check: the core fact behind every remaining stub of Object/Item/Guild/Map and Creature.
+    ("Creature", "CanAggro"): "no core aggro predicate: eligibility is Creature::CanStartAttack(Unit const*, bool), "
+                              "which needs a target",
+    ("Creature", "CanWalk"): "the core has IsWalking()/SetWalk() and the CreatureChaseMovementType::CanWalk chase mode, "
+                             "not a walking-capability query",
+    ("Creature", "IsDamageEnoughForLootingAndReward"): "the core keeps Creature::m_PlayerDamageReq and the "
+                                                        "LowerPlayerDamageReq/ResetPlayerDamageReq helpers, but no "
+                                                        "loot/reward predicate",
+    ("Creature", "SetAggroEnabled"): "no aggro-enabled flag; Creature::SetReactState(REACT_PASSIVE) is the core's control",
+    ("Creature", "RemoveFromWorld"): "ordinary world creatures only: a creature owned by a player (a pet, guardian, "
+                                     "minion, totem or charm) is refused, its owner's pet lifecycle removes it",
+    ("Item", "GetRandomProperty"): "this core has no legacy random property id: items carry ItemRandomBonusListId "
+                                   "(Item::GetItemRandomBonusListId, m_randomBonusListId)",
+    ("Item", "GetRandomSuffix"): "this core has no legacy random suffix id: items carry ItemRandomBonusListId "
+                                 "(Item::GetItemRandomBonusListId, m_randomBonusListId)",
+    ("Item", "SetRandomProperty"): "this core has no legacy random property id: items carry ItemRandomBonusListId "
+                                   "(Item::SetItemRandomBonusList, m_randomBonusListId)",
+    ("Item", "SetRandomSuffix"): "this core has no legacy random suffix id: items carry ItemRandomBonusListId "
+                                 "(Item::SetItemRandomBonusList, m_randomBonusListId)",
+    ("Item", "SetOwner"): "the core keeps an item in its owner's inventory, update queue and database rows; rewriting "
+                          "only the owner guid would leave the item in the old owner's bag",
+    ("Item", "SaveToDB"): "Item::SaveToDB called without a CharacterDatabaseTransaction begins and commits its own "
+                          "synchronous transaction: the write would block the game thread",
+    ("Guild", "SetLeader"): "the pinned core changes a guild leader only through Guild::HandleSetNewGuildMaster, which "
+                            "needs the old leader's session and its client permission checks; there is no server-side "
+                            "setter (Guild::_SetLeader is private)",
+    ("Guild", "SetBankTabText"): "Classic 1.60 has no guild bank (no client window and GUILD 9/11 never fire), so the "
+                                 "core's Guild::SetBankTabText has no tab to name",
+    ("Map", "GetInstanceData"): "no generic instance data store to read (see the Map class note)",
+    ("Map", "SaveInstanceData"): "no generic instance data store to save (see the Map class note)",
 }
 GLOBAL_NOTES = {
     "PerformIngameSpawn": "save writes the spawn to the creature/gameobject table (eluna mode trusts its scripts)",

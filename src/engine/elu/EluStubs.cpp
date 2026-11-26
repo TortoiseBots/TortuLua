@@ -116,6 +116,16 @@ void registerStubMethods(lua_State* L)
         addCoreStubMethod(L, "SpellInfo", m);
     // ElunaProcInfo: HealInfo exposes AbsorbHeal and SetEffectiveHeal but has no SetHeal/ModifyHeal mutator.
     addCoreStubMethod(L, "ElunaProcInfo", "SetHeal");
+    // Creature: the documented calls the pinned core cannot answer (0.3.0 stub re-check):
+    //  CanAggro: Creature/Unit have no aggro predicate; eligibility is Creature::CanStartAttack(Unit const*, bool)
+    //    (Entities/Creature/Creature.cpp), which needs the prospective target.
+    //  CanWalk: Unit.h has IsWalking()/SetWalk(), and CreatureData.h has the CreatureChaseMovementType::CanWalk chase
+    //    mode; there is no walking-capability query.
+    //  IsDamageEnoughForLootingAndReward: the core keeps the counter Creature::m_PlayerDamageReq and the
+    //    LowerPlayerDamageReq/ResetPlayerDamageReq helpers (Entities/Creature/Creature.h), but no loot/reward predicate.
+    //  SetAggroEnabled: there is no aggro-enabled flag; Creature::SetReactState(REACT_PASSIVE) is the core's control.
+    for (char const* m : {"CanAggro", "CanWalk", "IsDamageEnoughForLootingAndReward", "SetAggroEnabled"})
+        addCoreStubMethod(L, "Creature", m);
 }
 
 void registerVehicleMethods(lua_State* L)
