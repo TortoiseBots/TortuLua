@@ -2514,19 +2514,21 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
     static std::set<std::string> const readOps = {
         "player.canBlock",              "player.canCompleteRepeatableQuest", "player.canFly",
         "player.canParry",              "player.canShareQuest",             "player.canSpeak",
-        "player.canUninviteFromGroup",  "player.getChampioningFaction",     "player.getDbcLocale",
-        "player.getDifficulty",         "player.getDrunkValue",             "player.getGroupInvite",
-        "player.getGuildRank",          "player.getHealthBonusFromStamina", "player.getInGameTime",
-        "player.getMailCount",          "player.getManaBonusFromIntellect", "player.getNearbyGameObject",
+        "player.canUninviteFromGroup",  "player.getChampioningFaction",     "player.getChatTag",
+        "player.getDbcLocale",          "player.getDifficulty",             "player.getDrunkValue",
+        "player.getGroupInvite",        "player.getGuildRank",              "player.getHealthBonusFromStamina",
+        "player.getInGameTime",         "player.getLifetimeKills",          "player.getMailCount",
+        "player.getMailItem",           "player.getManaBonusFromIntellect", "player.getNearbyGameObject",
         "player.getNextRandomRaidMember", "player.getOriginalGroup",         "player.getOriginalSubGroup",
         "player.getQuestLevel",         "player.getRecruiterId",            "player.getSelectedPlayer",
         "player.getSelectedUnit",       "player.getShieldBlockValue",       "player.getSubGroup",
         "player.getXPRestBonus",        "player.hasAtLoginFlag",            "player.hasPendingBind",
         "player.hasTalent",             "player.hasTitle",                  "player.inArena",
         "player.inBattlegroundQueue",   "player.isAcceptingWhispers",       "player.isARecruiter",
-        "player.isGMChat",              "player.isGMVisible",               "player.isGroupVisibleFor",
-        "player.isInSameGroupWith",     "player.isInSameRaidWith",          "player.isNeverVisible",
-        "player.isOutdoorPvPActive",    "player.resetTalentsCost"};
+        "player.isGMChat",              "player.isGMVisible",               "player.isHonorOrXPTarget",
+        "player.isGroupVisibleFor",     "player.isInSameGroupWith",         "player.isInSameRaidWith",
+        "player.isNeverVisible",        "player.isOutdoorPvPActive",        "player.isVisibleForPlayer",
+        "player.resetTalentsCost"};
     // E7 long tail, round 2: the writes.
     static std::set<std::string> const writeOps = {
         "player.sendCinematicStart",          "player.sendMovieStart",           "player.sendUpdateWorldState",
@@ -2537,7 +2539,22 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         "player.resetTalents",                "player.durabilityLoss",           "player.durabilityLossAll",
         "player.durabilityPointLossForEquipSlot", "player.durabilityPointsLoss", "player.durabilityPointsLossAll",
         "player.durabilityRepair"};
-    if (!ops.count(op) && !readOps.count(op) && !writeOps.count(op))
+    // E7 long tail, round 3: remaining Player methods.
+    static std::set<std::string> const round3Ops = {
+        "player.canTitanGrip",     "player.getComboPoints",           "player.getComboTarget",
+        "player.getGossipTextId",  "player.hasRecruited",             "player.isRecruited",
+        "player.addComboPoints",   "player.clearComboPoints",         "player.addTalent",
+        "player.advanceAllSkills", "player.advanceSkill",             "player.advanceSkillsToMax", "player.bindToInstance",         "player.unbindInstance",
+        "player.unbindAllInstances", "player.gossipSendPOI",          "player.killedPlayerCredit",
+        "player.killGOCredit",     "player.leaveBattleground",        "player.mute",
+        "player.removedInsignia",  "player.removeFromBattlegroundRaid", "player.removeFromGroup",
+        "player.removePet",        "player.summonPet",                "player.sendAddonMessage",
+        "player.sendAuctionMenu",  "player.sendQuestTemplate",        "player.sendShowMailBox",
+        "player.sendTabardVendorActivate", "player.setKnownTitle",    "player.unsetKnownTitle",
+        "player.setMovement",      "player.setPlayerLock",            "player.setQuestStatus",
+        "player.startTaxi",        "player.groupCreate",              "player.groupInvite",
+        "player.sendGuildInvite",  "player.setGuildRank",             "player.runCommand"};
+    if (!ops.count(op) && !readOps.count(op) && !writeOps.count(op) && !round3Ops.count(op))
         return false;
 
     FakePlayer& p = playerState(self);
@@ -2858,6 +2875,8 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         out.emplace_back(p.canSpeak);
     else if (op == "player.canUninviteFromGroup")
         out.emplace_back(static_cast<int64_t>(p.partyResult));
+    else if (op == "player.getChatTag")
+        out.emplace_back(static_cast<int64_t>(p.chatTag));
     else if (op == "player.getChampioningFaction")
         out.emplace_back(static_cast<int64_t>(p.championing));
     else if (op == "player.getDbcLocale")
@@ -2882,8 +2901,17 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         out.emplace_back(p.healthBonus);
     else if (op == "player.getInGameTime")
         out.emplace_back(static_cast<int64_t>(p.inGameTime));
+    else if (op == "player.getLifetimeKills")
+        out.emplace_back(static_cast<int64_t>(p.lifetimeKills));
     else if (op == "player.getMailCount")
         out.emplace_back(static_cast<int64_t>(p.mailCount));
+    else if (op == "player.getMailItem")
+    {
+        fl::Guid g;
+        if (fl::parseGuidText(stringAt(args, 0), g) && p.mailedItems.count(g.lo))
+            if (FakeItem* it = findItemByLow(g.lo))
+                pushItem(*it);
+    }
     else if (op == "player.getManaBonusFromIntellect")
         out.emplace_back(p.manaBonus);
     else if (op == "player.getNearbyGameObject")
@@ -2949,6 +2977,8 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         out.emplace_back(p.gmChat);
     else if (op == "player.isGMVisible")
         out.emplace_back(p.gmVisible);
+    else if (op == "player.isHonorOrXPTarget")
+        out.emplace_back(p.honorXpTarget);
     else if (op == "player.isGroupVisibleFor" || op == "player.isInSameGroupWith" || op == "player.isInSameRaidWith")
     {
         fl::HandleData other;
@@ -2964,6 +2994,8 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         out.emplace_back(p.neverVisible);
     else if (op == "player.isOutdoorPvPActive")
         out.emplace_back(p.outdoorPvp);
+    else if (op == "player.isVisibleForPlayer")
+        out.emplace_back(p.seesPlayer);
     else if (op == "player.resetTalentsCost")
         out.emplace_back(static_cast<int64_t>(p.resetTalentsCost));
     // ---- E7 long tail, round 2: the writes ----
@@ -3066,6 +3098,141 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         call.discount = doubleAt(args, 2, 1.0);
         p.durabilities.push_back(call);
     }
+    // ---- E7 long tail, round 3: remaining Player methods ----
+    else if (op == "player.canTitanGrip")
+        out.emplace_back(p.canTitanGrip);
+    else if (op == "player.getComboPoints")
+        out.emplace_back(static_cast<int64_t>(p.comboPoints));
+    else if (op == "player.getComboTarget")
+    {
+        if (p.comboTargetLow)
+            out.emplace_back(creature(p.comboTargetLow));
+    }
+    else if (op == "player.getGossipTextId")
+        out.emplace_back(static_cast<int64_t>(p.gossipTextId));
+    else if (op == "player.hasRecruited")
+    {
+        fl::HandleData recruit;
+        bool has = false;
+        if (handleAt(args, 0, recruit))
+            has = p.recruitedPlayers.count(recruit.guid.lo) != 0;
+        out.emplace_back(has);
+    }
+    else if (op == "player.isRecruited")
+        out.emplace_back(p.recruited);
+    else if (op == "player.addComboPoints")
+    {
+        fl::HandleData target;
+        if (handleAt(args, 0, target))
+        {
+            int64_t const count = intAt(args, 1);
+            if (count > 0 && p.comboTargetLow != target.guid.lo)
+            {
+                p.comboPoints = 0;
+                p.comboTargetLow = target.guid.lo;
+            }
+            if (count != 0 && (count > 0 || p.comboTargetLow == target.guid.lo))
+            {
+                int64_t const next = std::clamp<int64_t>(static_cast<int64_t>(p.comboPoints) + count, 0, 5);
+                p.comboPoints = static_cast<uint8_t>(next);
+                if (p.comboPoints == 0)
+                    p.comboTargetLow = 0;
+            }
+        }
+    }
+    else if (op == "player.clearComboPoints")
+    {
+        p.comboPoints = 0;
+        p.comboTargetLow = 0;
+    }
+    else if (op == "player.addTalent")
+    {
+        uint32_t const spellId = static_cast<uint32_t>(intAt(args, 0));
+        uint8_t const spec = static_cast<uint8_t>(intAt(args, 1));
+        if (p.addTalentResult && spec < 5)
+            p.talents.insert({spellId, spec});
+        out.emplace_back(p.addTalentResult && spec < 5);
+    }
+    else if (op == "player.advanceSkill")
+    {
+        FakeSkill& s = p.skills[static_cast<uint32_t>(intAt(args, 0))];
+        if (s.known && s.max > 0)
+            s.cur = std::min(s.max, s.cur + static_cast<uint32_t>(intAt(args, 1)));
+    }
+    else if (op == "player.advanceAllSkills")
+    {
+        uint32_t const step = static_cast<uint32_t>(intAt(args, 0));
+        for (auto& [id, s] : p.skills)
+            if (s.known && s.max > 0)
+                s.cur = std::min(s.max, s.cur + step);
+    }
+    else if (op == "player.advanceSkillsToMax")
+    {
+        for (uint32_t id : p.weaponSkills)
+        {
+            FakeSkill& s = p.skills[id];
+            if (s.known && s.max > s.cur)
+                s.cur = s.max;
+        }
+    }
+    else if (op == "player.bindToInstance")
+        p.instanceBound = true;
+    else if (op == "player.unbindInstance")
+        p.instanceBinds.erase({static_cast<uint32_t>(intAt(args, 0)), static_cast<uint32_t>(intAt(args, 1, 0))});
+    else if (op == "player.unbindAllInstances")
+        p.instanceBinds.clear();
+    else if (op == "player.mute")
+        p.muteTime = static_cast<uint32_t>(intAt(args, 0));
+    else if (op == "player.removeFromBattlegroundRaid")
+        p.inBgRaid = false;
+    else if (op == "player.removeFromGroup")
+        p.inGroup = false;
+    else if (op == "player.removePet")
+    {
+        p.activePetEntry = 0;
+        p.removedPetMode = static_cast<int32_t>(intAt(args, 0, -1));
+        p.removedPetReagent = boolAt(args, 1, false);
+    }
+    else if (op == "player.summonPet")
+    {
+        p.activePetEntry = static_cast<uint32_t>(intAt(args, 0));
+        p.activePetType = static_cast<uint32_t>(intAt(args, 5));
+        p.actions.emplace_back(op, args);
+    }
+    else if (op == "player.setKnownTitle")
+        p.titles.insert(static_cast<uint32_t>(intAt(args, 0)));
+    else if (op == "player.unsetKnownTitle")
+        p.titles.erase(static_cast<uint32_t>(intAt(args, 0)));
+    else if (op == "player.setMovement")
+        p.movementType = static_cast<int32_t>(intAt(args, 0));
+    else if (op == "player.setPlayerLock")
+        p.playerLock = boolAt(args, 0, true);
+    else if (op == "player.setQuestStatus")
+        p.questStatus[static_cast<uint32_t>(intAt(args, 0))] = static_cast<uint32_t>(intAt(args, 1));
+    else if (op == "player.startTaxi")
+        p.taxiPath = static_cast<uint32_t>(intAt(args, 0));
+    else if (op == "player.groupCreate")
+    {
+        if (p.createdGroupId)
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::Group;
+            h.guid.hi = 1;
+            h.guid.lo = p.createdGroupId;
+            out.emplace_back(h);
+        }
+    }
+    else if (op == "player.groupInvite")
+        out.emplace_back(p.groupInviteResult);
+    else if (op == "player.setGuildRank")
+        p.guildRank = static_cast<uint8_t>(intAt(args, 0));
+    else if (op == "player.runCommand")
+        p.playerCommands.push_back(stringAt(args, 0));
+    else if (op == "player.gossipSendPOI" || op == "player.killedPlayerCredit" || op == "player.killGOCredit" ||
+             op == "player.leaveBattleground" || op == "player.removedInsignia" || op == "player.sendAddonMessage" ||
+             op == "player.sendAuctionMenu" || op == "player.sendGuildInvite" || op == "player.sendQuestTemplate" ||
+             op == "player.sendShowMailBox" || op == "player.sendTabardVendorActivate")
+        p.actions.emplace_back(op, args);
     return true;
 }
 

@@ -14,7 +14,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 164 | 3 | 0 | 98% | 100% |
-| Player | 263 | 195 | 20 | 48 | 74% | 82% |
+| Player | 263 | 241 | 22 | 0 | 92% | 100% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
 | Item | 66 | 58 | 8 | 0 | 88% | 100% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1247** | **114** | **82** | **86%** | **94%** |
+| **all** | **1443** | **1293** | **116** | **34** | **90%** | **98%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -456,16 +456,16 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 | Documented method | Status | Note |
 |---|---|---|
-| `AddComboPoints` | **missing** |  |
+| `AddComboPoints` | implemented |  |
 | `AddItem` | implemented |  |
-| `AddLifetimeKills` | **missing** |  |
+| `AddLifetimeKills` | **stub** | stub: not available (this core) |
 | `AddQuest` | implemented |  |
-| `AddTalent` | **missing** |  |
-| `AdvanceAllSkills` | **missing** |  |
-| `AdvanceSkill` | **missing** |  |
-| `AdvanceSkillsToMax` | **missing** |  |
+| `AddTalent` | implemented |  |
+| `AdvanceAllSkills` | implemented |  |
+| `AdvanceSkill` | implemented |  |
+| `AdvanceSkillsToMax` | implemented |  |
 | `AreaExploredOrEventHappens` | implemented |  |
-| `BindToInstance` | **missing** |  |
+| `BindToInstance` | implemented |  |
 | `CanBlock` | implemented |  |
 | `CanCompleteQuest` | implemented |  |
 | `CanCompleteRepeatableQuest` | implemented |  |
@@ -475,10 +475,10 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `CanRewardQuest` | implemented |  |
 | `CanShareQuest` | implemented |  |
 | `CanSpeak` | implemented |  |
-| `CanTitanGrip` | **missing** |  |
+| `CanTitanGrip` | implemented |  |
 | `CanUninviteFromGroup` | implemented |  |
 | `CanUseItem` | implemented |  |
-| `ClearComboPoints` | **missing** |  |
+| `ClearComboPoints` | implemented |  |
 | `CompleteQuest` | implemented |  |
 | `DurabilityLoss` | implemented |  |
 | `DurabilityLossAll` | implemented |  |
@@ -497,11 +497,11 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetBattlegroundId` | implemented |  |
 | `GetBattlegroundTypeId` | implemented |  |
 | `GetChampioningFaction` | implemented |  |
-| `GetChatTag` | **stub** | stub: not available (this core) |
+| `GetChatTag` | implemented |  |
 | `GetClass` | implemented | declared on `Unit` |
 | `GetCoinage` | implemented |  |
-| `GetComboPoints` | **missing** |  |
-| `GetComboTarget` | **missing** |  |
+| `GetComboPoints` | implemented |  |
+| `GetComboTarget` | implemented |  |
 | `GetCorpse` | implemented |  |
 | `GetDbcLocale` | implemented |  |
 | `GetDbLocaleIndex` | implemented |  |
@@ -511,7 +511,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetFreeTalentPoints` | **stub** | stub: not available (this core) |
 | `GetGender` | implemented | declared on `Unit` |
 | `GetGMRank` | implemented |  |
-| `GetGossipTextId` | **missing** |  |
+| `GetGossipTextId` | implemented |  |
 | `GetGroup` | implemented |  |
 | `GetGroupInvite` | implemented |  |
 | `GetGuild` | implemented |  |
@@ -528,9 +528,9 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetLatency` | implemented |  |
 | `GetLevelPlayedTime` | implemented |  |
 | `GetLFGRole` | **stub** | stub: not available (Classic 1.60) |
-| `GetLifetimeKills` | **stub** | stub: not available (this core) |
+| `GetLifetimeKills` | implemented |  |
 | `GetMailCount` | implemented |  |
-| `GetMailItem` | **stub** | stub: not available (this core) |
+| `GetMailItem` | implemented |  |
 | `GetManaBonusFromIntellect` | implemented |  |
 | `GetMaxSkillValue` | implemented |  |
 | `GetNearbyGameObject` | implemented |  |
@@ -571,10 +571,10 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GossipComplete` | implemented |  |
 | `GossipMenuAddItem` | implemented |  |
 | `GossipSendMenu` | implemented |  |
-| `GossipSendPOI` | **missing** |  |
-| `GroupCreate` | **missing** |  |
+| `GossipSendPOI` | implemented |  |
+| `GroupCreate` | implemented |  |
 | `GroupEventHappens` | implemented |  |
-| `GroupInvite` | **missing** |  |
+| `GroupInvite` | implemented |  |
 | `HasAchieved` | **stub** | stub: not available (Classic 1.60) |
 | `HasAtLoginFlag` | implemented |  |
 | `HasItem` | implemented |  |
@@ -583,7 +583,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HasQuestForGO` | implemented |  |
 | `HasQuestForItem` | implemented |  |
 | `HasReceivedQuestReward` | implemented |  |
-| `HasRecruited` | **missing** |  |
+| `HasRecruited` | implemented |  |
 | `HasSkill` | implemented |  |
 | `HasSpell` | implemented |  |
 | `HasSpellCooldown` | implemented |  |
@@ -605,7 +605,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsGMChat` | implemented |  |
 | `IsGMVisible` | implemented |  |
 | `IsGroupVisibleFor` | implemented |  |
-| `IsHonorOrXPTarget` | **stub** | stub: not available (this core) |
+| `IsHonorOrXPTarget` | implemented |  |
 | `IsHorde` | implemented |  |
 | `IsImmuneToDamage` | implemented |  |
 | `IsImmuneToEnvironmentalDamage` | implemented |  |
@@ -618,62 +618,62 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsMoving` | implemented |  |
 | `IsNeverVisible` | implemented |  |
 | `IsOutdoorPvPActive` | implemented |  |
-| `IsRecruited` | **missing** |  |
+| `IsRecruited` | implemented |  |
 | `IsRested` | implemented |  |
 | `IsTaxiCheater` | implemented |  |
 | `IsUsingLfg` | **stub** | stub: not available (Classic 1.60) |
-| `IsVisibleForPlayer` | **stub** | stub: not available (this core) |
+| `IsVisibleForPlayer` | implemented |  |
 | `KickPlayer` | implemented |  |
 | `KilledMonsterCredit` | implemented |  |
-| `KilledPlayerCredit` | **missing** |  |
-| `KillGOCredit` | **missing** |  |
+| `KilledPlayerCredit` | implemented |  |
+| `KillGOCredit` | implemented |  |
 | `KillPlayer` | implemented |  |
 | `LearnSpell` | implemented |  |
-| `LearnTalent` | **missing** |  |
-| `LeaveBattleground` | **missing** |  |
+| `LearnTalent` | **stub** | stub: not available (this core) |
+| `LeaveBattleground` | implemented |  |
 | `LogoutPlayer` | implemented |  |
 | `ModifyArenaPoints` | **stub** | stub: not available (Classic 1.60) |
 | `ModifyHonorPoints` | implemented |  |
 | `ModifyMoney` | implemented |  |
-| `Mute` | **missing** |  |
+| `Mute` | implemented |  |
 | `RemoveActiveQuest` | implemented |  |
 | `RemoveArenaSpellCooldowns` | **stub** | stub: not available (Classic 1.60) |
-| `RemovedInsignia` | **missing** |  |
-| `RemoveFromBattlegroundRaid` | **missing** |  |
-| `RemoveFromGroup` | **missing** |  |
+| `RemovedInsignia` | implemented |  |
+| `RemoveFromBattlegroundRaid` | implemented |  |
+| `RemoveFromGroup` | implemented |  |
 | `RemoveItem` | implemented |  |
-| `RemoveLifetimeKills` | **missing** |  |
-| `RemovePet` | **missing** |  |
+| `RemoveLifetimeKills` | **stub** | stub: not available (this core) |
+| `RemovePet` | implemented |  |
 | `RemoveQuest` | implemented |  |
 | `RemoveRewardedQuest` | implemented |  |
 | `RemoveSpell` | implemented |  |
 | `ResetAchievements` | **stub** | stub: not available (Classic 1.60) |
 | `ResetAllCooldowns` | implemented |  |
-| `ResetPetTalents` | **missing** |  |
+| `ResetPetTalents` | **stub** | stub: not available (this core) |
 | `ResetSpellCooldown` | implemented |  |
 | `ResetTalents` | implemented |  |
 | `ResetTalentsCost` | implemented |  |
 | `ResetTypeCooldowns` | implemented |  |
 | `ResurrectPlayer` | implemented |  |
 | `RewardQuest` | implemented |  |
-| `RunCommand` | **missing** |  |
+| `RunCommand` | implemented |  |
 | `SaveToDB` | implemented |  |
 | `Say` | implemented |  |
-| `SendAddonMessage` | **missing** |  |
-| `SendAreaTriggerMessage` | **missing** |  |
-| `SendAuctionMenu` | **missing** |  |
+| `SendAddonMessage` | implemented |  |
+| `SendAreaTriggerMessage` | **stub** | stub: not available (this core) |
+| `SendAuctionMenu` | implemented |  |
 | `SendBroadcastMessage` | implemented |  |
 | `SendCinematicStart` | implemented |  |
-| `SendGuildInvite` | **missing** |  |
+| `SendGuildInvite` | implemented |  |
 | `SendListInventory` | implemented |  |
 | `SendMovieStart` | implemented |  |
 | `SendNotification` | implemented |  |
 | `SendPacket` | implemented |  |
-| `SendQuestTemplate` | **missing** |  |
+| `SendQuestTemplate` | implemented |  |
 | `SendShowBank` | implemented |  |
-| `SendShowMailBox` | **missing** |  |
+| `SendShowMailBox` | implemented |  |
 | `SendSpiritResurrect` | implemented |  |
-| `SendTabardVendorActivate` | **missing** |  |
+| `SendTabardVendorActivate` | implemented |  |
 | `SendTaxiMenu` | implemented |  |
 | `SendTrainerList` | implemented |  |
 | `SendUpdateWorldState` | implemented |  |
@@ -686,37 +686,37 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetDrunkValue` | implemented |  |
 | `SetFactionForRace` | implemented | refuses a race id the core's race store does not know with an error and leaves team and faction unchanged |
 | `SetFFA` | implemented | declared on `Unit` |
-| `SetFreeTalentPoints` | **missing** |  |
+| `SetFreeTalentPoints` | **stub** | stub: not available (this core) |
 | `SetGameMaster` | implemented |  |
 | `SetGender` | implemented |  |
 | `SetGMChat` | implemented |  |
 | `SetGMVisible` | implemented |  |
-| `SetGuildRank` | **missing** |  |
+| `SetGuildRank` | implemented |  |
 | `SetHonorPoints` | implemented |  |
-| `SetKnownTitle` | **missing** |  |
+| `SetKnownTitle` | implemented |  |
 | `SetLevel` | implemented | declared on `Unit` |
-| `SetLifetimeKills` | **missing** |  |
-| `SetMovement` | **missing** |  |
-| `SetPlayerLock` | **missing** |  |
+| `SetLifetimeKills` | **stub** | stub: not available (this core) |
+| `SetMovement` | implemented |  |
+| `SetPlayerLock` | implemented |  |
 | `SetPvPDeath` | implemented |  |
-| `SetQuestStatus` | **missing** |  |
+| `SetQuestStatus` | implemented |  |
 | `SetReputation` | implemented |  |
 | `SetRestBonus` | implemented |  |
 | `SetSheath` | implemented | declared on `Unit` |
 | `SetSkill` | implemented |  |
 | `SetTaxiCheat` | implemented |  |
 | `SpawnBones` | implemented |  |
-| `StartTaxi` | **missing** |  |
-| `SummonPet` | **missing** |  |
+| `StartTaxi` | implemented |  |
+| `SummonPet` | implemented |  |
 | `SummonPlayer` | implemented |  |
 | `TalkedToCreature` | implemented |  |
 | `Teleport` | implemented |  |
 | `TextEmote` | implemented |  |
 | `ToggleAFK` | implemented |  |
 | `ToggleDND` | implemented |  |
-| `UnbindAllInstances` | **missing** |  |
-| `UnbindInstance` | **missing** |  |
-| `UnsetKnownTitle` | **missing** |  |
+| `UnbindAllInstances` | implemented |  |
+| `UnbindInstance` | implemented |  |
+| `UnsetKnownTitle` | implemented |  |
 | `Whisper` | implemented |  |
 | `Yell` | implemented |  |
 ### Class `Creature` (inherits `Unit`)

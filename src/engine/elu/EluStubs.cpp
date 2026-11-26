@@ -77,11 +77,21 @@ void registerStubMethods(lua_State* L)
         addStubMethod(L, "Unit", m);
     // Guild bank (GUILD 9/11 never fire; the documented bank method is a stub).
     addStubMethod(L, "Guild", "SetBankTabText");
-    // The documented Player reads the core has no API for: the chat tag and the lifetime-kill counter are gone from this
-    // core's player, talents are per-spec trees (no free points), a mail item is stored as a template id, the spawn phase
-    // mask and the honour/XP target test are not exposed, and visibility is only answered per seer.
-    for (char const* m : {"GetChatTag", "GetFreeTalentPoints", "GetLifetimeKills", "GetMailItem", "GetPhaseMaskForSpawn",
-                          "IsHonorOrXPTarget", "IsVisibleForPlayer"})
+    // The documented Player calls the pinned core cannot answer, with the core fact that blocks each one:
+    //  GetFreeTalentPoints, SetFreeTalentPoints: Classic 1.60 spends per-spec trait configs and Player.h has no free
+    //    talent-point pool (UpdateFields.h keeps PetTalentPoints on PetData only).
+    //  AddLifetimeKills, RemoveLifetimeKills, SetLifetimeKills: the counter is ActivePlayerData::LifetimeHonorableKills
+    //    and SetUpdateFieldValue is private to the core's entity classes (Object/Updates/UpdateField.h); GetLifetimeKills
+    //    reads the fragment, the three writers have no public call.
+    //  GetPhaseMaskForSpawn: phasing is PhaseShift phase ids (Phasing/PhasingHandler.h); there is no 32-bit phase mask.
+    //  ResetPetTalents: pet talents were removed from the core (the TODO block of scripts/Commands/cs_reset.cpp and no
+    //    talent API on Pet).
+    //  SendAreaTriggerMessage: Opcodes.h has no SMSG_AREA_TRIGGER_MESSAGE (PrintNotification is SendNotification).
+    //  LearnTalent: Player::LearnTalent(uint32 talentId, int32* spellOnCooldown) (Player.h) has no rank parameter;
+    //    ranks are trait-config entries, so the documented (talent_id, talentRank) call cannot be answered faithfully.
+    for (char const* m : {"GetFreeTalentPoints", "AddLifetimeKills", "RemoveLifetimeKills", "SetLifetimeKills",
+                          "SetFreeTalentPoints", "GetPhaseMaskForSpawn", "ResetPetTalents", "SendAreaTriggerMessage",
+                          "LearnTalent"})
         addCoreStubMethod(L, "Player", m);
     // Object generic update-field and flag accessors: this core stores typed update-field fragments rather than a
     // flat indexable values array.

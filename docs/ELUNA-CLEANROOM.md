@@ -175,3 +175,12 @@ E4/E5 review round (2026-11-21): `Player/index.html` and `Guild/index.html` were
 Classic-gap systems. The Player index lists no glyph, currency (other than honor), Battlefield or Wintergrasp method, and
 the Guild index's only bank method is `SetBankTabText`; the arena method `RemoveArenaSpellCooldowns` was added to the
 section 7 stubs. No other page was read and no source was opened.
+
+### Player long tail (read 2026-11-26, the same documentation site)
+
+Per-function pages: `Player/GetChatTag`, `Player/GetLifetimeKills`, `Player/GetMailItem`,
+`Player/IsHonorOrXPTarget`, `Player/IsVisibleForPlayer` for their synopsis, argument ranges and return types, and
+`Player/GetPhaseMaskForSpawn` again for the phase-mask contract that keeps it a stub. The pages' argument lists set the
+checks of those bindings; the rest of the round's Player methods take the documented names and argument lists from the
+maintained list the report is generated from. No Eluna source was opened; every body was written from the core's own
+Player API (`~/ForeverCore`, read only).

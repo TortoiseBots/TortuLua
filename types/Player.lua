@@ -3,18 +3,48 @@
 ---@class Player : Unit
 local Player = {}
 
+---@param target any
+---@param arg2 any
+---@return any
+function Player:AddComboPoints(target, arg2) end
+
 ---@param entry any
 ---@param arg2 any
 ---@return any
 function Player:AddItem(entry, arg2) end
 
+---@deprecated not available (this core)
+---@return any
+function Player:AddLifetimeKills() end
+
 ---@param entry any
 ---@return any
 function Player:AddQuest(entry) end
 
+---@param spellId any
+---@param spec any
+---@param arg3 any
+---@return any
+function Player:AddTalent(spellId, spec, arg3) end
+
+---@param skillStep any
+---@return any
+function Player:AdvanceAllSkills(skillStep) end
+
+---@param skillId any
+---@param skillStep any
+---@return any
+function Player:AdvanceSkill(skillId, skillStep) end
+
+---@return any
+function Player:AdvanceSkillsToMax() end
+
 ---@param quest any
 ---@return any
 function Player:AreaExploredOrEventHappens(quest) end
+
+---@return any
+function Player:BindToInstance() end
 
 ---@return any
 function Player:CanBlock() end
@@ -49,6 +79,10 @@ function Player:CanShareQuest(questId) end
 ---@return any
 function Player:CanSpeak() end
 
+---@param item any
+---@return any
+function Player:CanTitanGrip(item) end
+
 ---@param arg1 any
 ---@return any
 function Player:CanUninviteFromGroup(arg1) end
@@ -56,6 +90,9 @@ function Player:CanUninviteFromGroup(arg1) end
 ---@param arg1 any
 ---@return any
 function Player:CanUseItem(arg1) end
+
+---@return any
+function Player:ClearComboPoints() end
 
 ---@param entry any
 ---@return any
@@ -133,12 +170,17 @@ function Player:GetBattlegroundTypeId() end
 ---@return any
 function Player:GetChampioningFaction() end
 
----@deprecated not available (this core)
 ---@return any
 function Player:GetChatTag() end
 
 ---@return any
 function Player:GetCoinage() end
+
+---@return any
+function Player:GetComboPoints() end
+
+---@return any
+function Player:GetComboTarget() end
 
 ---@return any
 function Player:GetCorpse() end
@@ -165,6 +207,10 @@ function Player:GetFreeTalentPoints() end
 
 ---@return any
 function Player:GetGMRank() end
+
+---@param object any
+---@return any
+function Player:GetGossipTextId(object) end
 
 ---@return any
 function Player:GetGroup() end
@@ -221,16 +267,15 @@ function Player:GetLevelPlayedTime() end
 ---@return any
 function Player:GetLFGRole() end
 
----@deprecated not available (this core)
 ---@return any
 function Player:GetLifetimeKills() end
 
 ---@return any
 function Player:GetMailCount() end
 
----@deprecated not available (this core)
+---@param arg1 any
 ---@return any
-function Player:GetMailItem() end
+function Player:GetMailItem(arg1) end
 
 ---@return any
 function Player:GetManaBonusFromIntellect() end
@@ -380,10 +425,27 @@ function Player:GossipMenuAddItem(icon, msg, sender, intid, arg5, popup, arg7) e
 ---@return any
 function Player:GossipSendMenu(npc_text, sender, menu_id) end
 
+---@param x any
+---@param y any
+---@param icon any
+---@param flags any
+---@param data any
+---@param iconText any
+---@return any
+function Player:GossipSendPOI(x, y, icon, flags, data, iconText) end
+
+---@param invited any
+---@return any
+function Player:GroupCreate(invited) end
+
 ---@param quest any
 ---@param object any
 ---@return any
 function Player:GroupEventHappens(quest, object) end
+
+---@param invited any
+---@return any
+function Player:GroupInvite(invited) end
 
 ---@deprecated not available (Classic 1.60)
 ---@return any
@@ -417,6 +479,10 @@ function Player:HasQuestForItem(entry) end
 ---@param questId any
 ---@return any
 function Player:HasReceivedQuestReward(questId) end
+
+---@param recruit any
+---@return any
+function Player:HasRecruited(recruit) end
 
 ---@param skill any
 ---@return any
@@ -491,9 +557,9 @@ function Player:IsGMVisible() end
 ---@return any
 function Player:IsGroupVisibleFor(player) end
 
----@deprecated not available (this core)
+---@param unit any
 ---@return any
-function Player:IsHonorOrXPTarget() end
+function Player:IsHonorOrXPTarget(unit) end
 
 ---@return any
 function Player:IsHorde() end
@@ -535,6 +601,9 @@ function Player:IsNeverVisible() end
 function Player:IsOutdoorPvPActive() end
 
 ---@return any
+function Player:IsRecruited() end
+
+---@return any
 function Player:IsRested() end
 
 ---@return any
@@ -544,9 +613,9 @@ function Player:IsTaxiCheater() end
 ---@return any
 function Player:IsUsingLfg() end
 
----@deprecated not available (this core)
+---@param player any
 ---@return any
-function Player:IsVisibleForPlayer() end
+function Player:IsVisibleForPlayer(player) end
 
 ---@return any
 function Player:KickPlayer() end
@@ -556,11 +625,26 @@ function Player:KickPlayer() end
 function Player:KilledMonsterCredit(entry) end
 
 ---@return any
+function Player:KilledPlayerCredit() end
+
+---@param entryId any
+---@return any
+function Player:KillGOCredit(entryId) end
+
+---@return any
 function Player:KillPlayer() end
 
 ---@param spellId any
 ---@return any
 function Player:LearnSpell(spellId) end
+
+---@deprecated not available (this core)
+---@return any
+function Player:LearnTalent() end
+
+---@param arg1 any
+---@return any
+function Player:LeaveBattleground(arg1) end
 
 ---@param arg1 any
 ---@return any
@@ -578,6 +662,10 @@ function Player:ModifyHonorPoints(amount) end
 ---@return any
 function Player:ModifyMoney(copperAmt) end
 
+---@param muteTime any
+---@return any
+function Player:Mute(muteTime) end
+
 ---@param questId any
 ---@return any
 function Player:RemoveActiveQuest(questId) end
@@ -586,10 +674,29 @@ function Player:RemoveActiveQuest(questId) end
 ---@return any
 function Player:RemoveArenaSpellCooldowns() end
 
+---@param looter any
+---@return any
+function Player:RemovedInsignia(looter) end
+
+---@return any
+function Player:RemoveFromBattlegroundRaid() end
+
+---@return any
+function Player:RemoveFromGroup() end
+
 ---@param entry any
 ---@param arg2 any
 ---@return any
 function Player:RemoveItem(entry, arg2) end
+
+---@deprecated not available (this core)
+---@return any
+function Player:RemoveLifetimeKills() end
+
+---@param saveMode any
+---@param arg2 any
+---@return any
+function Player:RemovePet(saveMode, arg2) end
 
 ---@param entry any
 ---@return any
@@ -609,6 +716,10 @@ function Player:ResetAchievements() end
 
 ---@return any
 function Player:ResetAllCooldowns() end
+
+---@deprecated not available (this core)
+---@return any
+function Player:ResetPetTalents() end
 
 ---@param spellId any
 ---@param arg2 any
@@ -637,12 +748,30 @@ function Player:ResurrectPlayer(arg1, arg2) end
 function Player:RewardQuest(entry) end
 
 ---@return any
+function Player:RunCommand() end
+
+---@return any
 function Player:SaveToDB() end
 
 ---@param text any
 ---@param lang any
 ---@return any
 function Player:Say(text, lang) end
+
+---@param prefix any
+---@param message any
+---@param channel any
+---@param receiver any
+---@return any
+function Player:SendAddonMessage(prefix, message, channel, receiver) end
+
+---@deprecated not available (this core)
+---@return any
+function Player:SendAreaTriggerMessage() end
+
+---@param sender any
+---@return any
+function Player:SendAuctionMenu(sender) end
 
 ---@param message any
 ---@return any
@@ -651,6 +780,10 @@ function Player:SendBroadcastMessage(message) end
 ---@param cinematicId any
 ---@return any
 function Player:SendCinematicStart(cinematicId) end
+
+---@param invitee any
+---@return any
+function Player:SendGuildInvite(invitee) end
 
 ---@param sender any
 ---@return any
@@ -667,12 +800,25 @@ function Player:SendNotification(message) end
 ---@return any
 function Player:SendPacket() end
 
+---@param questId any
+---@param arg2 any
+---@return any
+function Player:SendQuestTemplate(questId, arg2) end
+
 ---@param sender any
 ---@return any
 function Player:SendShowBank(sender) end
 
+---@param arg1 any
+---@return any
+function Player:SendShowMailBox(arg1) end
+
 ---@return any
 function Player:SendSpiritResurrect() end
+
+---@param sender any
+---@return any
+function Player:SendTabardVendorActivate(sender) end
 
 ---@param sender any
 ---@return any
@@ -725,6 +871,10 @@ function Player:SetDrunkValue(value) end
 ---@return any
 function Player:SetFactionForRace(race) end
 
+---@deprecated not available (this core)
+---@return any
+function Player:SetFreeTalentPoints() end
+
 ---@param on any
 ---@return any
 function Player:SetGameMaster(on) end
@@ -741,13 +891,38 @@ function Player:SetGMChat(on) end
 ---@return any
 function Player:SetGMVisible(on) end
 
+---@param rank any
+---@return any
+function Player:SetGuildRank(rank) end
+
 ---@param honorPoints any
 ---@return any
 function Player:SetHonorPoints(honorPoints) end
 
+---@param titleId any
+---@return any
+function Player:SetKnownTitle(titleId) end
+
+---@deprecated not available (this core)
+---@return any
+function Player:SetLifetimeKills() end
+
+---@param movementType any
+---@return any
+function Player:SetMovement(movementType) end
+
+---@param arg1 any
+---@return any
+function Player:SetPlayerLock(arg1) end
+
 ---@param on any
 ---@return any
 function Player:SetPvPDeath(on) end
+
+---@param entry any
+---@param status any
+---@return any
+function Player:SetQuestStatus(entry, status) end
 
 ---@param factionId any
 ---@param reputationValue any
@@ -771,6 +946,20 @@ function Player:SetTaxiCheat(arg1) end
 
 ---@return any
 function Player:SpawnBones() end
+
+---@param pathId any
+---@return any
+function Player:StartTaxi(pathId) end
+
+---@param entryId any
+---@param x any
+---@param y any
+---@param z any
+---@param o any
+---@param petType any
+---@param despawnTime any
+---@return any
+function Player:SummonPet(entryId, x, y, z, o, petType, despawnTime) end
 
 ---@param summoner any
 ---@return any
@@ -798,6 +987,18 @@ function Player:ToggleAFK() end
 
 ---@return any
 function Player:ToggleDND() end
+
+---@return any
+function Player:UnbindAllInstances() end
+
+---@param map any
+---@param arg2 any
+---@return any
+function Player:UnbindInstance(map, arg2) end
+
+---@param titleId any
+---@return any
+function Player:UnsetKnownTitle(titleId) end
 
 ---@param text any
 ---@param lang any

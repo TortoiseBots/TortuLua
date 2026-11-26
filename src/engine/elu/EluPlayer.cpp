@@ -581,6 +581,7 @@ int pCanUninviteFromGroup(lua_State* L)
     argGuid(L, 2, guid);
     return readOp(L, kPlayer, "player.canUninviteFromGroup", "CanUninviteFromGroup", {EventValue(fl::guidText(guid))});
 }
+int pGetChatTag(lua_State* L) { return readOp(L, kPlayer, "player.getChatTag", "GetChatTag"); }
 int pGetChampioningFaction(lua_State* L)
 {
     return readOp(L, kPlayer, "player.getChampioningFaction", "GetChampioningFaction");
@@ -595,7 +596,14 @@ int pGetHealthBonusFromStamina(lua_State* L)
     return readOp(L, kPlayer, "player.getHealthBonusFromStamina", "GetHealthBonusFromStamina");
 }
 int pGetInGameTime(lua_State* L) { return readOp(L, kPlayer, "player.getInGameTime", "GetInGameTime"); }
+int pGetLifetimeKills(lua_State* L) { return readOp(L, kPlayer, "player.getLifetimeKills", "GetLifetimeKills"); }
 int pGetMailCount(lua_State* L) { return readOp(L, kPlayer, "player.getMailCount", "GetMailCount"); }
+int pGetMailItem(lua_State* L)
+{
+    fl::Guid guid;
+    argGuid(L, 2, guid);
+    return readHandleOp(L, kPlayer, "player.getMailItem", "GetMailItem", {EventValue(fl::guidText(guid))});
+}
 int pGetManaBonusFromIntellect(lua_State* L)
 {
     return readOp(L, kPlayer, "player.getManaBonusFromIntellect", "GetManaBonusFromIntellect");
@@ -655,6 +663,11 @@ int pIsAcceptingWhispers(lua_State* L)
 int pIsARecruiter(lua_State* L) { return readOp(L, kPlayer, "player.isARecruiter", "IsARecruiter"); }
 int pIsGMChat(lua_State* L) { return readOp(L, kPlayer, "player.isGMChat", "IsGMChat"); }
 int pIsGMVisible(lua_State* L) { return readOp(L, kPlayer, "player.isGMVisible", "IsGMVisible"); }
+int pIsHonorOrXPTarget(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.isHonorOrXPTarget", "IsHonorOrXPTarget",
+                  {EventValue(objArg(L, 2, kUnit, "unit"))});
+}
 int pIsGroupVisibleFor(lua_State* L)
 {
     return readOp(L, kPlayer, "player.isGroupVisibleFor", "IsGroupVisibleFor",
@@ -672,6 +685,11 @@ int pIsInSameRaidWith(lua_State* L)
 }
 int pIsNeverVisible(lua_State* L) { return readOp(L, kPlayer, "player.isNeverVisible", "IsNeverVisible"); }
 int pIsOutdoorPvPActive(lua_State* L) { return readOp(L, kPlayer, "player.isOutdoorPvPActive", "IsOutdoorPvPActive"); }
+int pIsVisibleForPlayer(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.isVisibleForPlayer", "IsVisibleForPlayer",
+                  {EventValue(objArg(L, 2, kPlayer, "player"))});
+}
 int pResetTalentsCost(lua_State* L) { return readOp(L, kPlayer, "player.resetTalentsCost", "ResetTalentsCost"); }
 
 // ---- E7 long tail, round 2: the documented writes that only change the receiver (no group or guild member, rank or
@@ -781,6 +799,226 @@ int pDurabilityRepair(lua_State* L)
     return actionOp(L, kPlayer, "player.durabilityRepair", "DurabilityRepair",
                     {EventValue(static_cast<int64_t>(argU16(L, 2, "pos"))), EventValue(optBool(L, 3, true)),
                      EventValue(durabilityDiscountArg(L, 4, "discount"))});
+}
+
+// ---- E7 long tail, round 3: remaining documented Player reads, writes, and social ops ----
+
+int pCanTitanGrip(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.canTitanGrip", "CanTitanGrip", {EventValue(objArg(L, 2, kItem, "item"))});
+}
+int pGetComboPoints(lua_State* L) { return readOp(L, kPlayer, "player.getComboPoints", "GetComboPoints"); }
+int pGetComboTarget(lua_State* L) { return readHandleOp(L, kPlayer, "player.getComboTarget", "GetComboTarget"); }
+int pGetGossipTextId(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.getGossipTextId", "GetGossipTextId",
+                  {EventValue(objArg(L, 2, kWorldObject, "object"))});
+}
+int pHasRecruited(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.hasRecruited", "HasRecruited",
+                  {EventValue(objArg(L, 2, kPlayer, "recruit"))});
+}
+int pIsRecruited(lua_State* L) { return readOp(L, kPlayer, "player.isRecruited", "IsRecruited"); }
+
+int pAddComboPoints(lua_State* L)
+{
+    fl::HandleData const& target = objArg(L, 2, kUnit, "target");
+    lua_Integer const count = luaL_checkinteger(L, 3);
+    if (count < -127 || count > 127)
+        luaL_error(L, "count must be an integer -127..127");
+    return actionOp(L, kPlayer, "player.addComboPoints", "AddComboPoints",
+                    {EventValue(target), EventValue(static_cast<int64_t>(count))});
+}
+int pClearComboPoints(lua_State* L) { return actionOp(L, kPlayer, "player.clearComboPoints", "ClearComboPoints"); }
+int pAddTalent(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.addTalent", "AddTalent",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "spellId"))),
+                   EventValue(static_cast<int64_t>(argU8(L, 3, "spec"))), EventValue(optBool(L, 4, true))});
+}
+int pAdvanceAllSkills(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.advanceAllSkills", "AdvanceAllSkills",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "skillStep")))});
+}
+int pAdvanceSkill(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.advanceSkill", "AdvanceSkill",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "skillId"))),
+                     EventValue(static_cast<int64_t>(argUInt(L, 3, "skillStep")))});
+}
+int pAdvanceSkillsToMax(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.advanceSkillsToMax", "AdvanceSkillsToMax");
+}
+int pBindToInstance(lua_State* L) { return actionOp(L, kPlayer, "player.bindToInstance", "BindToInstance"); }
+int pUnbindInstance(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.unbindInstance", "UnbindInstance",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "map"))),
+                     EventValue(static_cast<int64_t>(optUInt(L, 3, 0)))});
+}
+int pUnbindAllInstances(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.unbindAllInstances", "UnbindAllInstances");
+}
+int pGossipSendPOI(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.gossipSendPOI", "GossipSendPOI",
+                    {EventValue(argFinite(L, 2, "x")),
+                     EventValue(argFinite(L, 3, "y")),
+                     EventValue(static_cast<int64_t>(argUInt(L, 4, "icon"))),
+                     EventValue(static_cast<int64_t>(argUInt(L, 5, "flags"))),
+                     EventValue(static_cast<int64_t>(argUInt(L, 6, "data"))),
+                     EventValue(argStr(L, 7, "iconText"))});
+}
+int pKilledPlayerCredit(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.killedPlayerCredit", "KilledPlayerCredit");
+}
+int pKillGOCredit(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.killGOCredit", "KillGOCredit",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "entryId")))});
+}
+int pLeaveBattleground(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.leaveBattleground", "LeaveBattleground", {EventValue(optBool(L, 2, true))});
+}
+int pMute(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.mute", "Mute",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "muteTime")))});
+}
+int pRemovedInsignia(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.removedInsignia", "RemovedInsignia",
+                    {EventValue(objArg(L, 2, kPlayer, "looter"))});
+}
+int pRemoveFromBattlegroundRaid(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.removeFromBattlegroundRaid", "RemoveFromBattlegroundRaid");
+}
+int pRemoveFromGroup(lua_State* L) { return actionOp(L, kPlayer, "player.removeFromGroup", "RemoveFromGroup"); }
+int pRemovePet(lua_State* L)
+{
+    int32_t const mode = optInt(L, 2, -1, "saveMode");
+    if (mode < -1 || mode > 4)
+        luaL_error(L, "saveMode must be an integer -1..4");
+    return actionOp(L, kPlayer, "player.removePet", "RemovePet",
+                    {EventValue(static_cast<int64_t>(mode)), EventValue(optBool(L, 3, false))});
+}
+int pSummonPet(lua_State* L)
+{
+    uint32_t const entryId = argUInt(L, 2, "entryId");
+    double const x = argFinite(L, 3, "x");
+    double const y = argFinite(L, 4, "y");
+    double const z = argFinite(L, 5, "z");
+    double const o = argFinite(L, 6, "o");
+    uint32_t const petType = argUInt(L, 7, "petType");
+    if (petType > 1)
+        luaL_error(L, "petType must be 0 (SUMMON_PET) or 1 (HUNTER_PET)");
+    return actionOp(L, kPlayer, "player.summonPet", "SummonPet",
+                    {EventValue(static_cast<int64_t>(entryId)), EventValue(x), EventValue(y), EventValue(z),
+                     EventValue(o), EventValue(static_cast<int64_t>(petType)),
+                     EventValue(static_cast<int64_t>(argUInt(L, 8, "despawnTime")))});
+}
+int pSendAddonMessage(lua_State* L)
+{
+    std::string const prefix = argStr(L, 2, "prefix");
+    std::string const message = argStr(L, 3, "message");
+    uint32_t const channel = argU8(L, 4, "channel");
+    fl::HandleData const& receiver = objArg(L, 5, kPlayer, "receiver");
+    return actionOp(L, kPlayer, "player.sendAddonMessage", "SendAddonMessage",
+                    {EventValue(prefix), EventValue(message), EventValue(static_cast<int64_t>(channel)),
+                     EventValue(receiver)});
+}
+int pSendAuctionMenu(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.sendAuctionMenu", "SendAuctionMenu",
+                    {EventValue(objArg(L, 2, kUnit, "sender"))});
+}
+int pSendQuestTemplate(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.sendQuestTemplate", "SendQuestTemplate",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "questId"))), EventValue(optBool(L, 3, true))});
+}
+int pSendShowMailBox(lua_State* L)
+{
+    std::vector<EventValue> args;
+    if (!lua_isnoneornil(L, 2))
+    {
+        fl::Guid guid;
+        argGuid(L, 2, guid);
+        args.emplace_back(fl::guidText(guid));
+    }
+    return actionOp(L, kPlayer, "player.sendShowMailBox", "SendShowMailBox", args);
+}
+int pSendTabardVendorActivate(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.sendTabardVendorActivate", "SendTabardVendorActivate",
+                    {EventValue(objArg(L, 2, kWorldObject, "sender"))});
+}
+int pSetKnownTitle(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.setKnownTitle", "SetKnownTitle",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "titleId")))});
+}
+int pUnsetKnownTitle(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.unsetKnownTitle", "UnsetKnownTitle",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "titleId")))});
+}
+int pSetMovement(lua_State* L)
+{
+    int32_t const movementType = argInt(L, 2, "movementType");
+    if (movementType < 1 || movementType > 4)
+        luaL_error(L, "movementType must be an integer 1..4");
+    return actionOp(L, kPlayer, "player.setMovement", "SetMovement",
+                    {EventValue(static_cast<int64_t>(movementType))});
+}
+int pSetPlayerLock(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.setPlayerLock", "SetPlayerLock", {EventValue(optBool(L, 2, true))});
+}
+int pSetQuestStatus(lua_State* L)
+{
+    uint32_t const entry = argUInt(L, 2, "entry");
+    uint32_t const status = argUInt(L, 3, "status");
+    if (status > 6)
+        luaL_error(L, "status must be an integer 0..6");
+    return actionOp(L, kPlayer, "player.setQuestStatus", "SetQuestStatus",
+                    {EventValue(static_cast<int64_t>(entry)), EventValue(static_cast<int64_t>(status))});
+}
+int pStartTaxi(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.startTaxi", "StartTaxi",
+                    {EventValue(static_cast<int64_t>(argUInt(L, 2, "pathId")))});
+}
+int pGroupCreate(lua_State* L)
+{
+    return readHandleOp(L, kPlayer, "player.groupCreate", "GroupCreate",
+                        {EventValue(objArg(L, 2, kPlayer, "invited"))});
+}
+int pGroupInvite(lua_State* L)
+{
+    return readOp(L, kPlayer, "player.groupInvite", "GroupInvite",
+                  {EventValue(objArg(L, 2, kPlayer, "invited"))});
+}
+int pSendGuildInvite(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.sendGuildInvite", "SendGuildInvite",
+                    {EventValue(objArg(L, 2, kPlayer, "invitee"))});
+}
+int pSetGuildRank(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.setGuildRank", "SetGuildRank",
+                    {EventValue(static_cast<int64_t>(argU8(L, 2, "rank")))});
+}
+int pRunCommand(lua_State* L)
+{
+    return actionOp(L, kPlayer, "player.runCommand", "RunCommand", {EventValue(argStr(L, 2, "command"))});
 }
 }  // namespace
 
@@ -915,6 +1153,7 @@ void registerPlayerMethods(lua_State* L)
         {"CanSpeak", fl::safe<pCanSpeak>},
         {"CanUninviteFromGroup", fl::safe<pCanUninviteFromGroup>},
         {"GetChampioningFaction", fl::safe<pGetChampioningFaction>},
+        {"GetChatTag", fl::safe<pGetChatTag>},
         {"GetDbcLocale", fl::safe<pGetDbcLocale>},
         {"GetDifficulty", fl::safe<pGetDifficulty>},
         {"GetDrunkValue", fl::safe<pGetDrunkValue>},
@@ -922,7 +1161,9 @@ void registerPlayerMethods(lua_State* L)
         {"GetGuildRank", fl::safe<pGetGuildRank>},
         {"GetHealthBonusFromStamina", fl::safe<pGetHealthBonusFromStamina>},
         {"GetInGameTime", fl::safe<pGetInGameTime>},
+        {"GetLifetimeKills", fl::safe<pGetLifetimeKills>},
         {"GetMailCount", fl::safe<pGetMailCount>},
+        {"GetMailItem", fl::safe<pGetMailItem>},
         {"GetManaBonusFromIntellect", fl::safe<pGetManaBonusFromIntellect>},
         {"GetNearbyGameObject", fl::safe<pGetNearbyGameObject>},
         {"GetNextRandomRaidMember", fl::safe<pGetNextRandomRaidMember>},
@@ -945,11 +1186,13 @@ void registerPlayerMethods(lua_State* L)
         {"IsARecruiter", fl::safe<pIsARecruiter>},
         {"IsGMChat", fl::safe<pIsGMChat>},
         {"IsGMVisible", fl::safe<pIsGMVisible>},
+        {"IsHonorOrXPTarget", fl::safe<pIsHonorOrXPTarget>},
         {"IsGroupVisibleFor", fl::safe<pIsGroupVisibleFor>},
         {"IsInSameGroupWith", fl::safe<pIsInSameGroupWith>},
         {"IsInSameRaidWith", fl::safe<pIsInSameRaidWith>},
         {"IsNeverVisible", fl::safe<pIsNeverVisible>},
         {"IsOutdoorPvPActive", fl::safe<pIsOutdoorPvPActive>},
+        {"IsVisibleForPlayer", fl::safe<pIsVisibleForPlayer>},
         {"ResetTalentsCost", fl::safe<pResetTalentsCost>},
         // E7 long tail, round 2: the writes.
         {"SendCinematicStart", fl::safe<pSendCinematicStart>},
@@ -974,6 +1217,48 @@ void registerPlayerMethods(lua_State* L)
         {"DurabilityPointsLoss", fl::safe<pDurabilityPointsLoss>},
         {"DurabilityPointsLossAll", fl::safe<pDurabilityPointsLossAll>},
         {"DurabilityRepair", fl::safe<pDurabilityRepair>},
+        // E7 long tail, round 3.
+        {"CanTitanGrip", fl::safe<pCanTitanGrip>},
+        {"GetComboPoints", fl::safe<pGetComboPoints>},
+        {"GetComboTarget", fl::safe<pGetComboTarget>},
+        {"GetGossipTextId", fl::safe<pGetGossipTextId>},
+        {"HasRecruited", fl::safe<pHasRecruited>},
+        {"IsRecruited", fl::safe<pIsRecruited>},
+        {"AddComboPoints", fl::safe<pAddComboPoints>},
+        {"ClearComboPoints", fl::safe<pClearComboPoints>},
+        {"AddTalent", fl::safe<pAddTalent>},
+        {"AdvanceAllSkills", fl::safe<pAdvanceAllSkills>},
+        {"AdvanceSkill", fl::safe<pAdvanceSkill>},
+        {"AdvanceSkillsToMax", fl::safe<pAdvanceSkillsToMax>},
+        {"BindToInstance", fl::safe<pBindToInstance>},
+        {"UnbindInstance", fl::safe<pUnbindInstance>},
+        {"UnbindAllInstances", fl::safe<pUnbindAllInstances>},
+        {"GossipSendPOI", fl::safe<pGossipSendPOI>},
+        {"KilledPlayerCredit", fl::safe<pKilledPlayerCredit>},
+        {"KillGOCredit", fl::safe<pKillGOCredit>},
+        {"LeaveBattleground", fl::safe<pLeaveBattleground>},
+        {"Mute", fl::safe<pMute>},
+        {"RemovedInsignia", fl::safe<pRemovedInsignia>},
+        {"RemoveFromBattlegroundRaid", fl::safe<pRemoveFromBattlegroundRaid>},
+        {"RemoveFromGroup", fl::safe<pRemoveFromGroup>},
+        {"RemovePet", fl::safe<pRemovePet>},
+        {"SummonPet", fl::safe<pSummonPet>},
+        {"SendAddonMessage", fl::safe<pSendAddonMessage>},
+        {"SendAuctionMenu", fl::safe<pSendAuctionMenu>},
+        {"SendQuestTemplate", fl::safe<pSendQuestTemplate>},
+        {"SendShowMailBox", fl::safe<pSendShowMailBox>},
+        {"SendTabardVendorActivate", fl::safe<pSendTabardVendorActivate>},
+        {"SetKnownTitle", fl::safe<pSetKnownTitle>},
+        {"UnsetKnownTitle", fl::safe<pUnsetKnownTitle>},
+        {"SetMovement", fl::safe<pSetMovement>},
+        {"SetPlayerLock", fl::safe<pSetPlayerLock>},
+        {"SetQuestStatus", fl::safe<pSetQuestStatus>},
+        {"StartTaxi", fl::safe<pStartTaxi>},
+        {"GroupCreate", fl::safe<pGroupCreate>},
+        {"GroupInvite", fl::safe<pGroupInvite>},
+        {"SendGuildInvite", fl::safe<pSendGuildInvite>},
+        {"SetGuildRank", fl::safe<pSetGuildRank>},
+        {"RunCommand", fl::safe<pRunCommand>},
         {nullptr, nullptr}};
     addMethods(L, "Player", regs);
 }
