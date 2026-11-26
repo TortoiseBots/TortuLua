@@ -25,6 +25,23 @@ EventResult mergeResults(EventResult const& byEntry, EventResult const& byGuid)
     out.value = byEntry.hasValue ? byEntry.value : byGuid.value;
     return out;
 }
+
+// A Group/Guild hook the core itself called: everything the handler does now runs inside a core mutation that is still
+// open. A change the handler asks for must be queued (Host::enterSocialHook), not run inside it.
+struct SocialHookScope
+{
+    explicit SocialHookScope(fl::Engine* e) : host(e ? &e->host() : nullptr)
+    {
+        if (host)
+            host->enterSocialHook();
+    }
+    ~SocialHookScope()
+    {
+        if (host)
+            host->leaveSocialHook();
+    }
+    fl::Host* host;
+};
 }  // namespace
 
 bool EluRouter::listening(EluKind kind, uint32_t entry, uint32_t event, std::optional<MapKey> map) const
@@ -124,12 +141,16 @@ EventResult EluRouter::gameObjectGossipSelect(Subject const& me, EventValue play
 
 EventResult EluRouter::group(uint32_t event, std::vector<EventValue> args) const
 {
-    return fire(EluKind::Group, 0, event, std::move(args));
+    std::shared_ptr<fl::Engine> e = _engine(EluKind::Group, std::nullopt);
+    SocialHookScope scope(e.get());
+    return e ? e->emitEluna(EluKind::Group, 0, event, std::move(args)) : EventResult();
 }
 
 EventResult EluRouter::guild(uint32_t event, std::vector<EventValue> args) const
 {
-    return fire(EluKind::Guild, 0, event, std::move(args));
+    std::shared_ptr<fl::Engine> e = _engine(EluKind::Guild, std::nullopt);
+    SocialHookScope scope(e.get());
+    return e ? e->emitEluna(EluKind::Guild, 0, event, std::move(args)) : EventResult();
 }
 
 EventResult EluRouter::mapEvent(uint32_t mapId, uint32_t instanceId, bool instanced, uint32_t event,

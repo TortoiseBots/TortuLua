@@ -18,8 +18,8 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 9 | 0 | 11 | 45% | 45% |
 | Item | 66 | 56 | 4 | 6 | 85% | 91% |
-| Group | 27 | 6 | 0 | 21 | 22% | 22% |
-| Guild | 16 | 4 | 1 | 11 | 25% | 31% |
+| Group | 27 | 27 | 0 | 0 | 100% | 100% |
+| Guild | 16 | 14 | 2 | 0 | 88% | 100% |
 | Quest | 13 | 4 | 0 | 9 | 31% | 31% |
 | Spell | 40 | 40 | 0 | 0 | 100% | 100% |
 | Aura | 14 | 14 | 0 | 0 | 100% | 100% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **917** | **74** | **452** | **64%** | **69%** |
+| **all** | **1443** | **948** | **75** | **420** | **66%** | **71%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -914,52 +914,52 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | Documented method | Status | Note |
 |---|---|---|
 | `AddMember` | implemented |  |
-| `ConvertToLFG` | **missing** |  |
-| `ConvertToRaid` | **missing** |  |
-| `Disband` | **missing** |  |
-| `GetGUID` | **missing** |  |
+| `ConvertToLFG` | implemented |  |
+| `ConvertToRaid` | implemented |  |
+| `Disband` | implemented |  |
+| `GetGUID` | implemented |  |
 | `GetLeaderGUID` | implemented |  |
-| `GetMemberFlags` | **missing** |  |
-| `GetMemberGroup` | **missing** |  |
-| `GetMemberGUID` | **missing** |  |
+| `GetMemberFlags` | implemented |  |
+| `GetMemberGroup` | implemented |  |
+| `GetMemberGUID` | implemented |  |
 | `GetMembers` | implemented |  |
-| `GetMembersCount` | **missing** |  |
-| `HasFreeSlotSubGroup` | **missing** |  |
-| `IsAssistant` | **missing** |  |
-| `IsBFGroup` | **missing** |  |
-| `IsBGGroup` | **missing** |  |
-| `IsFull` | **missing** |  |
-| `IsLeader` | **missing** |  |
-| `IsLFGGroup` | **missing** |  |
-| `IsMember` | **missing** |  |
+| `GetMembersCount` | implemented |  |
+| `HasFreeSlotSubGroup` | implemented |  |
+| `IsAssistant` | implemented |  |
+| `IsBFGroup` | implemented |  |
+| `IsBGGroup` | implemented |  |
+| `IsFull` | implemented |  |
+| `IsLeader` | implemented |  |
+| `IsLFGGroup` | implemented |  |
+| `IsMember` | implemented |  |
 | `IsRaidGroup` | implemented |  |
 | `RemoveMember` | implemented |  |
-| `SameSubGroup` | **missing** |  |
+| `SameSubGroup` | implemented |  |
 | `SendPacket` | implemented |  |
-| `SetLeader` | **missing** |  |
-| `SetMemberFlag` | **missing** |  |
-| `SetMembersGroup` | **missing** |  |
-| `SetTargetIcon` | **missing** |  |
+| `SetLeader` | implemented |  |
+| `SetMemberFlag` | implemented |  |
+| `SetMembersGroup` | implemented |  |
+| `SetTargetIcon` | implemented |  |
 ### Class `Guild`
 
 | Documented method | Status | Note |
 |---|---|---|
-| `AddMember` | **missing** |  |
-| `DeleteMember` | **missing** |  |
-| `Disband` | **missing** |  |
-| `GetId` | **missing** |  |
-| `GetInfo` | **missing** |  |
-| `GetLeader` | **missing** |  |
+| `AddMember` | implemented | an explicit rankId the guild has no rank for is refused and nothing is written (the core would otherwise store it and leave the member without a rank) |
+| `DeleteMember` | implemented |  |
+| `Disband` | implemented |  |
+| `GetId` | implemented |  |
+| `GetInfo` | implemented |  |
+| `GetLeader` | implemented |  |
 | `GetLeaderGUID` | implemented |  |
-| `GetMemberCount` | **missing** |  |
+| `GetMemberCount` | implemented |  |
 | `GetMembers` | implemented |  |
-| `GetMOTD` | **missing** |  |
+| `GetMOTD` | implemented |  |
 | `GetName` | implemented |  |
 | `SendPacket` | implemented |  |
-| `SendPacketToRanked` | **missing** |  |
+| `SendPacketToRanked` | implemented |  |
 | `SetBankTabText` | **stub** | stub: not available (Classic 1.60) |
-| `SetLeader` | **missing** |  |
-| `SetMemberRank` | **missing** |  |
+| `SetLeader` | **stub** | stub: not available (this server) |
+| `SetMemberRank` | implemented |  |
 ### Class `Quest`
 
 | Documented method | Status | Note |

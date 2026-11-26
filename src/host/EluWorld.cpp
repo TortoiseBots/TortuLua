@@ -9,6 +9,7 @@
 #include "CellImpl.h"
 #include "CharacterCache.h"
 #include "DataSql.h"
+#include "GuildWrite.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
@@ -1130,7 +1131,24 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             return hasGuid && g->RemoveMember(toGuid(target), static_cast<RemoveMethod>(method)) ? 1 : 2;
         };
         WorldCallResult how = WorldCallResult::Ran;
-        std::optional<int> r = callOnWorld<int>(rules(), deferred(), job, &how);
+        // The flags are the world thread's: a map thread goes through callOnWorld without reading them. A world-thread
+        // call from a hook of a change (or of a core social action) already running is queued as well.
+        if (rules().placeForWorld() == AccessRules::Place::Direct && socialWriteBlocked())
+        {
+            runSocialWrite("Group member change", [job] { (void)job(); });
+            return true;   // queued: no result yet
+        }
+        auto guarded = [this, job]() -> int
+        {
+            struct Guard
+            {
+                bool& flag;
+                ~Guard() { flag = false; }
+            } reset{_socialWriteActive};
+            _socialWriteActive = true;
+            return job();
+        };
+        std::optional<int> r = callOnWorld<int>(rules(), deferred(), guarded, &how);
         if (how == WorldCallResult::Dropped)
             log(fl::LogLevel::Warn, "ForeverLua: Group member change dropped: the world thread queue is full");
         if (!r)
@@ -1139,6 +1157,52 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             return false;   // disbanded: "Group no longer exists"
         out.emplace_back(*r == 1);
         return true;
+    }
+    // The other group writes change state and send packets the same way: world thread only, queued from a map thread.
+    if (self.kind == ObjKind::Group &&
+        (name == "group.convertToLfg" || name == "group.convertToRaid" || name == "group.disband" ||
+         name == "group.setLeader" || name == "group.setMemberFlag" || name == "group.setMembersGroup" ||
+         name == "group.setTargetIcon"))
+    {
+        fl::Guid const groupGuid = self.guid;
+        fl::Guid target;
+        fl::Guid setter;
+        bool const hasTarget = fl::parseGuidText(sArg(args, name == "group.setTargetIcon" ? 1 : 0), target);
+        if (name == "group.setTargetIcon")
+            fl::parseGuidText(sArg(args, 2), setter);
+        bool const apply = bArg(args, 1, false);
+        int const flag = iArg(args, name == "group.setTargetIcon" ? 0 : (name == "group.setMemberFlag" ? 2 : 1));
+        auto job = [=]()
+        {
+            Group* g = sGroupMgr->GetGroupByGUID(toGuid(groupGuid));
+            if (!g)
+                return;
+            if (name == "group.convertToLfg")
+                g->ConvertToLFG();
+            else if (name == "group.convertToRaid")
+                g->ConvertToRaid();
+            else if (name == "group.disband")
+                g->Disband();   // frees the group: nothing below touches g afterwards
+            else if (name == "group.setLeader")
+            {
+                if (hasTarget)
+                    g->ChangeLeader(toGuid(target));
+            }
+            else if (name == "group.setMemberFlag")
+            {
+                if (hasTarget)
+                    g->SetGroupMemberFlag(toGuid(target), apply, static_cast<GroupMemberFlags>(flag));
+            }
+            else if (name == "group.setMembersGroup")
+            {
+                if (hasTarget)
+                    g->ChangeMembersGroup(toGuid(target), static_cast<uint8>(flag));
+            }
+            else if (hasTarget)
+                g->SetTargetIcon(static_cast<uint8>(flag), toGuid(target), toGuid(setter));
+        };
+        runSocialWrite("Group change", job);
+        return true;   // the docs: these return nothing, and a queued call has no result yet either
     }
     if (self.kind == ObjKind::Group)
     {
@@ -1153,9 +1217,40 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                         pushHandle(out, handleFor(p));
             return true;
         }
+        if (name == "group.getGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(group->GetGUID())));
+            return true;
+        }
         if (name == "group.getLeaderGuid")
         {
             out.emplace_back(fl::guidText(fromGuid(group->GetLeaderGUID())));
+            return true;
+        }
+        if (name == "group.getMembersCount")
+        {
+            out.emplace_back(static_cast<int64_t>(group->GetMembersCount()));
+            return true;
+        }
+        if (name == "group.getMemberGuid")
+        {
+            ObjectGuid const guid = group->GetMemberGUID(sArg(args, 0));
+            if (!guid.IsEmpty())
+                out.emplace_back(fl::guidText(fromGuid(guid)));
+            return true;
+        }
+        if (name == "group.getMemberFlags")
+        {
+            fl::Guid guid;
+            if (fl::parseGuidText(sArg(args, 0), guid))
+                out.emplace_back(static_cast<int64_t>(group->GetMemberFlags(toGuid(guid))));
+            return true;
+        }
+        if (name == "group.getMemberGroup")
+        {
+            fl::Guid guid;
+            if (fl::parseGuidText(sArg(args, 0), guid))
+                out.emplace_back(static_cast<int64_t>(group->GetMemberGroup(toGuid(guid))));
             return true;
         }
         if (name == "group.isRaidGroup")
@@ -1163,14 +1258,129 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(group->isRaidGroup());
             return true;
         }
-        if (name == "group.addMember" || name == "group.removeMember")
-            return false;   // answered above: a group member change is the world thread's alone
-        if (name == "group.sendPacket" || name == "guild.sendPacket")
-            return false;   // WorldPacket objects are created in E5; no packet can exist here yet
+        if (name == "group.isLfgGroup")
+        {
+            out.emplace_back(group->isLFGGroup());
+            return true;
+        }
+        if (name == "group.isBgGroup")
+        {
+            out.emplace_back(group->isBGGroup());
+            return true;
+        }
+        if (name == "group.isBfGroup")
+        {
+            out.emplace_back(group->isBFGroup());
+            return true;
+        }
+        if (name == "group.isFull")
+        {
+            out.emplace_back(group->IsFull());
+            return true;
+        }
+        if (name == "group.isMember" || name == "group.isLeader" || name == "group.isAssistant")
+        {
+            fl::Guid guid;
+            if (fl::parseGuidText(sArg(args, 0), guid))
+            {
+                if (name == "group.isMember")
+                    out.emplace_back(group->IsMember(toGuid(guid)));
+                else if (name == "group.isLeader")
+                    out.emplace_back(group->IsLeader(toGuid(guid)));
+                else
+                    out.emplace_back(group->IsAssistant(toGuid(guid)));
+            }
+            return true;
+        }
+        if (name == "group.sameSubGroup")
+        {
+            fl::Guid first;
+            fl::Guid second;
+            if (fl::parseGuidText(sArg(args, 0), first) && fl::parseGuidText(sArg(args, 1), second))
+                out.emplace_back(group->SameSubGroup(toGuid(first), toGuid(second)));
+            return true;
+        }
+        if (name == "group.hasFreeSlotSubGroup")
+        {
+            uint32 const subgroup = static_cast<uint32>(iArg(args, 0));
+            if (subgroup < MAX_RAID_SUBGROUPS)   // the counters array the core reads has this many entries
+                out.emplace_back(group->HasFreeSlotSubGroup(static_cast<uint8>(subgroup)));
+            return true;
+        }
         return false;
     }
 
     // ---- Guild ----
+    // The guild writes go through the world thread for the same reason as the group ones (and AddMember/DeleteMember/
+    // ChangeMemberRank take the character database transaction the caller commits).
+    if (self.kind == ObjKind::Guild &&
+        (name == "guild.addMember" || name == "guild.deleteMember" || name == "guild.disband" ||
+         name == "guild.setMemberRank"))
+    {
+        fl::Guid const guildId = self.guid;
+        HandleData player;
+        bool const hasPlayer = asHandle(args.empty() ? EventValue() : args[0], player);
+        flh::GuildWrite write;
+        if (name == "guild.addMember")
+        {
+            write.kind = flh::GuildWriteKind::AddMember;
+            write.hasRank = bArg(args, 2, false);
+            write.rank = static_cast<uint32_t>(iArg(args, 1));
+        }
+        else if (name == "guild.deleteMember")
+        {
+            write.kind = flh::GuildWriteKind::DeleteMember;
+            write.isDisbanding = bArg(args, 1, false);
+        }
+        else if (name == "guild.setMemberRank")
+        {
+            write.kind = flh::GuildWriteKind::ChangeRank;
+            write.rank = static_cast<uint32_t>(iArg(args, 1));
+        }
+        auto job = [=]()
+        {
+            Guild* g = sGuildMgr->GetGuildById(static_cast<uint32>(guildId.lo));
+            bool const needsPlayer = write.kind != flh::GuildWriteKind::Disband;
+            Player* p = g && needsPlayer && hasPlayer ? findPlayer(player) : nullptr;
+            // The core calls of the job, behind the game-free rule of GuildWrite.h.
+            struct CoreGuild
+            {
+                Guild* guild;
+                ObjectGuid guid;
+                bool RankExists(uint32_t rank) const
+                {
+                    return guild->GetRankInfo(static_cast<GuildRankId>(rank)) != nullptr;
+                }
+                void AddMember(bool hasRank, uint32_t rank)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    Optional<GuildRankId> rankId;
+                    if (hasRank)
+                        rankId = static_cast<GuildRankId>(rank);
+                    if (guild->AddMember(trans, guid, rankId))
+                        CharacterDatabase.CommitTransaction(trans);
+                }
+                void DeleteMember(bool isDisbanding)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    guild->DeleteMember(trans, guid, isDisbanding);
+                    CharacterDatabase.CommitTransaction(trans);
+                }
+                void ChangeRank(uint32_t rank)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    if (guild->ChangeMemberRank(trans, guid, static_cast<GuildRankId>(rank)))
+                        CharacterDatabase.CommitTransaction(trans);
+                }
+                void Disband() { guild->Disband(); }
+            } target{g, p ? p->GetGUID() : ObjectGuid::Empty};
+            if (flh::applyGuildWrite(g ? &target : nullptr, p != nullptr, write) == flh::GuildWriteResult::UnknownRank)
+                log(fl::LogLevel::Warn, "ForeverLua: Guild change: the guild has no rank " + std::to_string(write.rank) +
+                                            "; the member was not added");
+        };
+        runSocialWrite("Guild change", job);
+        return true;
+    }
     if (self.kind == ObjKind::Guild)
     {
         Guild* guild = sGuildMgr->GetGuildById(static_cast<uint32>(self.guid.lo));
@@ -1179,6 +1389,26 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "guild.getName")
         {
             out.emplace_back(guild->GetName());
+            return true;
+        }
+        if (name == "guild.getMotd")
+        {
+            out.emplace_back(guild->GetMOTD());
+            return true;
+        }
+        if (name == "guild.getInfo")
+        {
+            out.emplace_back(guild->GetInfo());
+            return true;
+        }
+        if (name == "guild.getId")
+        {
+            out.emplace_back(static_cast<int64_t>(guild->GetId()));
+            return true;
+        }
+        if (name == "guild.getMemberCount")
+        {
+            out.emplace_back(static_cast<int64_t>(guild->GetMembersCount()));
             return true;
         }
         if (name == "guild.getMembers")
@@ -1194,8 +1424,13 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(fl::guidText(fromGuid(guild->GetLeaderGUID())));
             return true;
         }
-        if (name == "guild.sendPacket")
-            return false;   // WorldPacket objects are created in E5
+        if (name == "guild.getLeader")
+        {
+            if (Player* leader = ObjectAccessor::FindPlayer(guild->GetLeaderGUID()))
+                if (leader->IsInWorld())
+                    pushHandle(out, handleFor(leader));
+            return true;
+        }
         return false;
     }
 
@@ -4686,6 +4921,55 @@ bool ForeverHost::sendPacket(fl::HandleData const& target, uint32_t opcode, std:
         }
         default: return false;
     }
+}
+
+void ForeverHost::runSocialWrite(char const* what, std::function<void()> job)
+{
+    auto guarded = [this, job = std::move(job)]
+    {
+        struct Guard
+        {
+            bool& flag;
+            ~Guard() { flag = false; }
+        } reset{_socialWriteActive};
+        _socialWriteActive = true;
+        job();
+    };
+    // The flags are the world thread's: a map thread queues without reading them. On the world thread a change runs now
+    // unless a script hook of a change (or of a core social action) already running asked for it: that one waits for the
+    // next tick, after the core operation that is still unwinding has returned.
+    bool queue = rules().placeForWorld() != AccessRules::Place::Direct;
+    if (!queue)
+        queue = socialWriteBlocked();
+    if (queue)
+    {
+        if (!deferred().push(guarded))
+            log(fl::LogLevel::Warn, std::string("ForeverLua: ") + what +
+                                        " dropped: the world thread queue is full");
+        return;
+    }
+    guarded();
+}
+
+bool ForeverHost::sendPacketToRanked(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
+                                     uint32_t rank)
+{
+    if (target.kind != ObjKind::Guild)
+        return false;
+    if (!worldThread())
+    {
+        return deferred().push([this, target, opcode, data, rank] {
+            ForeverHost::sendPacketToRanked(target, opcode, data, rank);
+        });
+    }
+    Guild* guild = sGuildMgr->GetGuildById(static_cast<uint32>(target.guid.lo));
+    if (!guild)
+        return false;
+    WorldPacket packet(opcode, data.size());
+    if (!data.empty())
+        packet.append(data.data(), data.size());
+    guild->BroadcastPacketToRank(&packet, static_cast<GuildRankId>(rank));
+    return true;
 }
 
 bool ForeverHost::rawQuery(std::string const& db, std::string const& sql, size_t maxRows, size_t maxBytes,

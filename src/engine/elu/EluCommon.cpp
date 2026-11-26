@@ -46,6 +46,15 @@ void requireLive(lua_State* L, fl::HandleData const& h)
         luaL_error(L, "%s no longer exists", classNameOf(h));
 }
 
+void requireWorldRead(lua_State* L, char const* display)
+{
+    if (host(L).worldOnlyReadOk())
+        return;
+    luaL_error(L, "%s is only available on the world thread (server events, timed events, commands), "
+                  "not from a map-thread handler",
+               display);
+}
+
 fl::HandleData const& objArg(lua_State* L, int idx, unsigned kinds, char const* what)
 {
     fl::HandleData const* h = fl::toHandleAny(L, idx);
@@ -311,6 +320,16 @@ void sendPacketArg(lua_State* L, fl::HandleData const& target, int idx, char con
     if (!value)
         luaL_error(L, "%s: WorldPacket no longer exists", display);
     if (!host(L).sendPacket(target, value->opcode, value->bytes, ignorePlayersInBg, ignore))
+        luaL_error(L, "%s: not available on this server", display);
+}
+
+void sendPacketToRankArg(lua_State* L, fl::HandleData const& target, int idx, uint32_t rank, char const* display)
+{
+    fl::HandleData const& packet = kindArg(L, idx, kPacket, "packet");
+    fl::Engine::PacketValue* value = eng(L).packet(packet.guid.lo);
+    if (!value)
+        luaL_error(L, "%s: WorldPacket no longer exists", display);
+    if (!host(L).sendPacketToRanked(target, value->opcode, value->bytes, rank))
         luaL_error(L, "%s: not available on this server", display);
 }
 

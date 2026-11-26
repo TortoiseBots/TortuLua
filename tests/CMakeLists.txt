@@ -41,6 +41,7 @@ add_executable(forever_lua_tests
   test_host_commands.cpp
   test_host_db.cpp
   test_host_router.cpp
+  test_host_writes.cpp
   test_json.cpp
   test_lua_scripts.cpp
   test_memory.cpp
