@@ -105,6 +105,8 @@ std::vector<std::string> const& roundCalls()
         "SetEnchantment(1, 1)",
         "ClearEnchantment(1)",
         "GetBagSize()",
+        "GetExtraFlags()",
+        "GetSpeed()",
     };
     return calls;
 }
@@ -146,6 +148,15 @@ TEST_CASE("eluna item long tail: every method of the round reaches the host and 
     fl::CallResult save = rig.run("bag:SaveToDB()");
     REQUIRE_FALSE(save.ok);
     CHECK(save.error.find("not available on this server") != std::string::npos);
+    // Random property/suffix methods have no equivalent on ForeverCore (it uses bonus lists).
+    for (char const* call : {"bag:GetRandomProperty()", "bag:GetRandomSuffix()",
+                             "bag:SetRandomProperty(1)", "bag:SetRandomSuffix(2)"})
+    {
+        INFO("call: " << call);
+        fl::CallResult r = rig.run(call);
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("not available on this core") != std::string::npos);
+    }
 
     // The family's stale-handle rule: the same calls on a gone item raise before anything reaches the host.
     rig.host.remove(item);
@@ -194,6 +205,8 @@ TEST_CASE("eluna item long tail: the values flow out of the fake item state")
     it.maxDurability = 50;
     it.flags = 0x8;
     it.flags2 = 0x10;
+    it.extraFlags = 0x20;
+    it.speed = 2400;
     it.spellIds[0] = 4242;
     it.spellTriggers[0] = 0;
     it.statValue = 7.5;
@@ -216,6 +229,7 @@ TEST_CASE("eluna item long tail: the values flow out of the fake item state")
     CHECK(rig.ok("return bag:GetArmor()") == "30");
     CHECK(rig.ok("return bag:GetDurability() .. ',' .. bag:GetMaxDurability()") == "40,50");
     CHECK(rig.ok("return bag:GetFlags() .. ',' .. bag:GetFlags2()") == "8,16");
+    CHECK(rig.ok("return bag:GetExtraFlags() .. ',' .. bag:GetSpeed()") == "32,2400");
     CHECK(rig.ok("return bag:GetSpellId(0)") == "4242");
     CHECK(rig.ok("return bag:GetSpellTrigger(0)") == "0");
     CHECK(rig.ok("local v, t = bag:GetStatInfo(0) return v .. ',' .. t") == "7.5,4");
@@ -338,5 +352,7 @@ TEST_CASE("eluna item long tail: the host's refusals raise with the method's own
     CHECK(errorOf("bag:GetName()").find("the item has no template on the server") != std::string::npos);
     CHECK(errorOf("bag:GetClass()").find("the item has no template on the server") != std::string::npos);
     CHECK(errorOf("bag:GetBagSize()").find("the item has no template on the server") != std::string::npos);
+    CHECK(errorOf("bag:GetExtraFlags()").find("the item has no template on the server") != std::string::npos);
+    CHECK(errorOf("bag:GetSpeed()").find("the item has no template on the server") != std::string::npos);
     CHECK(errorOf("bag:GetMaxStackCount()").find("the item has no template on the server") != std::string::npos);
 }

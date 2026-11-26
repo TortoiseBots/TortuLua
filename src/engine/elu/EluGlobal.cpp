@@ -11,6 +11,8 @@
 #include <lua.h>
 
 #include <algorithm>
+#include <charconv>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <optional>
@@ -29,6 +31,11 @@ int pGetOwnerHalaa(lua_State* L) { return luaL_error(L, "GetOwnerHalaa: not avai
 int pRegisterVehicleEvent(lua_State* L)
 {
     return luaL_error(L, "RegisterVehicleEvent: not available on Classic 1.60");
+}
+// ForeverCore has no all-spell hook (SpellScript is database-bound via spell_script_names) and no spell event id table.
+int pRegisterSpellEvent(lua_State* L)
+{
+    return luaL_error(L, "RegisterSpellEvent: not available on this core");
 }
 
 // Register<Family>Event(...): the handler id goes into the docs' cancel closure.
@@ -531,6 +538,123 @@ int bitRShift(lua_State* L)
     return 1;
 }
 
+// ---- 64-bit integer helpers, GUID builders, realm and inventory slots ----
+int pCreateLongLong(lua_State* L)
+{
+    if (lua_isnoneornil(L, 1))
+    {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    if (lua_isinteger(L, 1))
+    {
+        lua_pushinteger(L, lua_tointeger(L, 1));
+        return 1;
+    }
+    if (lua_type(L, 1) == LUA_TNUMBER)
+    {
+        lua_Number const d = lua_tonumber(L, 1);
+        if (!std::isfinite(d) || d < -9223372036854775808.0 || d >= 9223372036854775808.0)
+            return luaL_error(L, "CreateLongLong: number out of 64-bit signed integer range");
+        lua_pushinteger(L, static_cast<lua_Integer>(d));
+        return 1;
+    }
+    if (lua_type(L, 1) == LUA_TSTRING)
+    {
+        size_t len = 0;
+        char const* s = lua_tolstring(L, 1, &len);
+        size_t start = (len > 0 && s[0] == '+') ? 1 : 0;
+        if (start >= len)
+            return luaL_error(L, "CreateLongLong: string is not a valid 64-bit integer");
+        int64_t val = 0;
+        auto const [ptr, ec] = std::from_chars(s + start, s + len, val);
+        if (ec != std::errc{} || ptr != s + len)
+            return luaL_error(L, "CreateLongLong: string is not a valid 64-bit integer");
+        lua_pushinteger(L, static_cast<lua_Integer>(val));
+        return 1;
+    }
+    return luaL_typeerror(L, 1, "number or string");
+}
+
+int pCreateULongLong(lua_State* L)
+{
+    if (lua_isnoneornil(L, 1))
+    {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    if (lua_isinteger(L, 1))
+    {
+        lua_Integer const v = lua_tointeger(L, 1);
+        if (v < 0)
+            return luaL_error(L, "CreateULongLong: value must not be negative");
+        lua_pushinteger(L, v);
+        return 1;
+    }
+    if (lua_type(L, 1) == LUA_TNUMBER)
+    {
+        lua_Number const d = lua_tonumber(L, 1);
+        if (!std::isfinite(d) || d < 0.0 || d >= 18446744073709551616.0)
+            return luaL_error(L, "CreateULongLong: number out of 64-bit unsigned integer range");
+        lua_pushinteger(L, static_cast<lua_Integer>(static_cast<uint64_t>(d)));
+        return 1;
+    }
+    if (lua_type(L, 1) == LUA_TSTRING)
+    {
+        size_t len = 0;
+        char const* s = lua_tolstring(L, 1, &len);
+        size_t start = (len > 0 && s[0] == '+') ? 1 : 0;
+        if (start >= len)
+            return luaL_error(L, "CreateULongLong: string is not a valid unsigned 64-bit integer");
+        uint64_t val = 0;
+        auto const [ptr, ec] = std::from_chars(s + start, s + len, val);
+        if (ec != std::errc{} || ptr != s + len)
+            return luaL_error(L, "CreateULongLong: string is not a valid unsigned 64-bit integer");
+        lua_pushinteger(L, static_cast<lua_Integer>(val));
+        return 1;
+    }
+    return luaL_typeerror(L, 1, "number or string");
+}
+
+int pushBuiltGuid(lua_State* L, ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0)
+{
+    std::string const text = fl::guidText(host(L).buildGuid(kind, low, entry, mapId));
+    lua_pushlstring(L, text.data(), text.size());
+    return 1;
+}
+int pGetPlayerGUID(lua_State* L) { return pushBuiltGuid(L, ObjKind::Player, argUInt(L, 1, "lowguid"), 0); }
+int pGetItemGUID(lua_State* L) { return pushBuiltGuid(L, ObjKind::Item, argUInt(L, 1, "lowguid"), 0); }
+int pGetUnitGUID(lua_State* L)
+{
+    uint64_t const low = argUInt(L, 1, "lowguid");
+    uint32_t const entry = argUInt(L, 2, "entry");
+    uint16_t const mapId = lua_isnoneornil(L, 3) ? 0 : static_cast<uint16_t>(argU16(L, 3, "mapId"));
+    return pushBuiltGuid(L, ObjKind::Creature, low, entry, mapId);
+}
+int pGetObjectGUID(lua_State* L)
+{
+    uint64_t const low = argUInt(L, 1, "lowguid");
+    uint32_t const entry = argUInt(L, 2, "entry");
+    uint16_t const mapId = lua_isnoneornil(L, 3) ? 0 : static_cast<uint16_t>(argU16(L, 3, "mapId"));
+    return pushBuiltGuid(L, ObjKind::GameObject, low, entry, mapId);
+}
+int pGetRealmID(lua_State* L)
+{
+    lua_pushinteger(L, static_cast<lua_Integer>(host(L).realmId()));
+    return 1;
+}
+int checkInventoryPos(lua_State* L, int kind)
+{
+    uint32_t const bag = argU8(L, 1, "bag");
+    uint32_t const slot = argU8(L, 2, "slot");
+    lua_pushboolean(L, host(L).isInventoryPos(kind, static_cast<uint8_t>(bag), static_cast<uint8_t>(slot)) ? 1 : 0);
+    return 1;
+}
+int pIsBagPos(lua_State* L) { return checkInventoryPos(L, 0); }
+int pIsBankPos(lua_State* L) { return checkInventoryPos(L, 1); }
+int pIsEquipmentPos(lua_State* L) { return checkInventoryPos(L, 2); }
+int pIsInventoryPos(lua_State* L) { return checkInventoryPos(L, 3); }
+
 void set(lua_State* L, char const* name, lua_CFunction fn)
 {
     lua_pushcfunction(L, fn);
@@ -608,6 +732,18 @@ void registerGlobals(lua_State* L)
     set(L, "AddTaxiPath", fl::safe<pAddTaxiPath>);
     set(L, "GetOwnerHalaa", fl::safe<pGetOwnerHalaa>);
     set(L, "RegisterVehicleEvent", fl::safe<pRegisterVehicleEvent>);
+    set(L, "RegisterSpellEvent", fl::safe<pRegisterSpellEvent>);
+    set(L, "CreateLongLong", fl::safe<pCreateLongLong>);
+    set(L, "CreateULongLong", fl::safe<pCreateULongLong>);
+    set(L, "GetPlayerGUID", fl::safe<pGetPlayerGUID>);
+    set(L, "GetItemGUID", fl::safe<pGetItemGUID>);
+    set(L, "GetUnitGUID", fl::safe<pGetUnitGUID>);
+    set(L, "GetObjectGUID", fl::safe<pGetObjectGUID>);
+    set(L, "GetRealmID", fl::safe<pGetRealmID>);
+    set(L, "IsBagPos", fl::safe<pIsBagPos>);
+    set(L, "IsBankPos", fl::safe<pIsBankPos>);
+    set(L, "IsEquipmentPos", fl::safe<pIsEquipmentPos>);
+    set(L, "IsInventoryPos", fl::safe<pIsInventoryPos>);
     set(L, "bit_and", fl::safe<bitAnd>);
     set(L, "bit_or", fl::safe<bitOr>);
     set(L, "bit_xor", fl::safe<bitXor>);

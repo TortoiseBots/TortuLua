@@ -55,6 +55,9 @@ function Item:GetEnchantmentId(arg1) end
 function Item:GetEntry() end
 
 ---@return any
+function Item:GetExtraFlags() end
+
+---@return any
 function Item:GetFlags() end
 
 ---@return any
@@ -94,6 +97,14 @@ function Item:GetOwnerGUID() end
 ---@return any
 function Item:GetQuality() end
 
+---@deprecated not available (this core)
+---@return any
+function Item:GetRandomProperty() end
+
+---@deprecated not available (this core)
+---@return any
+function Item:GetRandomSuffix() end
+
 ---@return any
 function Item:GetRequiredLevel() end
 
@@ -102,6 +113,9 @@ function Item:GetSellPrice() end
 
 ---@return any
 function Item:GetSlot() end
+
+---@return any
+function Item:GetSpeed() end
 
 ---@param spellIndex any
 ---@return any
@@ -199,3 +213,11 @@ function Item:SetEnchantment(enchantId, arg2) end
 ---@deprecated not available (this server)
 ---@return any
 function Item:SetOwner() end
+
+---@deprecated not available (this core)
+---@return any
+function Item:SetRandomProperty() end
+
+---@deprecated not available (this core)
+---@return any
+function Item:SetRandomSuffix() end

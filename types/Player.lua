@@ -725,10 +725,6 @@ function Player:SetDrunkValue(value) end
 ---@return any
 function Player:SetFactionForRace(race) end
 
----@param arg1 any
----@return any
-function Player:SetFFA(arg1) end
-
 ---@param on any
 ---@return any
 function Player:SetGameMaster(on) end

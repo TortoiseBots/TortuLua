@@ -48,6 +48,7 @@
 #include "Player.h"
 #include "DB2Structure.h"
 #include "QuestDef.h"
+#include "RealmList.h"
 #include "RestMgr.h"
 #include "SharedDefines.h"
 #include "Spell.h"
@@ -192,15 +193,23 @@ LocaleConstant localeArgAt(std::vector<EventValue> const& a, size_t i)
 // A guid given as the 32-digit Object:GetGUID() text: the 128-bit value, empty when absent. A legacy integer (high half 0,
 // low half set) means a guid of the one kind the argument takes: an item, or a player.
 // A zero-high guid is a typeless (HighGuid::Null) value that no core object ever carries, so it would match nothing.
-enum class LegacyGuid { Player, Item };
+enum class LegacyGuid { Player, Item, Creature, Pet };
 ObjectGuid guidArgAt(std::vector<EventValue> const& a, size_t i, LegacyGuid legacy)
 {
     fl::Guid g;
     if (i < a.size() && fl::parseGuidText(sArg(a, i), g))
     {
         if (g.hi == 0 && g.lo != 0)
-            return legacy == LegacyGuid::Item ? ObjectGuid::Create<HighGuid::Item>(static_cast<ObjectGuid::LowType>(g.lo))
-                                              : ObjectGuid::Create<HighGuid::Player>(static_cast<ObjectGuid::LowType>(g.lo));
+        {
+            auto const low = static_cast<ObjectGuid::LowType>(g.lo);
+            switch (legacy)
+            {
+                case LegacyGuid::Item: return ObjectGuid::Create<HighGuid::Item>(low);
+                case LegacyGuid::Creature: return ObjectGuid::Create<HighGuid::Creature>(0, 0, low);
+                case LegacyGuid::Pet: return ObjectGuid::Create<HighGuid::Pet>(0, 0, low);
+                case LegacyGuid::Player: return ObjectGuid::Create<HighGuid::Player>(low);
+            }
+        }
         return toGuid(g);
     }
     return ObjectGuid::Empty;
@@ -832,7 +841,8 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             name == "item.getBuyPrice" || name == "item.getSellPrice" || name == "item.getBuyCount" ||
             name == "item.getMaxStackCount" || name == "item.getStatsCount" || name == "item.getItemSet" ||
             name == "item.getAllowableClass" || name == "item.getAllowableRace" || name == "item.getArmor" ||
-            name == "item.getFlags" || name == "item.getFlags2" || name == "item.getBagSize" ||
+            name == "item.getFlags" || name == "item.getFlags2" || name == "item.getExtraFlags" ||
+            name == "item.getSpeed" || name == "item.getBagSize" ||
             name == "item.getSpellId" || name == "item.getSpellTrigger" || name == "item.getDamageInfo")
         {
             if (!itemProto)
@@ -909,6 +919,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 out.emplace_back(static_cast<int64_t>(static_cast<uint32>(itemProto->ExtendedData->Flags[0])));
             else if (name == "item.getFlags2")
                 out.emplace_back(static_cast<int64_t>(static_cast<uint32>(itemProto->ExtendedData->Flags[1])));
+            else if (name == "item.getExtraFlags")
+                out.emplace_back(static_cast<int64_t>(itemProto->FlagsCu));
+            else if (name == "item.getSpeed")
+                out.emplace_back(static_cast<int64_t>(itemProto->GetDelay()));
             else if (name == "item.getBagSize")
                 out.emplace_back(static_cast<int64_t>(item->IsBag() ? itemProto->GetContainerSlots() : 0));
             else if (name == "item.getSpellId" || name == "item.getSpellTrigger")
@@ -3316,6 +3330,183 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             unit->RestoreFaction();
             return true;
         }
+        if (name == "unit.addFlatStatModifier")
+        {
+            uint32 const mod = static_cast<uint32>(iArg(args, 0));
+            uint32 const modType = static_cast<uint32>(iArg(args, 1));
+            if (mod < UNIT_MOD_END && modType < MODIFIER_TYPE_FLAT_END)
+                unit->HandleStatFlatModifier(static_cast<UnitMods>(mod), static_cast<UnitModifierFlatType>(modType),
+                                             static_cast<float>(dArg(args, 2)), bArg(args, 3, true));
+            return true;
+        }
+        if (name == "unit.addPctStatModifier")
+        {
+            uint32 const mod = static_cast<uint32>(iArg(args, 0));
+            uint32 const modType = static_cast<uint32>(iArg(args, 1));
+            if (mod < UNIT_MOD_END && modType < MODIFIER_TYPE_PCT_END)
+                unit->ApplyStatPctModifier(static_cast<UnitMods>(mod), static_cast<UnitModifierPctType>(modType),
+                                           static_cast<float>(dArg(args, 2)));
+            return true;
+        }
+        if (name == "unit.canModifyStats")
+        {
+            out.emplace_back(unit->CanModifyStats());
+            return true;
+        }
+        if (name == "unit.castSpellAoF")
+        {
+            unit->CastSpell(Position(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                     static_cast<float>(dArg(args, 2))),
+                            static_cast<uint32>(iArg(args, 3)), CastSpellExtraArgs(bArg(args, 4, true)));
+            return true;
+        }
+        if (name == "unit.countPctFromCurHealth")
+        {
+            out.emplace_back(static_cast<int64_t>(unit->CountPctFromCurHealth(static_cast<float>(dArg(args, 0, 0.0)))));
+            return true;
+        }
+        if (name == "unit.countPctFromMaxHealth")
+        {
+            out.emplace_back(static_cast<int64_t>(unit->CountPctFromMaxHealth(static_cast<float>(dArg(args, 0, 0.0)))));
+            return true;
+        }
+        if (name == "unit.disableMelee")
+        {
+            if (Creature* c = unit->ToCreature())
+            {
+                c->SetCanMelee(!bArg(args, 0, true));
+                out.emplace_back(true);
+            }
+            else
+            {
+                out.emplace_back(false);
+            }
+            return true;
+        }
+        if (name == "unit.getCharmGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(unit->GetCharmedGUID())));
+            return true;
+        }
+        if (name == "unit.getControllerGuids")
+        {
+            out.emplace_back(fl::guidText(fromGuid(unit->GetCharmerOrOwnerOrOwnGUID())));
+            return true;
+        }
+        if (name == "unit.getCritterGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(unit->GetCritterGUID())));
+            return true;
+        }
+        if (name == "unit.getStandState")
+        {
+            out.emplace_back(static_cast<int64_t>(unit->GetStandState()));
+            return true;
+        }
+        if (name == "unit.isArmorer") { out.emplace_back(unit->IsArmorer()); return true; }
+        if (name == "unit.isAuctioneer") { out.emplace_back(unit->IsAuctioner()); return true; }
+        if (name == "unit.isBattleMaster") { out.emplace_back(unit->IsBattleMaster()); return true; }
+        if (name == "unit.isDying") { out.emplace_back(unit->isDying()); return true; }
+        if (name == "unit.isGuildMaster") { out.emplace_back(unit->IsGuildMaster()); return true; }
+        if (name == "unit.isInAccessiblePlaceFor")
+        {
+            bool accessible = false;
+            HandleData other;
+            if (!args.empty() && asHandle(args[0], other))
+                if (Creature* c = creatureOf(other))
+                    accessible = unit->isInAccessiblePlaceFor(c);
+            out.emplace_back(accessible);
+            return true;
+        }
+        if (name == "unit.isSpiritGuide") { out.emplace_back(unit->IsAreaSpiritHealer()); return true; }
+        if (name == "unit.isSpiritService") { out.emplace_back(unit->IsSpiritService()); return true; }
+        if (name == "unit.isTabardDesigner") { out.emplace_back(unit->IsTabardDesigner()); return true; }
+        if (name == "unit.isTaxi") { out.emplace_back(unit->IsTaxi()); return true; }
+        if (name == "unit.removeBindSightAuras")
+        {
+            unit->RemoveBindSightAuras();
+            return true;
+        }
+        if (name == "unit.removeCharmAuras")
+        {
+            unit->RemoveCharmAuras();
+            return true;
+        }
+        if (name == "unit.sendUnitEmote")
+        {
+            Unit* receiver = nullptr;
+            HandleData target;
+            if (args.size() > 1 && asHandle(args[1], target))
+                receiver = unitOf(target);
+            Player* p = unit->ToPlayer();
+            if (!p || p->GetSession())
+            {
+                std::string msg = sArg(args, 0);
+                if (msg.size() > 255)
+                    msg.resize(255);
+                unit->TextEmote(msg, receiver, bArg(args, 2, false));
+            }
+            return true;
+        }
+        if (name == "unit.setCanFly")
+        {
+            unit->SetCanFly(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "unit.setCreatorGuid")
+        {
+            unit->SetCreatorGUID(guidArgAt(args, 0, LegacyGuid::Player));
+            return true;
+        }
+        if (name == "unit.setCritterGuid")
+        {
+            unit->SetCritterGUID(guidArgAt(args, 0, LegacyGuid::Creature));
+            return true;
+        }
+        if (name == "unit.setFFA")
+        {
+            if (bArg(args, 0, true))
+                unit->SetPvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
+            else
+                unit->RemovePvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
+            return true;
+        }
+        if (name == "unit.setImmuneTo")
+        {
+            int64_t const mech = iArg(args, 0);
+            if (mech >= 0 && mech < MAX_MECHANIC)
+                unit->ApplySpellImmune(0, IMMUNITY_MECHANIC, static_cast<uint32>(mech), bArg(args, 1, true));
+            return true;
+        }
+        if (name == "unit.setName")
+        {
+            // Player::SaveToDB writes GetName() into characters.name (12 chars), and Pet::SavePetToDB writes m_name into
+            // character_pet.name (21 chars), so only non-pet creatures may be renamed.
+            Creature* c = unit->ToCreature();
+            if (c && !c->IsPet())
+            {
+                std::string s = sArg(args, 0);
+                if (s.size() > 64)
+                    s.resize(64);
+                c->SetName(std::move(s));
+                out.emplace_back(true);
+            }
+            else
+            {
+                out.emplace_back(false);
+            }
+            return true;
+        }
+        if (name == "unit.setPetGuid")
+        {
+            unit->SetPetGUID(guidArgAt(args, 0, LegacyGuid::Pet));
+            return true;
+        }
+        if (name == "unit.setVisible")
+        {
+            unit->SetVisible(bArg(args, 0, true));
+            return true;
+        }
     }
 
     // ---- Creature ----
@@ -4724,14 +4915,6 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             player->ToggleDND();
             return true;
         }
-        if (name == "player.setFFA")
-        {
-            if (bArg(args, 0, true))
-                player->SetPvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
-            else
-                player->RemovePvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
-            return true;
-        }
         if (name == "player.isImmuneToDamage")
         {
             out.emplace_back(player->IsImmunedToDamage(SPELL_SCHOOL_MASK_ALL));
@@ -6097,5 +6280,32 @@ void ForeverHost::takeDataWrites(std::vector<fl::DataWriteResult>& out)
 {
     if (_db)
         _db->takeConfirmed(out);
+}
+
+fl::Guid ForeverHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId)
+{
+    auto const counter = static_cast<ObjectGuid::LowType>(low);
+    switch (kind)
+    {
+        case ObjKind::Player: return fromGuid(ObjectGuid::Create<HighGuid::Player>(counter));
+        case ObjKind::Item: return fromGuid(ObjectGuid::Create<HighGuid::Item>(counter));
+        case ObjKind::Creature: return fromGuid(ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
+        case ObjKind::GameObject: return fromGuid(ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
+        default: return fl::Guid{};
+    }
+}
+
+uint32_t ForeverHost::realmId() { return sRealmList->GetCurrentRealmId().Realm; }
+
+bool ForeverHost::isInventoryPos(int kind, uint8_t bag, uint8_t slot)
+{
+    switch (kind)
+    {
+        case 0: return Player::IsBagPos(static_cast<uint16>((static_cast<uint16>(bag) << 8) | slot));
+        case 1: return Player::IsBankPos(bag, slot);
+        case 2: return Player::IsEquipmentPos(bag, slot);
+        case 3: return Player::IsInventoryPos(bag, slot);
+        default: return false;
+    }
 }
 }  // namespace flh

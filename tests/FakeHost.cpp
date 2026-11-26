@@ -72,10 +72,10 @@ std::string FakeHost::guidToString(fl::Guid const& g)
     return "Guid-" + std::to_string(g.hi) + "-" + std::to_string(g.lo);
 }
 
-fl::Guid FakeHost::makeGuid(uint64_t type, uint64_t low, uint32_t entry)
+fl::Guid FakeHost::makeGuid(uint64_t type, uint64_t low, uint32_t entry, uint16_t mapId)
 {
     fl::Guid g;
-    g.hi = (type << 58) | (static_cast<uint64_t>(entry) << 20);
+    g.hi = (type << 58) | (static_cast<uint64_t>(mapId & 0x1FFF) << 44) | (static_cast<uint64_t>(entry) << 20);
     g.lo = low;
     return g;
 }
@@ -84,7 +84,7 @@ fl::HandleData FakeHost::creature(uint64_t id, uint32_t map, uint32_t instance, 
 {
     fl::HandleData h;
     h.kind = fl::ObjKind::Creature;
-    h.guid = makeGuid(kTypeCreature, id, entry);
+    h.guid = makeGuid(kTypeCreature, id, entry, static_cast<uint16_t>(map));
     h.mapId = map;
     h.instanceId = instance;
     return h;
@@ -93,7 +93,7 @@ fl::HandleData FakeHost::creature(uint64_t id, uint32_t map, uint32_t instance, 
 fl::HandleData FakeHost::pet(uint64_t id, uint32_t map, uint32_t instance, uint32_t entry)
 {
     fl::HandleData h = creature(id, map, instance, entry);
-    h.guid = makeGuid(kTypePet, id, entry);
+    h.guid = makeGuid(kTypePet, id, entry, static_cast<uint16_t>(map));
     return h;
 }
 
@@ -111,7 +111,7 @@ fl::HandleData FakeHost::gameObject(uint64_t id, uint32_t map, uint32_t instance
 {
     fl::HandleData h;
     h.kind = fl::ObjKind::GameObject;
-    h.guid = makeGuid(kTypeGameObject, id, entry);
+    h.guid = makeGuid(kTypeGameObject, id, entry, static_cast<uint16_t>(map));
     h.mapId = map;
     h.instanceId = instance;
     return h;
@@ -439,7 +439,15 @@ bool FakeHost::unitStateCall(fl::HandleData const& self, std::string const& op,
         "unit.setNativeDisplayId", "unit.getCreatureType", "unit.getClassAsString", "unit.getRaceAsString",
         "unit.getClassMask", "unit.getRaceMask", "unit.sendChatMessageToPlayer", "unit.performEmote", "unit.emoteState",
         "unit.isMoving", "unit.isFlying", "unit.isVisible", "unit.setSheath", "unit.setWaterWalk", "unit.setSanctuary",
-        "unit.deMorph", "unit.restoreDisplayId", "unit.restoreFaction"};
+        "unit.deMorph", "unit.restoreDisplayId", "unit.restoreFaction",
+        "unit.addFlatStatModifier", "unit.addPctStatModifier", "unit.canModifyStats", "unit.castSpellAoF",
+        "unit.countPctFromCurHealth", "unit.countPctFromMaxHealth", "unit.disableMelee", "unit.getCharmGuid",
+        "unit.getControllerGuids", "unit.getCritterGuid", "unit.getStandState", "unit.isArmorer", "unit.isAuctioneer",
+        "unit.isBattleMaster", "unit.isDying", "unit.isGuildMaster", "unit.isInAccessiblePlaceFor",
+        "unit.isSpiritGuide", "unit.isSpiritService", "unit.isTabardDesigner", "unit.isTaxi",
+        "unit.removeBindSightAuras", "unit.removeCharmAuras", "unit.sendUnitEmote", "unit.setCanFly",
+        "unit.setCreatorGuid", "unit.setCritterGuid", "unit.setFFA", "unit.setImmuneTo", "unit.setName",
+        "unit.setPetGuid", "unit.setVisible"};
     if (!ops.count(op))
         return false;
 
@@ -734,6 +742,130 @@ bool FakeHost::unitStateCall(fl::HandleData const& self, std::string const& op,
         ++u.restoreDisplayId;
     else if (op == "unit.restoreFaction")
         ++u.restoreFaction;
+    else if (op == "unit.addFlatStatModifier")
+    {
+        u.statMods.push_back(FakeUnit::StatMod{static_cast<uint32_t>(unitIntAt(args, 0)),
+                                               static_cast<uint32_t>(unitIntAt(args, 1)), unitDoubleAt(args, 2),
+                                               unitBoolAt(args, 3, true), false});
+    }
+    else if (op == "unit.addPctStatModifier")
+    {
+        u.statMods.push_back(FakeUnit::StatMod{static_cast<uint32_t>(unitIntAt(args, 0)),
+                                               static_cast<uint32_t>(unitIntAt(args, 1)), unitDoubleAt(args, 2),
+                                               true, true});
+    }
+    else if (op == "unit.canModifyStats")
+        out.emplace_back(u.canModifyStats);
+    else if (op == "unit.castSpellAoF")
+    {
+        u.aofCasts.push_back(FakeUnit::AoFCast{unitDoubleAt(args, 0), unitDoubleAt(args, 1), unitDoubleAt(args, 2),
+                                               static_cast<uint32_t>(unitIntAt(args, 3)), unitBoolAt(args, 4, true)});
+    }
+    else if (op == "unit.countPctFromCurHealth")
+    {
+        double const pct = unitDoubleAt(args, 0, 0.0);
+        out.emplace_back(static_cast<int64_t>(static_cast<double>(u.health) * pct / 100.0));
+    }
+    else if (op == "unit.countPctFromMaxHealth")
+    {
+        double const pct = unitDoubleAt(args, 0, 0.0);
+        out.emplace_back(static_cast<int64_t>(static_cast<double>(u.maxHealth) * pct / 100.0));
+    }
+    else if (op == "unit.disableMelee")
+    {
+        if (self.kind != fl::ObjKind::Creature)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        u.meleeDisabled = unitBoolAt(args, 0, true);
+        out.emplace_back(true);
+    }
+    else if (op == "unit.getCharmGuid")
+        out.emplace_back(u.charmGuid);
+    else if (op == "unit.getControllerGuids")
+        out.emplace_back(u.controllerGuids);
+    else if (op == "unit.getCritterGuid")
+        out.emplace_back(u.critterGuid);
+    else if (op == "unit.getStandState")
+        out.emplace_back(static_cast<int64_t>(u.standState));
+    else if (op == "unit.isArmorer")
+        out.emplace_back(u.armorer);
+    else if (op == "unit.isAuctioneer")
+        out.emplace_back(u.auctioneer);
+    else if (op == "unit.isBattleMaster")
+        out.emplace_back(u.battleMaster);
+    else if (op == "unit.isDying")
+        out.emplace_back(u.dying);
+    else if (op == "unit.isGuildMaster")
+        out.emplace_back(u.guildMaster);
+    else if (op == "unit.isInAccessiblePlaceFor")
+    {
+        fl::HandleData target;
+        if (unitHandleAt(args, 0, target))
+            u.accessibleObjLow = target.guid.lo;
+        u.accessibleRadius = unitDoubleAt(args, 1, 0.0);
+        out.emplace_back(u.accessiblePlace);
+    }
+    else if (op == "unit.isSpiritGuide")
+        out.emplace_back(u.spiritGuide);
+    else if (op == "unit.isSpiritService")
+        out.emplace_back(u.spiritService);
+    else if (op == "unit.isTabardDesigner")
+        out.emplace_back(u.tabardDesigner);
+    else if (op == "unit.isTaxi")
+        out.emplace_back(u.taxi);
+    else if (op == "unit.removeBindSightAuras")
+        ++u.removeBindSightAuras;
+    else if (op == "unit.removeCharmAuras")
+        ++u.removeCharmAuras;
+    else if (op == "unit.sendUnitEmote")
+    {
+        FakeUnit::EmoteMsg e;
+        e.msg = unitStringAt(args, 0);
+        fl::HandleData receiver;
+        if (unitHandleAt(args, 1, receiver))
+            e.receiverLow = receiver.guid.lo;
+        e.bossEmote = unitBoolAt(args, 2, false);
+        u.unitEmotes.push_back(std::move(e));
+    }
+    else if (op == "unit.setCanFly")
+        u.canFly = unitBoolAt(args, 0, true);
+    else if (op == "unit.setCreatorGuid")
+        u.creatorGuid = unitStringAt(args, 0);
+    else if (op == "unit.setCritterGuid")
+        u.critterGuid = unitStringAt(args, 0);
+    else if (op == "unit.setFFA")
+    {
+        bool const on = unitBoolAt(args, 0, true);
+        u.ffa = on;
+        if (self.kind == fl::ObjKind::Player)
+            playerState(self).ffa = on;
+    }
+    else if (op == "unit.setImmuneTo")
+    {
+        uint32_t const mech = static_cast<uint32_t>(unitIntAt(args, 0));
+        if (unitBoolAt(args, 1, true))
+            u.immuneMechanics.insert(mech);
+        else
+            u.immuneMechanics.erase(mech);
+    }
+    else if (op == "unit.setName")
+    {
+        auto cit = creatureStates.find({self.guid.hi, self.guid.lo});
+        bool const isPet = (self.guid.hi >> 58) == kTypePet || (cit != creatureStates.end() && cit->second.isPet);
+        if (self.kind != fl::ObjKind::Creature || isPet)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        u.name = unitStringAt(args, 0);
+        out.emplace_back(true);
+    }
+    else if (op == "unit.setPetGuid")
+        u.petGuid = unitStringAt(args, 0);
+    else if (op == "unit.setVisible")
+        u.visible = unitBoolAt(args, 0, true);
     return true;
 }
 
@@ -1140,7 +1272,7 @@ bool FakeHost::itemStateCall(fl::HandleData const& self, std::string const& op,
         "item.isCurrencyToken", "item.isNotEmptyBag", "item.isInBag", "item.isInTrade", "item.isPotion",
         "item.isConjuredConsumable", "item.isRefundExpired", "item.canBeTraded", "item.hasQuest",
         "item.getOwnerGuid", "item.setBinding", "item.getEnchantmentId", "item.setEnchantment",
-        "item.clearEnchantment", "item.getBagSize"};
+        "item.clearEnchantment", "item.getBagSize", "item.getExtraFlags", "item.getSpeed"};
     if (!ops.count(op))
         return false;
 
@@ -1400,6 +1532,18 @@ bool FakeHost::itemStateCall(fl::HandleData const& self, std::string const& op,
         }
         it.enchantments[slot] = 0;
         out.emplace_back(true);
+    }
+    else if (op == "item.getExtraFlags")
+    {
+        if (!templated())
+            return true;
+        out.emplace_back(static_cast<int64_t>(it.extraFlags));
+    }
+    else if (op == "item.getSpeed")
+    {
+        if (!templated())
+            return true;
+        out.emplace_back(static_cast<int64_t>(it.speed));
     }
     else  // item.getBagSize
     {
@@ -2538,6 +2682,37 @@ bool FakeHost::guidInfo(fl::Guid const& g, uint32_t* entry, int* type)
     if (entry)
         *entry = (t == kTypeCreature || t == kTypeGameObject) ? static_cast<uint32_t>((g.hi >> 20) & 0xFFFFFF) : 0;
     return true;
+}
+
+fl::Guid FakeHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId)
+{
+    switch (kind)
+    {
+        case fl::ObjKind::Player: return makeGuid(kTypePlayer, low, 0);
+        case fl::ObjKind::Item: return makeGuid(kTypeItem, low, 0);
+        case fl::ObjKind::Creature: return makeGuid(kTypeCreature, low, entry, mapId);
+        case fl::ObjKind::GameObject: return makeGuid(kTypeGameObject, low, entry, mapId);
+        default: return fl::Guid{};
+    }
+}
+
+bool FakeHost::isInventoryPos(int kind, uint8_t bag, uint8_t slot)
+{
+    constexpr uint8_t kBag0 = 255;
+    switch (kind)
+    {
+        case 0:   // IsBagPos
+            return bag == kBag0 && ((slot >= 30 && slot < 34) || (slot >= 63 && slot < 72) || (slot >= 34 && slot < 35));
+        case 1:   // IsBankPos
+            return (bag == kBag0 && slot >= 63 && slot < 72) || (bag >= 63 && bag < 72);
+        case 2:   // IsEquipmentPos
+            return bag == kBag0 && (slot < 19 || (slot >= 19 && slot < 30) || (slot >= 30 && slot < 34) ||
+                                    (slot >= 34 && slot < 35));
+        case 3:   // IsInventoryPos
+            return (bag == kBag0 && (slot == 255 || (slot >= 35 && slot < 63) || (slot >= 84 && slot < 87))) ||
+                   (bag >= 30 && bag < 34) || (bag >= 34 && bag < 35);
+        default: return false;
+    }
 }
 
 bool FakeHost::playerOwner(fl::HandleData const& h, uint64_t& owner)

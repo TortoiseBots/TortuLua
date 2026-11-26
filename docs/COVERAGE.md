@@ -10,14 +10,14 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
-| Global | 110 | 94 | 4 | 12 | 85% | 89% |
+| Global | 110 | 105 | 5 | 0 | 95% | 100% |
 | Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
-| Unit | 167 | 132 | 3 | 32 | 79% | 81% |
+| Unit | 167 | 164 | 3 | 0 | 98% | 100% |
 | Player | 263 | 195 | 20 | 48 | 74% | 82% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
-| Item | 66 | 56 | 4 | 6 | 85% | 91% |
+| Item | 66 | 58 | 8 | 0 | 88% | 100% |
 | Group | 27 | 27 | 0 | 0 | 100% | 100% |
 | Guild | 16 | 14 | 2 | 0 | 88% | 100% |
 | Quest | 13 | 13 | 0 | 0 | 100% | 100% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1058** | **104** | **281** | **73%** | **81%** |
+| **all** | **1443** | **1103** | **109** | **231** | **76%** | **84%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -85,10 +85,10 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `ClearPlayerGossipEvents` | implemented |  |
 | `ClearServerEvents` | implemented |  |
 | `ClearUniqueCreatureEvents` | implemented |  |
-| `CreateLongLong` | **missing** |  |
+| `CreateLongLong` | implemented | returns a native Lua 5.4 signed 64-bit integer |
 | `CreateLuaEvent` | implemented |  |
 | `CreatePacket` | implemented |  |
-| `CreateULongLong` | **missing** |  |
+| `CreateULongLong` | implemented | returns a native Lua 5.4 64-bit integer |
 | `GetActiveGameEvents` | implemented |  |
 | `GetAreaName` | implemented |  |
 | `GetCoreExpansion` | implemented | answers 0 (Classic 1.60) |
@@ -101,32 +101,32 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetGameTime` | implemented |  |
 | `GetGuildByLeaderGUID` | implemented |  |
 | `GetGuildByName` | implemented |  |
-| `GetItemGUID` | **missing** |  |
+| `GetItemGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID) |
 | `GetItemLink` | implemented |  |
 | `GetLuaEngine` | implemented | answers ForeverLua |
 | `GetMapById` | implemented |  |
-| `GetObjectGUID` | **missing** |  |
+| `GetObjectGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0) |
 | `GetOwnerHalaa` | **stub** | stub: not available (Classic 1.60) |
 | `GetPlayerByGUID` | implemented |  |
 | `GetPlayerByName` | implemented |  |
 | `GetPlayerCount` | implemented |  |
-| `GetPlayerGUID` | **missing** |  |
+| `GetPlayerGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID) |
 | `GetPlayersInWorld` | implemented |  |
 | `GetPlayersOnMap` | implemented |  |
 | `GetQuest` | implemented |  |
-| `GetRealmID` | **missing** |  |
+| `GetRealmID` | implemented |  |
 | `GetSpellInfo` | implemented |  |
 | `GetStateInstanceId` | implemented |  |
 | `GetStateMap` | implemented |  |
 | `GetStateMapId` | implemented |  |
 | `GetTimeDiff` | implemented |  |
-| `GetUnitGUID` | **missing** |  |
-| `IsBagPos` | **missing** |  |
-| `IsBankPos` | **missing** |  |
+| `GetUnitGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0) |
+| `IsBagPos` | implemented |  |
+| `IsBankPos` | implemented |  |
 | `IsCompatibilityMode` | implemented |  |
-| `IsEquipmentPos` | **missing** |  |
+| `IsEquipmentPos` | implemented |  |
 | `IsGameEventActive` | implemented |  |
-| `IsInventoryPos` | **missing** |  |
+| `IsInventoryPos` | implemented |  |
 | `Kick` | implemented |  |
 | `PerformIngameSpawn` | implemented | save writes the spawn to the creature/gameobject table (eluna mode trusts its scripts) |
 | `PrintDebug` | implemented |  |
@@ -147,7 +147,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `RegisterPlayerEvent` | implemented |  |
 | `RegisterPlayerGossipEvent` | implemented |  |
 | `RegisterServerEvent` | implemented |  |
-| `RegisterSpellEvent` | **missing** |  |
+| `RegisterSpellEvent` | **stub** | stub: not available (this core) |
 | `RegisterUniqueCreatureEvent` | implemented |  |
 | `RegisterVehicleEvent` | **stub** | stub: not available (Classic 1.60) |
 | `ReloadEluna` | implemented |  |
@@ -284,38 +284,38 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | Documented method | Status | Note |
 |---|---|---|
 | `AddAura` | implemented |  |
-| `AddFlatStatModifier` | **missing** |  |
-| `AddPctStatModifier` | **missing** |  |
+| `AddFlatStatModifier` | implemented |  |
+| `AddPctStatModifier` | implemented |  |
 | `AddUnitState` | implemented |  |
 | `Attack` | implemented |  |
 | `AttackStop` | implemented |  |
-| `CanModifyStats` | **missing** |  |
+| `CanModifyStats` | implemented |  |
 | `CastCustomSpell` | implemented |  |
 | `CastSpell` | implemented |  |
-| `CastSpellAoF` | **missing** |  |
+| `CastSpellAoF` | implemented |  |
 | `ClearInCombat` | implemented |  |
 | `ClearUnitState` | implemented |  |
-| `CountPctFromCurHealth` | **missing** |  |
-| `CountPctFromMaxHealth` | **missing** |  |
+| `CountPctFromCurHealth` | implemented |  |
+| `CountPctFromMaxHealth` | implemented |  |
 | `DealDamage` | implemented |  |
 | `DealHeal` | implemented |  |
 | `DeMorph` | implemented |  |
-| `DisableMelee` | **missing** |  |
+| `DisableMelee` | implemented |  |
 | `Dismount` | implemented |  |
 | `Emote` | implemented |  |
 | `EmoteState` | implemented |  |
 | `GetAura` | implemented |  |
 | `GetBaseSpellPower` | implemented |  |
 | `GetCharmerGUID` | implemented |  |
-| `GetCharmGUID` | **missing** |  |
+| `GetCharmGUID` | implemented |  |
 | `GetClass` | implemented |  |
 | `GetClassAsString` | implemented |  |
 | `GetClassMask` | implemented |  |
 | `GetControllerGUID` | implemented |  |
-| `GetControllerGUIDS` | **missing** |  |
+| `GetControllerGUIDS` | implemented |  |
 | `GetCreatorGUID` | implemented |  |
 | `GetCreatureType` | implemented |  |
-| `GetCritterGUID` | **missing** |  |
+| `GetCritterGUID` | implemented |  |
 | `GetCurrentSpell` | implemented |  |
 | `GetDisplayId` | implemented |  |
 | `GetFaction` | implemented |  |
@@ -340,7 +340,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetRaceAsString` | implemented |  |
 | `GetRaceMask` | implemented |  |
 | `GetSpeed` | implemented |  |
-| `GetStandState` | **missing** |  |
+| `GetStandState` | implemented |  |
 | `GetStat` | implemented |  |
 | `GetUnfriendlyUnitsInRange` | implemented |  |
 | `GetVehicle` | **stub** | stub: not available (Classic 1.60) |
@@ -352,22 +352,22 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HealthBelowPct` | implemented |  |
 | `InterruptSpell` | implemented |  |
 | `IsAlive` | implemented |  |
-| `IsArmorer` | **missing** |  |
+| `IsArmorer` | implemented |  |
 | `IsAttackingPlayer` | implemented |  |
-| `IsAuctioneer` | **missing** |  |
+| `IsAuctioneer` | implemented |  |
 | `IsBanker` | implemented |  |
-| `IsBattleMaster` | **missing** |  |
+| `IsBattleMaster` | implemented |  |
 | `IsCasting` | implemented |  |
 | `IsCharmed` | implemented |  |
 | `IsDead` | implemented |  |
-| `IsDying` | **missing** |  |
+| `IsDying` | implemented |  |
 | `IsFlying` | implemented |  |
 | `IsFriendlyTo` | implemented |  |
 | `IsFullHealth` | implemented |  |
 | `IsGossip` | implemented |  |
-| `IsGuildMaster` | **missing** |  |
+| `IsGuildMaster` | implemented |  |
 | `IsHostileTo` | implemented |  |
-| `IsInAccessiblePlaceFor` | **missing** |  |
+| `IsInAccessiblePlaceFor` | implemented |  |
 | `IsInCombat` | implemented |  |
 | `IsInnkeeper` | implemented |  |
 | `IsInWater` | implemented |  |
@@ -378,13 +378,13 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsQuestGiver` | implemented |  |
 | `IsRooted` | implemented |  |
 | `IsServiceProvider` | implemented |  |
-| `IsSpiritGuide` | **missing** |  |
+| `IsSpiritGuide` | implemented |  |
 | `IsSpiritHealer` | implemented |  |
-| `IsSpiritService` | **missing** |  |
+| `IsSpiritService` | implemented |  |
 | `IsStandState` | implemented |  |
 | `IsStopped` | implemented |  |
-| `IsTabardDesigner` | **missing** |  |
-| `IsTaxi` | **missing** |  |
+| `IsTabardDesigner` | implemented |  |
+| `IsTaxi` | implemented |  |
 | `IsTrainer` | implemented |  |
 | `IsUnderWater` | implemented |  |
 | `IsVendor` | implemented |  |
@@ -409,35 +409,35 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `RemoveAllAuras` | implemented |  |
 | `RemoveArenaAuras` | implemented |  |
 | `RemoveAura` | implemented |  |
-| `RemoveBindSightAuras` | **missing** |  |
-| `RemoveCharmAuras` | **missing** |  |
+| `RemoveBindSightAuras` | implemented |  |
+| `RemoveCharmAuras` | implemented |  |
 | `RestoreDisplayId` | implemented |  |
 | `RestoreFaction` | implemented |  |
 | `SendChatMessageToPlayer` | implemented |  |
-| `SendUnitEmote` | **missing** |  |
+| `SendUnitEmote` | implemented |  |
 | `SendUnitSay` | implemented |  |
 | `SendUnitWhisper` | implemented |  |
 | `SendUnitYell` | implemented |  |
-| `SetCanFly` | **missing** |  |
+| `SetCanFly` | implemented |  |
 | `SetConfused` | implemented |  |
-| `SetCreatorGUID` | **missing** |  |
-| `SetCritterGUID` | **missing** |  |
+| `SetCreatorGUID` | implemented |  |
+| `SetCritterGUID` | implemented |  |
 | `SetDisplayId` | implemented |  |
 | `SetFacing` | implemented |  |
 | `SetFacingToObject` | implemented |  |
 | `SetFaction` | implemented |  |
 | `SetFeared` | implemented |  |
-| `SetFFA` | **missing** | the engine registers it on `Player` only |
+| `SetFFA` | implemented |  |
 | `SetHealth` | implemented |  |
-| `SetImmuneTo` | **missing** |  |
+| `SetImmuneTo` | implemented |  |
 | `SetInCombatWith` | implemented |  |
 | `SetLevel` | implemented |  |
 | `SetMaxHealth` | implemented |  |
 | `SetMaxPower` | implemented |  |
-| `SetName` | **missing** |  |
+| `SetName` | implemented | non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes |
 | `SetNativeDisplayId` | implemented |  |
 | `SetOwnerGUID` | implemented |  |
-| `SetPetGUID` | **missing** |  |
+| `SetPetGUID` | implemented |  |
 | `SetPower` | implemented |  |
 | `SetPowerType` | implemented |  |
 | `SetPvP` | implemented |  |
@@ -447,7 +447,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetSpeed` | implemented |  |
 | `SetStandState` | implemented |  |
 | `SetStunned` | implemented |  |
-| `SetVisible` | **missing** |  |
+| `SetVisible` | implemented |  |
 | `SetWaterWalk` | implemented |  |
 | `StopSpellCast` | implemented |  |
 ### Class `Player` (inherits `Unit`)
@@ -683,7 +683,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetCoinage` | implemented |  |
 | `SetDrunkValue` | implemented |  |
 | `SetFactionForRace` | implemented | refuses a race id the core's race store does not know with an error and leaves team and faction unchanged |
-| `SetFFA` | implemented |  |
+| `SetFFA` | implemented | declared on `Unit` |
 | `SetFreeTalentPoints` | **missing** |  |
 | `SetGameMaster` | implemented |  |
 | `SetGender` | implemented |  |
@@ -859,7 +859,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetDurability` | implemented |  |
 | `GetEnchantmentId` | implemented |  |
 | `GetEntry` | implemented |  |
-| `GetExtraFlags` | **missing** |  |
+| `GetExtraFlags` | implemented |  |
 | `GetFlags` | implemented |  |
 | `GetFlags2` | implemented |  |
 | `GetInventoryType` | implemented |  |
@@ -873,12 +873,12 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetOwner` | implemented |  |
 | `GetOwnerGUID` | implemented |  |
 | `GetQuality` | implemented |  |
-| `GetRandomProperty` | **missing** |  |
-| `GetRandomSuffix` | **missing** |  |
+| `GetRandomProperty` | **stub** | stub: not available (this core) |
+| `GetRandomSuffix` | **stub** | stub: not available (this core) |
 | `GetRequiredLevel` | implemented |  |
 | `GetSellPrice` | implemented |  |
 | `GetSlot` | implemented |  |
-| `GetSpeed` | **missing** |  |
+| `GetSpeed` | implemented |  |
 | `GetSpellId` | implemented |  |
 | `GetSpellTrigger` | implemented |  |
 | `GetStatInfo` | implemented |  |
@@ -907,8 +907,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetCount` | implemented |  |
 | `SetEnchantment` | implemented |  |
 | `SetOwner` | **stub** | stub: not available (this server) |
-| `SetRandomProperty` | **missing** |  |
-| `SetRandomSuffix` | **missing** |  |
+| `SetRandomProperty` | **stub** | stub: not available (this core) |
+| `SetRandomSuffix` | **stub** | stub: not available (this core) |
 ### Class `Group`
 
 | Documented method | Status | Note |
@@ -1719,4 +1719,4 @@ The documentation pages list event names without numeric ids; the maintainers' A
 * Globals: `set(L, "Name", fl::safe<fn>)` in `registerGlobals`/`registerGameGlobals`, the `ForeverData` table of `registerForeverData`, and `print`/`require` of `registerCommon`.
 * Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the `Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and the section 7 stubs of `addStubMethod` and the core stubs of `addCoreStubMethod`; inheritance from the `createClass` calls.
 * Events: the `SpecRow` tables of `EluAlias.cpp`, joined to the families by `eluEventSpec`; the hook note comes from `hookGapFor` and the Classic-era note from `classicStubFor` (`EluCommon.cpp`), evaluated for a core without the C1-C4 hooks.
-* Stub detection: the registered C++ function (or the single function it only forwards to) raises `not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name registered with `addCoreStubMethod` raises `not available on this core`.
+* Stub detection: the registered C++ function (or the single function it only forwards to) raises `not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name registered with `addCoreStubMethod` or raising `not available on this core` is a core stub.

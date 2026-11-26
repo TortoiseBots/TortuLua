@@ -97,6 +97,9 @@ void registerStubMethods(lua_State* L)
     // object or SaveToDB API (InstanceScript persists boss states and values incrementally through InstanceLockMgr).
     for (char const* m : {"GetInstanceData", "SaveInstanceData"})
         addCoreStubMethod(L, "Map", m);
+    // Item random properties/suffixes: ForeverCore uses ItemRandomBonusListId instead of legacy random property/suffix DB2s.
+    for (char const* m : {"GetRandomProperty", "GetRandomSuffix", "SetRandomProperty", "SetRandomSuffix"})
+        addCoreStubMethod(L, "Item", m);
 }
 
 void registerVehicleMethods(lua_State* L)

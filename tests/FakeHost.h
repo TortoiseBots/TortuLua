@@ -65,7 +65,7 @@ public:
     // access follows the same flh::AccessRules the module uses.
     static constexpr uint64_t kTypePlayer = 4, kTypeItem = 3, kTypeCreature = 9, kTypeGameObject = 11, kTypePet = 10,
                               kTypeCorpse = 14;
-    static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0);
+    static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0, uint16_t mapId = 0);
     static fl::HandleData creature(uint64_t id, uint32_t map = 0, uint32_t instance = 0, uint32_t entry = 0);
     // A hunter/warlock pet: a creature handle whose guid is a Pet guid. The core keeps it in the map's Pet store, so only
     // the lookup rule of src/host/CreatureLookup.h (GetCreature, then GetPet for a Pet guid) finds it.
@@ -195,6 +195,39 @@ public:
         uint32_t sheath = 0;
         bool waterWalk = false, sanctuary = false;
         int deMorphs = 0, restoreDisplayId = 0, restoreFaction = 0;
+        bool canModifyStats = true, dying = false, ffa = false, canFly = false, meleeDisabled = false;
+        bool armorer = false, auctioneer = false, battleMaster = false, guildMaster = false;
+        bool spiritGuide = false, spiritService = false, tabardDesigner = false, taxi = false;
+        bool accessiblePlace = true;
+        uint64_t accessibleObjLow = 0;
+        double accessibleRadius = 0;
+        std::string name;
+        std::string charmGuid, controllerGuids, critterGuid;
+        int removeBindSightAuras = 0, removeCharmAuras = 0;
+        std::set<uint32_t> immuneMechanics;
+        struct StatMod
+        {
+            uint32_t mod = 0;
+            uint32_t type = 0;
+            double value = 0;
+            bool apply = true;
+            bool isPct = false;
+        };
+        std::vector<StatMod> statMods;
+        struct AoFCast
+        {
+            double x = 0, y = 0, z = 0;
+            uint32_t spell = 0;
+            bool triggered = true;
+        };
+        std::vector<AoFCast> aofCasts;
+        struct EmoteMsg
+        {
+            std::string msg;
+            uint64_t receiverLow = 0;
+            bool bossEmote = false;
+        };
+        std::vector<EmoteMsg> unitEmotes;
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };
@@ -307,6 +340,7 @@ public:
         std::map<uint32_t, uint32_t> enchantments;   // slot -> enchant id
         std::set<uint32_t> knownEnchants;
         uint32_t bagSize = 0;
+        uint32_t extraFlags = 0, speed = 0;
         std::set<uint32_t> quests;
         bool boundToPlayerAnswer = false;
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
@@ -397,6 +431,10 @@ public:
     std::optional<fl::HandleData> spawnResult;
     std::vector<std::string> worldMessages;
     int reloadsRequested = 0;
+    uint32_t fakeRealmId = 1;
+    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0) override;
+    uint32_t realmId() override { return fakeRealmId; }
+    bool isInventoryPos(int kind, uint8_t bag, uint8_t slot) override;
     fl::Access checkAccess(fl::HandleData const& h) override;
     bool currentMap(fl::HandleData const& h, uint32_t& mapId, uint32_t& instanceId) override;
     bool objectInWorld(fl::HandleData const& h) override;

@@ -80,7 +80,8 @@
    "status": "implemented"
   },
   "CreateLongLong": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns a native Lua 5.4 signed 64-bit integer"
   },
   "CreateLuaEvent": {
    "status": "implemented"
@@ -89,7 +90,8 @@
    "status": "implemented"
   },
   "CreateULongLong": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns a native Lua 5.4 64-bit integer"
   },
   "GetActiveGameEvents": {
    "status": "implemented"
@@ -130,7 +132,8 @@
    "status": "implemented"
   },
   "GetItemGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID)"
   },
   "GetItemLink": {
    "status": "implemented"
@@ -143,7 +146,8 @@
    "status": "implemented"
   },
   "GetObjectGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)"
   },
   "GetOwnerHalaa": {
    "status": "stub",
@@ -159,7 +163,8 @@
    "status": "implemented"
   },
   "GetPlayerGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID)"
   },
   "GetPlayersInWorld": {
    "status": "implemented"
@@ -171,7 +176,7 @@
    "status": "implemented"
   },
   "GetRealmID": {
-   "status": "missing"
+   "status": "implemented"
   },
   "GetSpellInfo": {
    "status": "implemented"
@@ -189,25 +194,26 @@
    "status": "implemented"
   },
   "GetUnitGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)"
   },
   "IsBagPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "IsBankPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "IsCompatibilityMode": {
    "status": "implemented"
   },
   "IsEquipmentPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "IsGameEventActive": {
    "status": "implemented"
   },
   "IsInventoryPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "Kick": {
    "status": "implemented"
@@ -272,7 +278,8 @@
    "status": "implemented"
   },
   "RegisterSpellEvent": {
-   "status": "missing"
+   "status": "stub",
+   "note": "stub: not available (this core)"
   },
   "RegisterUniqueCreatureEvent": {
    "status": "implemented"
@@ -705,10 +712,12 @@
      "declared": "Unit"
     },
     "AddFlatStatModifier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "AddPctStatModifier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "AddUnitState": {
      "status": "implemented",
@@ -723,7 +732,8 @@
      "declared": "Unit"
     },
     "CanModifyStats": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "CastCustomSpell": {
      "status": "implemented",
@@ -734,7 +744,8 @@
      "declared": "Unit"
     },
     "CastSpellAoF": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "ClearInCombat": {
      "status": "implemented",
@@ -745,10 +756,12 @@
      "declared": "Unit"
     },
     "CountPctFromCurHealth": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "CountPctFromMaxHealth": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "DealDamage": {
      "status": "implemented",
@@ -763,7 +776,8 @@
      "declared": "Unit"
     },
     "DisableMelee": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "Dismount": {
      "status": "implemented",
@@ -790,7 +804,8 @@
      "declared": "Unit"
     },
     "GetCharmGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetClass": {
      "status": "implemented",
@@ -809,7 +824,8 @@
      "declared": "Unit"
     },
     "GetControllerGUIDS": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetCreatorGUID": {
      "status": "implemented",
@@ -820,7 +836,8 @@
      "declared": "Unit"
     },
     "GetCritterGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetCurrentSpell": {
      "status": "implemented",
@@ -919,7 +936,8 @@
      "declared": "Unit"
     },
     "GetStandState": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetStat": {
      "status": "implemented",
@@ -968,21 +986,24 @@
      "declared": "Unit"
     },
     "IsArmorer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsAttackingPlayer": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsAuctioneer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsBanker": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsBattleMaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsCasting": {
      "status": "implemented",
@@ -997,7 +1018,8 @@
      "declared": "Unit"
     },
     "IsDying": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsFlying": {
      "status": "implemented",
@@ -1016,14 +1038,16 @@
      "declared": "Unit"
     },
     "IsGuildMaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsHostileTo": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsInAccessiblePlaceFor": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsInCombat": {
      "status": "implemented",
@@ -1067,14 +1091,16 @@
      "declared": "Unit"
     },
     "IsSpiritGuide": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsSpiritHealer": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsSpiritService": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsStandState": {
      "status": "implemented",
@@ -1085,10 +1111,12 @@
      "declared": "Unit"
     },
     "IsTabardDesigner": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsTaxi": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsTrainer": {
      "status": "implemented",
@@ -1187,10 +1215,12 @@
      "declared": "Unit"
     },
     "RemoveBindSightAuras": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "RemoveCharmAuras": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "RestoreDisplayId": {
      "status": "implemented",
@@ -1205,7 +1235,8 @@
      "declared": "Unit"
     },
     "SendUnitEmote": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SendUnitSay": {
      "status": "implemented",
@@ -1220,17 +1251,20 @@
      "declared": "Unit"
     },
     "SetCanFly": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetConfused": {
      "status": "implemented",
      "declared": "Unit"
     },
     "SetCreatorGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetCritterGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetDisplayId": {
      "status": "implemented",
@@ -1253,15 +1287,16 @@
      "declared": "Unit"
     },
     "SetFFA": {
-     "status": "missing",
-     "note": "the engine registers it on `Player` only"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetHealth": {
      "status": "implemented",
      "declared": "Unit"
     },
     "SetImmuneTo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetInCombatWith": {
      "status": "implemented",
@@ -1280,7 +1315,9 @@
      "declared": "Unit"
     },
     "SetName": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit",
+     "note": "non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes"
     },
     "SetNativeDisplayId": {
      "status": "implemented",
@@ -1291,7 +1328,8 @@
      "declared": "Unit"
     },
     "SetPetGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetPower": {
      "status": "implemented",
@@ -1330,7 +1368,8 @@
      "declared": "Unit"
     },
     "SetVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetWaterWalk": {
      "status": "implemented",
@@ -2248,7 +2287,7 @@
     },
     "SetFFA": {
      "status": "implemented",
-     "declared": "Player"
+     "declared": "Unit"
     },
     "SetFreeTalentPoints": {
      "status": "missing"
@@ -2900,7 +2939,8 @@
      "declared": "Item"
     },
     "GetExtraFlags": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Item"
     },
     "GetFlags": {
      "status": "implemented",
@@ -2955,10 +2995,14 @@
      "declared": "Item"
     },
     "GetRandomProperty": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     },
     "GetRandomSuffix": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     },
     "GetRequiredLevel": {
      "status": "implemented",
@@ -2973,7 +3017,8 @@
      "declared": "Item"
     },
     "GetSpeed": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Item"
     },
     "GetSpellId": {
      "status": "implemented",
@@ -3092,10 +3137,14 @@
      "declared": "Item"
     },
     "SetRandomProperty": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     },
     "SetRandomSuffix": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     }
    }
   },
@@ -5911,55 +5960,8 @@
   }
  },
  "missing": {
-  "globals": [
-   "CreateLongLong",
-   "CreateULongLong",
-   "GetItemGUID",
-   "GetObjectGUID",
-   "GetPlayerGUID",
-   "GetRealmID",
-   "GetUnitGUID",
-   "IsBagPos",
-   "IsBankPos",
-   "IsEquipmentPos",
-   "IsInventoryPos",
-   "RegisterSpellEvent"
-  ],
+  "globals": [],
   "classes": {
-   "Unit": [
-    "AddFlatStatModifier",
-    "AddPctStatModifier",
-    "CanModifyStats",
-    "CastSpellAoF",
-    "CountPctFromCurHealth",
-    "CountPctFromMaxHealth",
-    "DisableMelee",
-    "GetCharmGUID",
-    "GetControllerGUIDS",
-    "GetCritterGUID",
-    "GetStandState",
-    "IsArmorer",
-    "IsAuctioneer",
-    "IsBattleMaster",
-    "IsDying",
-    "IsGuildMaster",
-    "IsInAccessiblePlaceFor",
-    "IsSpiritGuide",
-    "IsSpiritService",
-    "IsTabardDesigner",
-    "IsTaxi",
-    "RemoveBindSightAuras",
-    "RemoveCharmAuras",
-    "SendUnitEmote",
-    "SetCanFly",
-    "SetCreatorGUID",
-    "SetCritterGUID",
-    "SetFFA",
-    "SetImmuneTo",
-    "SetName",
-    "SetPetGUID",
-    "SetVisible"
-   ],
    "Player": [
     "AddComboPoints",
     "AddLifetimeKills",
@@ -6018,14 +6020,6 @@
     "IsTargetableForAttack",
     "RemoveFromWorld",
     "SetAggroEnabled"
-   ],
-   "Item": [
-    "GetExtraFlags",
-    "GetRandomProperty",
-    "GetRandomSuffix",
-    "GetSpeed",
-    "SetRandomProperty",
-    "SetRandomSuffix"
    ],
    "WorldPacket": [
     "ReadByte",
