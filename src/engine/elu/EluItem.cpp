@@ -139,6 +139,14 @@ int iGetFlags2(lua_State* L)
 {
     return itemRead(L, "item.getFlags2", "GetFlags2", "the item has no template on the server");
 }
+int iGetExtraFlags(lua_State* L)
+{
+    return itemRead(L, "item.getExtraFlags", "GetExtraFlags", "the item has no template on the server");
+}
+int iGetSpeed(lua_State* L)
+{
+    return itemRead(L, "item.getSpeed", "GetSpeed", "the item has no template on the server");
+}
 int iGetDurability(lua_State* L) { return readOp(L, kItem, "item.getDurability", "GetDurability"); }
 int iGetMaxDurability(lua_State* L) { return readOp(L, kItem, "item.getMaxDurability", "GetMaxDurability"); }
 int iGetSpellId(lua_State* L)
@@ -290,7 +298,8 @@ void registerItemMethods(lua_State* L)
         {"GetAllowableClass", fl::safe<iGetAllowableClass>},
         {"GetAllowableRace", fl::safe<iGetAllowableRace>},
         {"GetArmor", fl::safe<iGetArmor>},       {"GetFlags", fl::safe<iGetFlags>},
-        {"GetFlags2", fl::safe<iGetFlags2>},     {"GetDurability", fl::safe<iGetDurability>},
+        {"GetFlags2", fl::safe<iGetFlags2>},     {"GetExtraFlags", fl::safe<iGetExtraFlags>},
+        {"GetSpeed", fl::safe<iGetSpeed>},       {"GetDurability", fl::safe<iGetDurability>},
         {"GetMaxDurability", fl::safe<iGetMaxDurability>},
         {"GetSpellId", fl::safe<iGetSpellId>},   {"GetSpellTrigger", fl::safe<iGetSpellTrigger>},
         {"GetStatInfo", fl::safe<iGetStatInfo>}, {"GetDamageInfo", fl::safe<iGetDamageInfo>},

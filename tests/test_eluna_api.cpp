@@ -488,3 +488,53 @@ TEST_CASE("eluna gossip: the menu calls reach the host with the docs arguments")
     CHECK(std::get<int64_t>(args[1][2].v) == 7);                       // menu_id
     CHECK(ops[4] == "gossip.addQuests");
 }
+
+TEST_CASE("eluna globals: 64-bit integer helpers, GUID builders, realm id, inventory slots and spell stub")
+{
+    ElunaRig rig;
+    fl::HandleData p = FakeHost::player(51);
+    fl::ObjectInfo info;
+    info.name = "Hero";
+    rig.host.add(p, info);
+    rig.host.players.push_back(p);
+    rig.host.playersByName["Hero"] = p;
+
+    // CreateLongLong / CreateULongLong
+    CHECK(rig.ok("return CreateLongLong()") == "0");
+    CHECK(rig.ok("return CreateLongLong(-42)") == "-42");
+    CHECK(rig.ok("return CreateLongLong('-9223372036854775808')") == "-9223372036854775808");
+    CHECK(rig.ok("return CreateLongLong('9223372036854775807')") == "9223372036854775807");
+    CHECK(rig.ok("return CreateULongLong()") == "0");
+    CHECK(rig.ok("return CreateULongLong(42)") == "42");
+    CHECK(rig.ok("return string.format('%u', CreateULongLong('18446744073709551615'))") == "18446744073709551615");
+    CHECK(errorOf(rig, "return CreateLongLong('notanumber')").find("valid") != std::string::npos);
+    CHECK(errorOf(rig, "return CreateULongLong(-1)").find("negative") != std::string::npos);
+    CHECK(errorOf(rig, "return CreateULongLong('-1')").find("valid") != std::string::npos);
+
+    // GUID builders round-trip through the GUID helpers and lookup
+    CHECK(rig.ok("local g = GetPlayerGUID(51) return GetGUIDType(g) .. ',' .. GetGUIDLow(g) .. ',' .. GetPlayerByGUID(g):GetName()") ==
+          "4,51,Hero");
+    CHECK(rig.ok("local g = GetItemGUID(99) return GetGUIDType(g) .. ',' .. GetGUIDLow(g)") == "3,99");
+    CHECK(rig.ok("local g = GetUnitGUID(12, 777) return GetGUIDType(g) .. ',' .. GetGUIDEntry(g) .. ',' .. GetGUIDLow(g)") ==
+          "9,777,12");
+    CHECK(rig.ok("local g = GetObjectGUID(15, 888) return GetGUIDType(g) .. ',' .. GetGUIDEntry(g) .. ',' .. GetGUIDLow(g)") ==
+          "11,888,15");
+
+    // GetRealmID
+    rig.host.fakeRealmId = 7;
+    CHECK(rig.ok("return GetRealmID()") == "7");
+
+    // Inventory position checks
+    CHECK(rig.ok("return tostring(IsBagPos(255, 30)) .. ',' .. tostring(IsBagPos(255, 35))") == "true,false");
+    CHECK(rig.ok("return tostring(IsBankPos(255, 63)) .. ',' .. tostring(IsBankPos(64, 0)) .. ',' .. tostring(IsBankPos(255, 35))") ==
+          "true,true,false");
+    CHECK(rig.ok("return tostring(IsEquipmentPos(255, 0)) .. ',' .. tostring(IsEquipmentPos(255, 35))") == "true,false");
+    CHECK(rig.ok("return tostring(IsInventoryPos(255, 35)) .. ',' .. tostring(IsInventoryPos(30, 0)) .. ',' .. tostring(IsInventoryPos(255, 63))") ==
+          "true,true,false");
+    CHECK(errorOf(rig, "return IsBagPos(256, 0)").find("bag must be an integer 0..255") != std::string::npos);
+    CHECK(errorOf(rig, "return IsInventoryPos(0, -1)").find("slot must be an integer 0..255") != std::string::npos);
+
+    // RegisterSpellEvent stub
+    CHECK(errorOf(rig, "return RegisterSpellEvent(133, 1, function() end)").find("RegisterSpellEvent: not available on this core") !=
+          std::string::npos);
+}

@@ -124,6 +124,12 @@ GLOBAL_NOTES = {
     "GetCoreName": "answers ForeverCore",
     "GetLuaEngine": "answers ForeverLua",
     "GetCoreExpansion": "answers 0 (Classic 1.60)",
+    "CreateLongLong": "returns a native Lua 5.4 signed 64-bit integer",
+    "CreateULongLong": "returns a native Lua 5.4 64-bit integer",
+    "GetItemGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetObjectGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetPlayerGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetUnitGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
 }
 
 STUB_MARKERS = [
@@ -1027,8 +1033,8 @@ class Coverage:
             "",
             "Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the "
             "documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); "
-            "**missing** = documented and not "
-            "in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).",
+            "**missing** = documented and not in the engine; **extra** = in the engine and not in the documented API "
+            "(our extensions, the Lua sandbox).",
             "",
             "## Summary",
             "",
@@ -1093,7 +1099,7 @@ class Coverage:
                 "evaluated for a core without the C1-C4 hooks.",
                 "* Stub detection: the registered C++ function (or the single function it only forwards to) raises "
                 "`not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name "
-                "registered with `addCoreStubMethod` raises `not available on this core`.", ""]
+                "registered with `addCoreStubMethod` or raising `not available on this core` is a core stub.", ""]
         return out
 
 

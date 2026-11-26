@@ -132,6 +132,37 @@ std::vector<std::string> const& roundCalls()
         "DeMorph()",
         "RestoreDisplayId()",
         "RestoreFaction()",
+        "AddFlatStatModifier(0, 1, 5)",
+        "AddPctStatModifier(0, 1, 10)",
+        "CanModifyStats()",
+        "CastSpellAoF(1, 2, 3, 100)",
+        "CountPctFromCurHealth(50)",
+        "CountPctFromMaxHealth(50)",
+        "GetCharmGUID()",
+        "GetControllerGUIDS()",
+        "GetCritterGUID()",
+        "GetStandState()",
+        "IsArmorer()",
+        "IsAuctioneer()",
+        "IsBattleMaster()",
+        "IsDying()",
+        "IsGuildMaster()",
+        "IsInAccessiblePlaceFor(mob)",
+        "IsSpiritGuide()",
+        "IsSpiritService()",
+        "IsTabardDesigner()",
+        "IsTaxi()",
+        "RemoveBindSightAuras()",
+        "RemoveCharmAuras()",
+        "SendUnitEmote('roars')",
+        "SetCanFly(false)",
+        "SetCreatorGUID(stored:GetGUID())",
+        "SetCritterGUID(stored:GetGUID())",
+        "SetFFA(false)",
+        "SetImmuneTo(12, true)",
+        "SetName('Longtail')",
+        "SetPetGUID(stored:GetGUID())",
+        "SetVisible(true)",
     };
     return calls;
 }
@@ -407,6 +438,102 @@ TEST_CASE("eluna unit long tail: the values flow both ways through the fake unit
 
     // a creature inherits the same methods
     CHECK(rig.ok("return tostring(mob:IsMounted())") == "false");
+
+    // remaining Unit coverage methods: values flow both ways
+    state.canModifyStats = false;
+    state.dying = true;
+    state.armorer = state.auctioneer = state.battleMaster = state.guildMaster = true;
+    state.spiritGuide = state.spiritService = state.tabardDesigner = state.taxi = true;
+    state.standState = 4;
+    state.charmGuid = "00000000000000010000000000000111";
+    state.controllerGuids = "00000000000000010000000000000222";
+    state.critterGuid = "00000000000000010000000000000333";
+    CHECK(rig.ok("return tostring(stored:CanModifyStats()) .. ',' .. tostring(stored:IsDying())") == "false,true");
+    CHECK(rig.ok("return stored:GetStandState()") == "4");
+    CHECK(rig.ok("return tostring(stored:IsArmorer()) .. tostring(stored:IsAuctioneer()) .. "
+                 "tostring(stored:IsBattleMaster()) .. tostring(stored:IsGuildMaster())") == "truetruetruetrue");
+    CHECK(rig.ok("return tostring(stored:IsSpiritGuide()) .. tostring(stored:IsSpiritService()) .. "
+                 "tostring(stored:IsTabardDesigner()) .. tostring(stored:IsTaxi())") == "truetruetruetrue");
+    CHECK(rig.ok("return stored:GetCharmGUID() .. ',' .. stored:GetControllerGUIDS() .. ',' .. stored:GetCritterGUID()") ==
+          state.charmGuid + "," + state.controllerGuids + "," + state.critterGuid);
+
+    state.health = 200;
+    state.maxHealth = 1000;
+    CHECK(rig.ok("return stored:CountPctFromCurHealth(25) .. ',' .. stored:CountPctFromMaxHealth(50)") == "50,500");
+    CHECK(rig.ok("return stored:CountPctFromCurHealth() .. ',' .. stored:CountPctFromMaxHealth()") == "0,0");
+
+    rig.ok("stored:AddFlatStatModifier(2, 1, 15.5, false)");
+    rig.ok("stored:AddPctStatModifier(3, 0, 12.5)");
+    REQUIRE(state.statMods.size() == 2);
+    CHECK(state.statMods[0].mod == 2);
+    CHECK(state.statMods[0].type == 1);
+    CHECK(state.statMods[0].value == 15.5);
+    CHECK_FALSE(state.statMods[0].apply);
+    CHECK_FALSE(state.statMods[0].isPct);
+    CHECK(state.statMods[1].mod == 3);
+    CHECK(state.statMods[1].type == 0);
+    CHECK(state.statMods[1].value == 12.5);
+    CHECK(state.statMods[1].isPct);
+
+    rig.ok("stored:CastSpellAoF(10.5, 20.5, 30.5, 999)");
+    rig.ok("stored:CastSpellAoF(1, 2, 3, 888, false)");
+    REQUIRE(state.aofCasts.size() == 2);
+    CHECK(state.aofCasts[0].spell == 999);
+    CHECK(state.aofCasts[0].triggered);
+    CHECK(state.aofCasts[1].spell == 888);
+    CHECK_FALSE(state.aofCasts[1].triggered);
+
+    rig.ok("mob:DisableMelee(true)");
+    CHECK(mobState.meleeDisabled);
+    rig.ok("mob:DisableMelee(false)");
+    CHECK_FALSE(mobState.meleeDisabled);
+    {
+        fl::CallResult r = rig.run("stored:DisableMelee(true)");
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("DisableMelee: only available on a creature") != std::string::npos);
+    }
+
+    state.accessiblePlace = false;
+    CHECK(rig.ok("return tostring(stored:IsInAccessiblePlaceFor(mob, 5.0))") == "false");
+    CHECK(state.accessibleObjLow == mob.guid.lo);
+    CHECK(state.accessibleRadius == 5.0);
+
+    rig.ok("stored:RemoveBindSightAuras()");
+    rig.ok("stored:RemoveCharmAuras()");
+    CHECK(state.removeBindSightAuras == 1);
+    CHECK(state.removeCharmAuras == 1);
+
+    rig.ok("stored:SendUnitEmote('yawns', mob, true)");
+    REQUIRE(state.unitEmotes.size() == 1);
+    CHECK(state.unitEmotes[0].msg == "yawns");
+    CHECK(state.unitEmotes[0].receiverLow == mob.guid.lo);
+    CHECK(state.unitEmotes[0].bossEmote);
+
+    rig.ok("stored:SetCanFly(true)");
+    CHECK(state.canFly);
+    rig.ok("stored:SetCreatorGUID('" + state.charmerGuid + "')");
+    CHECK(state.creatorGuid == state.charmerGuid);
+    rig.ok("stored:SetCritterGUID('" + state.ownerGuid + "')");
+    CHECK(state.critterGuid == state.ownerGuid);
+    rig.ok("stored:SetPetGUID('" + state.controllerGuid + "')");
+    CHECK(state.petGuid == state.controllerGuid);
+
+    rig.ok("mob:SetFFA(true)");
+    CHECK(mobState.ffa);
+    rig.ok("stored:SetFFA(true)");
+    CHECK(state.ffa);
+
+    rig.ok("stored:SetImmuneTo(12)");
+    CHECK(state.immuneMechanics.count(12) == 1);
+    rig.ok("stored:SetImmuneTo(12, false)");
+    CHECK(state.immuneMechanics.empty());
+
+    rig.ok("stored:SetName('Renamed')");
+    CHECK(state.name == "Renamed");
+    rig.ok("stored:SetVisible(false)");
+    CHECK_FALSE(state.visible);
+    rig.ok("stored:SetVisible()");
+    CHECK(state.visible);
 }
 
 TEST_CASE("eluna unit long tail: a bad argument raises before the host is called")
@@ -475,6 +602,24 @@ TEST_CASE("eluna unit long tail: a bad argument raises before the host is called
     CHECK(errorOf("stored:SetFacing(1/0)").find("orientation must be a finite number") != std::string::npos);
     CHECK(errorOf("stored:SetFacing('x')").find("bad argument") != std::string::npos);
     CHECK(errorOf("stored:GetFriendlyUnitsInRange(1/0)").find("range must be a finite number") != std::string::npos);
+    // remaining Unit coverage argument checks
+    CHECK(errorOf("stored:AddFlatStatModifier(44, 0, 1)").find("statType must be an integer 0..43") != std::string::npos);
+    CHECK(errorOf("stored:AddFlatStatModifier(0, 2, 1)").find("modType must be 0 or 1") != std::string::npos);
+    CHECK(errorOf("stored:AddFlatStatModifier(0, 0, 1/0)").find("value must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:AddPctStatModifier(44, 0, 1)").find("statType must be an integer 0..43") != std::string::npos);
+    CHECK(errorOf("stored:AddPctStatModifier(0, 2, 1)").find("modType must be 0 or 1") != std::string::npos);
+    CHECK(errorOf("stored:AddPctStatModifier(0, 0, 0/0)").find("value must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:CastSpellAoF(1/0, 2, 3, 1)").find("x must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:CountPctFromCurHealth(1/0)").find("pct must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:CountPctFromMaxHealth(0/0)").find("pct must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:IsInAccessiblePlaceFor(5)").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:IsInAccessiblePlaceFor(mob, 1/0)").find("radius must be a finite number") != std::string::npos);
+    CHECK(errorOf("stored:SendUnitEmote('x', 5)").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:SetImmuneTo(-1)").find("immunity must be an integer 0..36") != std::string::npos);
+    CHECK(errorOf("stored:SetImmuneTo(37)").find("immunity must be an integer 0..36") != std::string::npos);
+    CHECK(errorOf("stored:SetCreatorGUID('bad')").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:SetCritterGUID('bad')").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:SetPetGUID('bad')").find("bad argument") != std::string::npos);
     CHECK(rig.host.gameCalls.size() == callsBefore);   // nothing reached the host
 }
 

@@ -455,10 +455,6 @@ int pIsAFK(lua_State* L) { return readOp(L, kPlayer, "player.isAFK", "IsAFK"); }
 int pIsDND(lua_State* L) { return readOp(L, kPlayer, "player.isDND", "IsDND"); }
 int pToggleAFK(lua_State* L) { return actionOp(L, kPlayer, "player.toggleAFK", "ToggleAFK"); }
 int pToggleDND(lua_State* L) { return actionOp(L, kPlayer, "player.toggleDND", "ToggleDND"); }
-int pSetFFA(lua_State* L)
-{
-    return actionOp(L, kPlayer, "player.setFFA", "SetFFA", {EventValue(optBool(L, 2, true))});
-}
 int pIsImmuneToDamage(lua_State* L) { return readOp(L, kPlayer, "player.isImmuneToDamage", "IsImmuneToDamage"); }
 int pIsImmuneToEnvironmentalDamage(lua_State* L)
 {
@@ -890,7 +886,6 @@ void registerPlayerMethods(lua_State* L)
         {"IsDND", fl::safe<pIsDND>},
         {"ToggleAFK", fl::safe<pToggleAFK>},
         {"ToggleDND", fl::safe<pToggleDND>},
-        {"SetFFA", fl::safe<pSetFFA>},
         {"IsImmuneToDamage", fl::safe<pIsImmuneToDamage>},
         {"IsImmuneToEnvironmentalDamage", fl::safe<pIsImmuneToEnvironmentalDamage>},
         {"Say", fl::safe<pSay>},
