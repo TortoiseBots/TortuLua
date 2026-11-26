@@ -35,6 +35,7 @@ add_executable(forever_lua_tests
   test_eluna_player.cpp
   test_eluna_quest_map.cpp
   test_eluna_spell.cpp
+  test_eluna_aura_proc.cpp
   test_eluna_scripts.cpp
   test_eluna_unit.cpp
   test_handles.cpp

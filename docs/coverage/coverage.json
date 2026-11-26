@@ -3997,164 +3997,218 @@
    "inherits": null,
    "methods": {
     "CalculateAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "CalculatePeriodic": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "CanBeRecalculated": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "ChangeAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetAmplitude": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetAuraType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetBase": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetBaseAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetCaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetCasterGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetEffIndex": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetPeriodicTimer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetRemainingTicks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetSpellInfo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetTargetList": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetTickNumber": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetTotalTicks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "RecalculateAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "SetAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "SetCanBeRecalculated": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "SetPeriodicTimer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     }
-   }
+   },
+   "note": "implemented, but unreachable from scripts until spell events exist"
   },
   "ElunaProcInfo": {
    "inherits": null,
    "methods": {
     "GetActionTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetActor": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetAttackType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetBlock": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetDamageAbsorb": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetDamageType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetEffectiveHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetHealAbsorb": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetHitMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetMap": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetProcSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetResist": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSchoolMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSpellInfo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSpellPhaseMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSpellTypeMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetTypeMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "HasDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "HasHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetAbsorbDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetAbsorbHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetBlockDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetEffectiveHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetHeal": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "ElunaProcInfo"
     },
     "SetResistDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     }
-   }
+   },
+   "note": "implemented, but unreachable from scripts until spell events exist"
   },
   "SpellInfo": {
    "inherits": null,
@@ -4180,41 +4234,52 @@
      "declared": "SpellInfo"
     },
     "CheckTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "CheckTargetCreatureType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsAreaAuraEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsAura": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsAuraType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsEffectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsTargetingArea": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsUnitOwnedAuraEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetActiveIconID": {
      "status": "implemented",
      "declared": "SpellInfo"
     },
     "GetAllEffectsMechanicMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetAllowedMechanicMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetAreaGroupId": {
      "status": "implemented",
@@ -4297,16 +4362,20 @@
      "declared": "SpellInfo"
     },
     "GetDiminishingReturnsGroupForSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDiminishingReturnsGroupType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDiminishingReturnsLimitDuration": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDiminishingReturnsMaxLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDispel": {
      "status": "implemented",
@@ -4321,127 +4390,169 @@
      "declared": "SpellInfo"
     },
     "GetEffectAmplitude": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectApplyAuraName": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectBasePoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectBonusMultiplier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectCalcRadius": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectCalcValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectChainTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectDamageMultiplier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectDieSides": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo",
+     "note": "returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others)"
     },
     "GetEffectHasRadius": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectImplicitTargetType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectIndex": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectItemType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMechanic": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMechanicMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMiscValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMiscValueB": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectPointsPerComboPoint": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectProvidedTargetMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectRealPointsPerLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectSpellClassMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetACheckType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetADirectionAngle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetADirectionType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetAIsArea": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetAObjectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetAReferenceType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetASelectionCategory": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetATarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBCheckType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBDirectionAngle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBDirectionType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBIsArea": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBObjectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBReferenceType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBSelectionCategory": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTriggerSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectUsedTargetObjectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectValueMultiplier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEquippedItemClass": {
      "status": "implemented",
@@ -4456,10 +4567,12 @@
      "declared": "SpellInfo"
     },
     "GetExcludeCasterAuraSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetExcludeTargetAuraSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetExplicitTargetMask": {
      "status": "implemented",
@@ -4482,7 +4595,8 @@
      "declared": "SpellInfo"
     },
     "GetManaCostPercentage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetManaCostPerlevel": {
      "status": "implemented",
@@ -4493,7 +4607,9 @@
      "declared": "SpellInfo"
     },
     "GetManaPerSecondPerLevel": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "GetMaxAffectedTargets": {
      "status": "implemented",
@@ -4516,7 +4632,8 @@
      "declared": "SpellInfo"
     },
     "GetMaxTicks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetMechanic": {
      "status": "implemented",
@@ -4535,7 +4652,9 @@
      "declared": "SpellInfo"
     },
     "GetPriority": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "GetProcChance": {
      "status": "implemented",
@@ -4570,7 +4689,9 @@
      "declared": "SpellInfo"
     },
     "GetRuneCostID": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "GetSchoolMask": {
      "status": "implemented",
@@ -4597,14 +4718,16 @@
      "declared": "SpellInfo"
     },
     "GetSpellMechanicMaskByEffectMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetSpellSpecific": {
      "status": "implemented",
      "declared": "SpellInfo"
     },
     "GetSpellVisual": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetStackAmount": {
      "status": "implemented",
@@ -4675,16 +4798,21 @@
      "declared": "SpellInfo"
     },
     "IsAbilityLearnedWithProfession": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAbilityOfSkillType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAffected": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAffectedBySpellMod": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "IsAffectedBySpellMods": {
      "status": "implemented",
@@ -4699,10 +4827,12 @@
      "declared": "SpellInfo"
     },
     "IsAuraExclusiveBySpecificPerCasterWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAuraExclusiveBySpecificWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAutocastable": {
      "status": "implemented",
@@ -4713,7 +4843,8 @@
      "declared": "SpellInfo"
     },
     "IsBreakingStealth": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsChanneled": {
      "status": "implemented",
@@ -4732,7 +4863,8 @@
      "declared": "SpellInfo"
     },
     "IsExplicitDiscovery": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsGroupBuff": {
      "status": "implemented",
@@ -4743,10 +4875,12 @@
      "declared": "SpellInfo"
     },
     "IsItemFitToSpellRequirements": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsLootCrafting": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsMoveAllowedChannel": {
      "status": "implemented",
@@ -4765,7 +4899,8 @@
      "declared": "SpellInfo"
     },
     "IsPassiveStackableWithRanks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsPositive": {
      "status": "implemented",
@@ -4776,16 +4911,20 @@
      "declared": "SpellInfo"
     },
     "IsPrimaryProfession": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsPrimaryProfessionFirstRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsProfession": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsProfessionOrRiding": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsRangedWeaponSpell": {
      "status": "implemented",
@@ -4804,14 +4943,16 @@
      "declared": "SpellInfo"
     },
     "IsSelfCast": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsSingleTarget": {
      "status": "implemented",
      "declared": "SpellInfo"
     },
     "IsStackableOnOneSlotWithDifferentCasters": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsStackableWithRanks": {
      "status": "implemented",
@@ -4822,7 +4963,8 @@
      "declared": "SpellInfo"
     },
     "NeedsComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "NeedsExplicitUnitTarget": {
      "status": "implemented",
@@ -4833,7 +4975,8 @@
      "declared": "SpellInfo"
     },
     "SpellCancelsAuraEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     }
    }
   }
@@ -6036,147 +6179,6 @@
     "WriteUByte",
     "WriteULong",
     "WriteUShort"
-   ],
-   "AuraEffect": [
-    "CalculateAmount",
-    "CalculatePeriodic",
-    "CanBeRecalculated",
-    "ChangeAmount",
-    "GetAmount",
-    "GetAmplitude",
-    "GetAuraType",
-    "GetBase",
-    "GetBaseAmount",
-    "GetCaster",
-    "GetCasterGUID",
-    "GetEffIndex",
-    "GetId",
-    "GetPeriodicTimer",
-    "GetRemainingTicks",
-    "GetSpellInfo",
-    "GetTargetList",
-    "GetTickNumber",
-    "GetTotalTicks",
-    "RecalculateAmount",
-    "SetAmount",
-    "SetCanBeRecalculated",
-    "SetPeriodicTimer"
-   ],
-   "ElunaProcInfo": [
-    "GetActionTarget",
-    "GetActor",
-    "GetAttackType",
-    "GetBlock",
-    "GetDamage",
-    "GetDamageAbsorb",
-    "GetDamageType",
-    "GetEffectiveHeal",
-    "GetHeal",
-    "GetHealAbsorb",
-    "GetHitMask",
-    "GetMap",
-    "GetProcSpell",
-    "GetResist",
-    "GetSchoolMask",
-    "GetSpellInfo",
-    "GetSpellPhaseMask",
-    "GetSpellTypeMask",
-    "GetTypeMask",
-    "HasDamage",
-    "HasHeal",
-    "SetAbsorbDamage",
-    "SetAbsorbHeal",
-    "SetBlockDamage",
-    "SetDamage",
-    "SetEffectiveHeal",
-    "SetHeal",
-    "SetResistDamage"
-   ],
-   "SpellInfo": [
-    "CheckTarget",
-    "CheckTargetCreatureType",
-    "EffectIsAreaAuraEffect",
-    "EffectIsAura",
-    "EffectIsAuraType",
-    "EffectIsEffect",
-    "EffectIsEffectType",
-    "EffectIsTargetingArea",
-    "EffectIsUnitOwnedAuraEffect",
-    "GetAllEffectsMechanicMask",
-    "GetAllowedMechanicMask",
-    "GetDiminishingReturnsGroupForSpell",
-    "GetDiminishingReturnsGroupType",
-    "GetDiminishingReturnsLimitDuration",
-    "GetDiminishingReturnsMaxLevel",
-    "GetEffectAmplitude",
-    "GetEffectApplyAuraName",
-    "GetEffectBasePoints",
-    "GetEffectBonusMultiplier",
-    "GetEffectCalcRadius",
-    "GetEffectCalcValue",
-    "GetEffectChainTarget",
-    "GetEffectDamageMultiplier",
-    "GetEffectDieSides",
-    "GetEffectHasRadius",
-    "GetEffectImplicitTargetType",
-    "GetEffectIndex",
-    "GetEffectItemType",
-    "GetEffectMechanic",
-    "GetEffectMechanicMask",
-    "GetEffectMiscValue",
-    "GetEffectMiscValueB",
-    "GetEffectPointsPerComboPoint",
-    "GetEffectProvidedTargetMask",
-    "GetEffectRealPointsPerLevel",
-    "GetEffectSpellClassMask",
-    "GetEffectTargetACheckType",
-    "GetEffectTargetADirectionAngle",
-    "GetEffectTargetADirectionType",
-    "GetEffectTargetAIsArea",
-    "GetEffectTargetAObjectType",
-    "GetEffectTargetAReferenceType",
-    "GetEffectTargetASelectionCategory",
-    "GetEffectTargetATarget",
-    "GetEffectTargetBCheckType",
-    "GetEffectTargetBDirectionAngle",
-    "GetEffectTargetBDirectionType",
-    "GetEffectTargetBIsArea",
-    "GetEffectTargetBObjectType",
-    "GetEffectTargetBReferenceType",
-    "GetEffectTargetBSelectionCategory",
-    "GetEffectTargetBTarget",
-    "GetEffectTriggerSpell",
-    "GetEffectType",
-    "GetEffectUsedTargetObjectType",
-    "GetEffectValueMultiplier",
-    "GetExcludeCasterAuraSpell",
-    "GetExcludeTargetAuraSpell",
-    "GetManaCostPercentage",
-    "GetManaPerSecondPerLevel",
-    "GetMaxTicks",
-    "GetPriority",
-    "GetRuneCostID",
-    "GetSpellMechanicMaskByEffectMask",
-    "GetSpellVisual",
-    "IsAbilityLearnedWithProfession",
-    "IsAbilityOfSkillType",
-    "IsAffected",
-    "IsAffectedBySpellMod",
-    "IsAuraExclusiveBySpecificPerCasterWith",
-    "IsAuraExclusiveBySpecificWith",
-    "IsBreakingStealth",
-    "IsExplicitDiscovery",
-    "IsItemFitToSpellRequirements",
-    "IsLootCrafting",
-    "IsPassiveStackableWithRanks",
-    "IsPrimaryProfession",
-    "IsPrimaryProfessionFirstRank",
-    "IsProfession",
-    "IsProfessionOrRiding",
-    "IsSelfCast",
-    "IsStackableOnOneSlotWithDifferentCasters",
-    "NeedsComboPoints",
-    "SpellCancelsAuraEffect"
    ]
   },
   "events": {

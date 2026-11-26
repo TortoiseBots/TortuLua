@@ -1743,6 +1743,29 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
         {"spellinfo.isRangedWeaponSpell", &FakeSI::rangedWeaponSpell},
         {"spellinfo.isAutoRepeatRangedSpell", &FakeSI::autoRepeatRangedSpell},
         {"spellinfo.isAffectedBySpellMods", &FakeSI::affectedBySpellMods},
+        {"spellinfo.isAbilityLearnedWithProfession", &FakeSI::abilityLearnedWithProfession},
+        {"spellinfo.isBreakingStealth", &FakeSI::breakingStealth},
+        {"spellinfo.isExplicitDiscovery", &FakeSI::explicitDiscovery},
+        {"spellinfo.isLootCrafting", &FakeSI::lootCrafting},
+        {"spellinfo.isPassiveStackableWithRanks", &FakeSI::passiveStackableWithRanks},
+        {"spellinfo.isPrimaryProfession", &FakeSI::primaryProfession},
+        {"spellinfo.isPrimaryProfessionFirstRank", &FakeSI::primaryProfessionFirstRank},
+        {"spellinfo.isProfession", &FakeSI::profession},
+        {"spellinfo.isProfessionOrRiding", &FakeSI::professionOrRiding},
+        {"spellinfo.isStackableOnOneSlotWithDifferentCasters", &FakeSI::stackableOnOneSlotWithDifferentCasters},
+        {"spellinfo.needsComboPoints", &FakeSI::needsComboPoints},
+    };
+    static IntField const kExtInts[] = {
+        {"spellinfo.getAllEffectsMechanicMask", &FakeSI::allEffectsMechanicMask},
+        {"spellinfo.getAllowedMechanicMask", &FakeSI::allowedMechanicMask},
+        {"spellinfo.getExcludeCasterAuraSpell", &FakeSI::excludeCasterAuraSpell},
+        {"spellinfo.getExcludeTargetAuraSpell", &FakeSI::excludeTargetAuraSpell},
+        {"spellinfo.getManaCostPercentage", &FakeSI::manaCostPercentage},
+        {"spellinfo.getMaxTicks", &FakeSI::maxTicks},
+        {"spellinfo.getDiminishingReturnsGroupForSpell", &FakeSI::diminishingGroup},
+        {"spellinfo.getDiminishingReturnsGroupType", &FakeSI::diminishingGroupType},
+        {"spellinfo.getDiminishingReturnsLimitDuration", &FakeSI::diminishingLimitDuration},
+        {"spellinfo.getDiminishingReturnsMaxLevel", &FakeSI::diminishingMaxLevel},
     };
 
     if (self.kind == fl::ObjKind::Spell)
@@ -2012,6 +2035,162 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
                 out.emplace_back(info.*(f.member));
                 return true;
             }
+        if (op == "spellinfo.isSelfCast")
+        {
+            bool hasEffect = false;
+            bool selfCast = true;
+            for (FakeSI::FakeEffect const& e : info.effectSlots)
+            {
+                if (!e.isEffect)
+                    continue;
+                hasEffect = true;
+                if (e.targetA.target != 1 || (e.targetB.target != 0 && e.targetB.target != 1))
+                {
+                    selfCast = false;
+                    break;
+                }
+            }
+            out.emplace_back(hasEffect && selfCast);
+            return true;
+        }
+        for (IntField const& f : kExtInts)
+            if (op == f.op)
+            {
+                out.emplace_back(info.*(f.member));
+                return true;
+            }
+        if (op == "spellinfo.getSpellVisual")
+        {
+            uint32_t const index = static_cast<uint32_t>(unitIntAt(args, 0));
+            if (index > 1)
+                throw std::out_of_range("spell visual index " + std::to_string(index) + " is not 0..1");
+            out.emplace_back(info.spellVisual[index]);
+            return true;
+        }
+        if (op == "spellinfo.getSpellMechanicMaskByEffectMask")
+        {
+            uint32_t const mask = static_cast<uint32_t>(unitIntAt(args, 0));
+            int64_t outMask = info.mechanic ? (int64_t(1) << info.mechanic) : 0;
+            for (size_t i = 0; i < info.effectSlots.size() && i < 32; ++i)
+                if ((mask & (1u << i)) && info.effectSlots[i].mechanic)
+                    outMask |= (int64_t(1) << info.effectSlots[i].mechanic);
+            out.emplace_back(outMask);
+            return true;
+        }
+        if (op == "spellinfo.checkTarget")
+        {
+            out.emplace_back(info.checkTargetResult);
+            return true;
+        }
+        if (op == "spellinfo.checkTargetCreatureType")
+        {
+            fl::HandleData h;
+            handleAt(args, 0, h);
+            out.emplace_back(info.checkTargetCreatureTypes.count(h.guid.lo) != 0);
+            return true;
+        }
+        if (op == "spellinfo.isAbilityOfSkillType")
+        {
+            out.emplace_back(info.skillTypes.count(static_cast<uint32_t>(unitIntAt(args, 0))) != 0);
+            return true;
+        }
+        if (op == "spellinfo.isAffected")
+        {
+            uint32_t const fam = static_cast<uint32_t>(unitIntAt(args, 0));
+            uint32_t const f0 = static_cast<uint32_t>(unitIntAt(args, 1));
+            uint32_t const f1 = static_cast<uint32_t>(unitIntAt(args, 2));
+            uint32_t const f2 = static_cast<uint32_t>(unitIntAt(args, 3));
+            bool ok = (fam == 0 || fam == info.affectedFamilyName) &&
+                      ((f0 == 0 && f1 == 0 && f2 == 0) || (f0 & info.affectedFlags[0]) ||
+                       (f1 & info.affectedFlags[1]) || (f2 & info.affectedFlags[2]));
+            out.emplace_back(ok);
+            return true;
+        }
+        if (op == "spellinfo.isItemFitToSpellRequirements")
+        {
+            fl::HandleData h;
+            handleAt(args, 0, h);
+            out.emplace_back(info.fitItems.count(h.guid.lo) != 0);
+            return true;
+        }
+        if (op == "spellinfo.spellCancelsAuraEffect")
+        {
+            uint32_t const aeId = static_cast<uint32_t>(unitIntAt(args, 0));
+            if (auraEffects.count(aeId) == 0)
+                throw std::out_of_range("AuraEffect no longer exists");
+            out.emplace_back(info.cancelsAuraEffects.count(aeId) != 0);
+            return true;
+        }
+        auto effSlot = [&](uint32_t idx) -> FakeSI::FakeEffect const&
+        {
+            if (idx >= info.effectSlots.size())
+                throw std::out_of_range("effect index " + std::to_string(idx) + " is not an effect of spell " +
+                                        std::to_string(info.id));
+            return info.effectSlots[idx];
+        };
+        if (op.rfind("spellinfo.effectIs", 0) == 0 || op.rfind("spellinfo.getEffect", 0) == 0)
+        {
+            FakeSI::FakeEffect const& e = effSlot(static_cast<uint32_t>(unitIntAt(args, 0)));
+            if (op == "spellinfo.effectIsAreaAuraEffect") out.emplace_back(e.isAreaAuraEffect);
+            else if (op == "spellinfo.effectIsAura") out.emplace_back(e.isAura);
+            else if (op == "spellinfo.effectIsAuraType")
+                out.emplace_back(e.isAura && e.auraType == unitIntAt(args, 1));
+            else if (op == "spellinfo.effectIsEffect") out.emplace_back(e.isEffect);
+            else if (op == "spellinfo.effectIsEffectType")
+                out.emplace_back(e.isEffect && e.effectType == unitIntAt(args, 1));
+            else if (op == "spellinfo.effectIsTargetingArea") out.emplace_back(e.isTargetingArea);
+            else if (op == "spellinfo.effectIsUnitOwnedAuraEffect") out.emplace_back(e.isUnitOwnedAuraEffect);
+            else if (op == "spellinfo.getEffectAmplitude") out.emplace_back(e.amplitude);
+            else if (op == "spellinfo.getEffectApplyAuraName") out.emplace_back(e.auraType);
+            else if (op == "spellinfo.getEffectBasePoints") out.emplace_back(e.basePoints);
+            else if (op == "spellinfo.getEffectBonusMultiplier") out.emplace_back(e.bonusMultiplier);
+            else if (op == "spellinfo.getEffectCalcRadius") out.emplace_back(e.calcRadius);
+            else if (op == "spellinfo.getEffectCalcValue") out.emplace_back(e.calcValue);
+            else if (op == "spellinfo.getEffectChainTarget") out.emplace_back(e.chainTarget);
+            else if (op == "spellinfo.getEffectDamageMultiplier") out.emplace_back(e.damageMultiplier);
+            else if (op == "spellinfo.getEffectDieSides") out.emplace_back(e.dieSides);
+            else if (op == "spellinfo.getEffectHasRadius") out.emplace_back(e.hasRadius);
+            else if (op == "spellinfo.getEffectImplicitTargetType") out.emplace_back(e.implicitTargetType);
+            else if (op == "spellinfo.getEffectIndex") out.emplace_back(e.effectIndex);
+            else if (op == "spellinfo.getEffectItemType") out.emplace_back(e.itemType);
+            else if (op == "spellinfo.getEffectMechanic") out.emplace_back(e.mechanic);
+            else if (op == "spellinfo.getEffectMechanicMask") out.emplace_back(e.mechanicMask);
+            else if (op == "spellinfo.getEffectMiscValue") out.emplace_back(e.miscValue);
+            else if (op == "spellinfo.getEffectMiscValueB") out.emplace_back(e.miscValueB);
+            else if (op == "spellinfo.getEffectPointsPerComboPoint") out.emplace_back(e.pointsPerComboPoint);
+            else if (op == "spellinfo.getEffectProvidedTargetMask") out.emplace_back(e.providedTargetMask);
+            else if (op == "spellinfo.getEffectRealPointsPerLevel") out.emplace_back(e.realPointsPerLevel);
+            else if (op == "spellinfo.getEffectSpellClassMask")
+            {
+                uint32_t const mi = static_cast<uint32_t>(unitIntAt(args, 1));
+                if (mi > 2)
+                    throw std::out_of_range("spell class mask index " + std::to_string(mi) + " is not 0..2");
+                out.emplace_back(e.spellClassMask[mi]);
+            }
+            else if (op == "spellinfo.getEffectTargetACheckType") out.emplace_back(e.targetA.checkType);
+            else if (op == "spellinfo.getEffectTargetADirectionAngle") out.emplace_back(e.targetA.directionAngle);
+            else if (op == "spellinfo.getEffectTargetADirectionType") out.emplace_back(e.targetA.directionType);
+            else if (op == "spellinfo.getEffectTargetAIsArea") out.emplace_back(e.targetA.isArea);
+            else if (op == "spellinfo.getEffectTargetAObjectType") out.emplace_back(e.targetA.objectType);
+            else if (op == "spellinfo.getEffectTargetAReferenceType") out.emplace_back(e.targetA.referenceType);
+            else if (op == "spellinfo.getEffectTargetASelectionCategory") out.emplace_back(e.targetA.selectionCategory);
+            else if (op == "spellinfo.getEffectTargetATarget") out.emplace_back(e.targetA.target);
+            else if (op == "spellinfo.getEffectTargetBCheckType") out.emplace_back(e.targetB.checkType);
+            else if (op == "spellinfo.getEffectTargetBDirectionAngle") out.emplace_back(e.targetB.directionAngle);
+            else if (op == "spellinfo.getEffectTargetBDirectionType") out.emplace_back(e.targetB.directionType);
+            else if (op == "spellinfo.getEffectTargetBIsArea") out.emplace_back(e.targetB.isArea);
+            else if (op == "spellinfo.getEffectTargetBObjectType") out.emplace_back(e.targetB.objectType);
+            else if (op == "spellinfo.getEffectTargetBReferenceType") out.emplace_back(e.targetB.referenceType);
+            else if (op == "spellinfo.getEffectTargetBSelectionCategory") out.emplace_back(e.targetB.selectionCategory);
+            else if (op == "spellinfo.getEffectTargetBTarget") out.emplace_back(e.targetB.target);
+            else if (op == "spellinfo.getEffectTriggerSpell") out.emplace_back(e.triggerSpell);
+            else if (op == "spellinfo.getEffectType") out.emplace_back(e.effectType);
+            else if (op == "spellinfo.getEffectUsedTargetObjectType") out.emplace_back(e.usedTargetObjectType);
+            else if (op == "spellinfo.getEffectValueMultiplier") out.emplace_back(e.valueMultiplier);
+            else
+                return false;
+            return true;
+        }
         if (op == "spellinfo.getSpellFamilyFlags")
         {
             uint32_t const index = static_cast<uint32_t>(unitIntAt(args, 0));
@@ -2069,12 +2248,229 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
             related = &info.pierces;
         else if (op == "spellinfo.canSpellProvideImmunityAgainstAura")
             related = &info.providesImmunity;
+        else if (op == "spellinfo.isAuraExclusiveBySpecificWith")
+            related = &info.exclusiveWith;
+        else if (op == "spellinfo.isAuraExclusiveBySpecificPerCasterWith")
+            related = &info.exclusivePerCasterWith;
         if (related)
         {
             out.emplace_back(related->count(static_cast<uint32_t>(unitIntAt(args, 0))) != 0);
             return true;
         }
         return false;
+    }
+    if (self.kind == fl::ObjKind::AuraEffect)
+    {
+        auto it = auraEffects.find(self.instanceId);
+        if (it == auraEffects.end())
+            return false;
+        FakeAuraEffect& ae = it->second;
+        if (op == "auraeffect.calculateAmount")
+            out.emplace_back(static_cast<int64_t>(ae.calculatedAmount));
+        else if (op == "auraeffect.calculatePeriodic")
+        {
+            ae.actions.push_back("calculatePeriodic");
+            auraEffectActions.push_back("calculatePeriodic");
+        }
+        else if (op == "auraeffect.canBeRecalculated")
+            out.emplace_back(ae.canBeRecalculated);
+        else if (op == "auraeffect.changeAmount")
+        {
+            ae.amount = static_cast<int32_t>(unitIntAt(args, 0));
+            ae.actions.push_back("changeAmount");
+            auraEffectActions.push_back("changeAmount");
+        }
+        else if (op == "auraeffect.getAmount")
+            out.emplace_back(static_cast<int64_t>(ae.amount));
+        else if (op == "auraeffect.getAmplitude")
+            out.emplace_back(static_cast<int64_t>(ae.amplitude));
+        else if (op == "auraeffect.getAuraType")
+            out.emplace_back(ae.auraType);
+        else if (op == "auraeffect.getBase")
+        {
+            if (ae.hasBase)
+            {
+                fl::HandleData h;
+                h.kind = fl::ObjKind::Aura;
+                h.instanceId = ae.baseAuraId;
+                h.mapId = ae.id;
+                out.emplace_back(h);
+            }
+        }
+        else if (op == "auraeffect.getBaseAmount")
+            out.emplace_back(static_cast<int64_t>(ae.baseAmount));
+        else if (op == "auraeffect.getCaster")
+        {
+            if (ae.hasCaster)
+                out.emplace_back(ae.caster);
+        }
+        else if (op == "auraeffect.getCasterGuid")
+            out.emplace_back(guidToString(ae.casterGuid));
+        else if (op == "auraeffect.getEffIndex")
+            out.emplace_back(static_cast<int64_t>(ae.effIndex));
+        else if (op == "auraeffect.getId")
+            out.emplace_back(static_cast<int64_t>(ae.id));
+        else if (op == "auraeffect.getPeriodicTimer")
+            out.emplace_back(static_cast<int64_t>(ae.periodicTimer));
+        else if (op == "auraeffect.getRemainingTicks")
+            out.emplace_back(static_cast<int64_t>(ae.remainingTicks));
+        else if (op == "auraeffect.getSpellInfo")
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::SpellInfo;
+            h.guid.lo = ae.id;
+            out.emplace_back(h);
+        }
+        else if (op == "auraeffect.getTargetList")
+        {
+            for (fl::HandleData const& th : ae.targetList)
+                out.emplace_back(th);
+        }
+        else if (op == "auraeffect.getTickNumber")
+            out.emplace_back(static_cast<int64_t>(ae.tickNumber));
+        else if (op == "auraeffect.getTotalTicks")
+            out.emplace_back(static_cast<int64_t>(ae.totalTicks));
+        else if (op == "auraeffect.recalculateAmount")
+        {
+            if (ae.canBeRecalculated)
+                ae.amount = ae.calculatedAmount;
+            ae.actions.push_back("recalculateAmount");
+            auraEffectActions.push_back("recalculateAmount");
+        }
+        else if (op == "auraeffect.setAmount")
+        {
+            ae.amount = static_cast<int32_t>(unitIntAt(args, 0));
+            ae.canBeRecalculated = false;
+        }
+        else if (op == "auraeffect.setCanBeRecalculated")
+            ae.canBeRecalculated = unitBoolAt(args, 0);
+        else if (op == "auraeffect.setPeriodicTimer")
+            ae.periodicTimer = static_cast<int32_t>(unitIntAt(args, 0));
+        else
+            return false;
+        return true;
+    }
+    if (self.kind == fl::ObjKind::ElunaProcInfo)
+    {
+        auto it = procInfos.find(self.instanceId);
+        if (it == procInfos.end())
+            return false;
+        FakeProcInfo& pi = it->second;
+        if (op == "procinfo.getActionTarget")
+        {
+            if (pi.hasActionTarget)
+                out.emplace_back(pi.actionTarget);
+        }
+        else if (op == "procinfo.getActor")
+        {
+            if (pi.hasActor)
+                out.emplace_back(pi.actor);
+        }
+        else if (op == "procinfo.getAttackType")
+            out.emplace_back(static_cast<int64_t>(pi.attackType));
+        else if (op == "procinfo.getBlock")
+            out.emplace_back(static_cast<int64_t>(pi.block));
+        else if (op == "procinfo.getDamage")
+            out.emplace_back(static_cast<int64_t>(pi.damage));
+        else if (op == "procinfo.getDamageAbsorb")
+            out.emplace_back(static_cast<int64_t>(pi.damageAbsorb));
+        else if (op == "procinfo.getDamageType")
+            out.emplace_back(static_cast<int64_t>(pi.damageType));
+        else if (op == "procinfo.getEffectiveHeal")
+            out.emplace_back(static_cast<int64_t>(pi.effectiveHeal));
+        else if (op == "procinfo.getHeal")
+            out.emplace_back(static_cast<int64_t>(pi.heal));
+        else if (op == "procinfo.getHealAbsorb")
+            out.emplace_back(static_cast<int64_t>(pi.healAbsorb));
+        else if (op == "procinfo.getHitMask")
+            out.emplace_back(static_cast<int64_t>(pi.hitMask));
+        else if (op == "procinfo.getMap")
+        {
+            if (pi.hasMap)
+                out.emplace_back(pi.map);
+        }
+        else if (op == "procinfo.getProcSpell")
+        {
+            if (pi.hasProcSpell)
+                out.emplace_back(pi.procSpell);
+        }
+        else if (op == "procinfo.getResist")
+            out.emplace_back(static_cast<int64_t>(pi.resist));
+        else if (op == "procinfo.getSchoolMask")
+            out.emplace_back(static_cast<int64_t>(pi.schoolMask));
+        else if (op == "procinfo.getSpellInfo")
+        {
+            if (pi.spellId)
+            {
+                fl::HandleData h;
+                h.kind = fl::ObjKind::SpellInfo;
+                h.guid.lo = pi.spellId;
+                out.emplace_back(h);
+            }
+        }
+        else if (op == "procinfo.getSpellPhaseMask")
+            out.emplace_back(static_cast<int64_t>(pi.spellPhaseMask));
+        else if (op == "procinfo.getSpellTypeMask")
+            out.emplace_back(static_cast<int64_t>(pi.spellTypeMask));
+        else if (op == "procinfo.getTypeMask")
+            out.emplace_back(static_cast<int64_t>(pi.typeMask));
+        else if (op == "procinfo.hasDamage")
+            out.emplace_back(pi.hasDamage);
+        else if (op == "procinfo.hasHeal")
+            out.emplace_back(pi.hasHeal);
+        else if (op == "procinfo.setAbsorbDamage")
+        {
+            if (pi.hasDamage)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.damage);
+                pi.damageAbsorb += amt;
+                pi.damage -= amt;
+            }
+        }
+        else if (op == "procinfo.setAbsorbHeal")
+        {
+            if (pi.hasHeal)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.heal);
+                pi.healAbsorb += amt;
+                pi.heal -= amt;
+                pi.effectiveHeal -= std::min(amt, pi.effectiveHeal);
+            }
+        }
+        else if (op == "procinfo.setBlockDamage")
+        {
+            if (pi.hasDamage)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.damage);
+                pi.block += amt;
+                pi.damage -= amt;
+            }
+        }
+        else if (op == "procinfo.setDamage")
+        {
+            if (pi.hasDamage)
+            {
+                int64_t const target = unitIntAt(args, 0);
+                pi.damage = target > 0 ? static_cast<uint32_t>(target) : 0u;
+            }
+        }
+        else if (op == "procinfo.setEffectiveHeal")
+        {
+            if (pi.hasHeal)
+                pi.effectiveHeal = static_cast<uint32_t>(unitIntAt(args, 0));
+        }
+        else if (op == "procinfo.setResistDamage")
+        {
+            if (pi.hasDamage)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.damage);
+                pi.resist += amt;
+                pi.damage -= amt;
+            }
+        }
+        else
+            return false;
+        return true;
     }
     return false;
 }

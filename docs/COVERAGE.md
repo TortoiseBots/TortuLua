@@ -29,9 +29,9 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Corpse | 5 | 5 | 0 | 0 | 100% | 100% |
 | BattleGround | 18 | 18 | 0 | 0 | 100% | 100% |
 | Vehicle | 6 | 0 | 6 | 0 | 0% | 100% |
-| AuraEffect | 23 | 0 | 0 | 23 | 0% | 0% |
-| ElunaProcInfo | 28 | 0 | 0 | 28 | 0% | 0% |
-| SpellInfo | 190 | 106 | 0 | 84 | 56% | 56% |
+| AuraEffect | 23 | 23 | 0 | 0 | 100% | 100% |
+| ElunaProcInfo | 28 | 27 | 1 | 0 | 96% | 100% |
+| SpellInfo | 190 | 186 | 4 | 0 | 98% | 100% |
 | events: server | 34 | 31 | 3 | 0 | 91% | 100% |
 | events: player | 51 | 27 | 24 | 0 | 53% | 100% |
 | events: creature | 28 | 27 | 1 | 0 | 96% | 100% |
@@ -48,9 +48,11 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1103** | **109** | **231** | **76%** | **84%** |
+| **all** | **1443** | **1233** | **114** | **96** | **85%** | **93%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
+
+Class notes: `AuraEffect` — implemented, but unreachable from scripts until spell events exist; `ElunaProcInfo` — implemented, but unreachable from scripts until spell events exist.
 
 Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and are not part of the eluna surface (appendix A).
 
@@ -1158,63 +1160,67 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 ### Class `AuraEffect`
 
-| Documented method | Status | Note |
-|---|---|---|
-| `CalculateAmount` | **missing** |  |
-| `CalculatePeriodic` | **missing** |  |
-| `CanBeRecalculated` | **missing** |  |
-| `ChangeAmount` | **missing** |  |
-| `GetAmount` | **missing** |  |
-| `GetAmplitude` | **missing** |  |
-| `GetAuraType` | **missing** |  |
-| `GetBase` | **missing** |  |
-| `GetBaseAmount` | **missing** |  |
-| `GetCaster` | **missing** |  |
-| `GetCasterGUID` | **missing** |  |
-| `GetEffIndex` | **missing** |  |
-| `GetId` | **missing** |  |
-| `GetPeriodicTimer` | **missing** |  |
-| `GetRemainingTicks` | **missing** |  |
-| `GetSpellInfo` | **missing** |  |
-| `GetTargetList` | **missing** |  |
-| `GetTickNumber` | **missing** |  |
-| `GetTotalTicks` | **missing** |  |
-| `RecalculateAmount` | **missing** |  |
-| `SetAmount` | **missing** |  |
-| `SetCanBeRecalculated` | **missing** |  |
-| `SetPeriodicTimer` | **missing** |  |
-### Class `ElunaProcInfo`
+Note: implemented, but unreachable from scripts until spell events exist.
 
 | Documented method | Status | Note |
 |---|---|---|
-| `GetActionTarget` | **missing** |  |
-| `GetActor` | **missing** |  |
-| `GetAttackType` | **missing** |  |
-| `GetBlock` | **missing** |  |
-| `GetDamage` | **missing** |  |
-| `GetDamageAbsorb` | **missing** |  |
-| `GetDamageType` | **missing** |  |
-| `GetEffectiveHeal` | **missing** |  |
-| `GetHeal` | **missing** |  |
-| `GetHealAbsorb` | **missing** |  |
-| `GetHitMask` | **missing** |  |
-| `GetMap` | **missing** |  |
-| `GetProcSpell` | **missing** |  |
-| `GetResist` | **missing** |  |
-| `GetSchoolMask` | **missing** |  |
-| `GetSpellInfo` | **missing** |  |
-| `GetSpellPhaseMask` | **missing** |  |
-| `GetSpellTypeMask` | **missing** |  |
-| `GetTypeMask` | **missing** |  |
-| `HasDamage` | **missing** |  |
-| `HasHeal` | **missing** |  |
-| `SetAbsorbDamage` | **missing** |  |
-| `SetAbsorbHeal` | **missing** |  |
-| `SetBlockDamage` | **missing** |  |
-| `SetDamage` | **missing** |  |
-| `SetEffectiveHeal` | **missing** |  |
-| `SetHeal` | **missing** |  |
-| `SetResistDamage` | **missing** |  |
+| `CalculateAmount` | implemented |  |
+| `CalculatePeriodic` | implemented |  |
+| `CanBeRecalculated` | implemented |  |
+| `ChangeAmount` | implemented |  |
+| `GetAmount` | implemented |  |
+| `GetAmplitude` | implemented |  |
+| `GetAuraType` | implemented |  |
+| `GetBase` | implemented |  |
+| `GetBaseAmount` | implemented |  |
+| `GetCaster` | implemented |  |
+| `GetCasterGUID` | implemented |  |
+| `GetEffIndex` | implemented |  |
+| `GetId` | implemented |  |
+| `GetPeriodicTimer` | implemented |  |
+| `GetRemainingTicks` | implemented |  |
+| `GetSpellInfo` | implemented |  |
+| `GetTargetList` | implemented |  |
+| `GetTickNumber` | implemented |  |
+| `GetTotalTicks` | implemented |  |
+| `RecalculateAmount` | implemented |  |
+| `SetAmount` | implemented |  |
+| `SetCanBeRecalculated` | implemented |  |
+| `SetPeriodicTimer` | implemented |  |
+### Class `ElunaProcInfo`
+
+Note: implemented, but unreachable from scripts until spell events exist.
+
+| Documented method | Status | Note |
+|---|---|---|
+| `GetActionTarget` | implemented |  |
+| `GetActor` | implemented |  |
+| `GetAttackType` | implemented |  |
+| `GetBlock` | implemented |  |
+| `GetDamage` | implemented |  |
+| `GetDamageAbsorb` | implemented |  |
+| `GetDamageType` | implemented |  |
+| `GetEffectiveHeal` | implemented |  |
+| `GetHeal` | implemented |  |
+| `GetHealAbsorb` | implemented |  |
+| `GetHitMask` | implemented |  |
+| `GetMap` | implemented |  |
+| `GetProcSpell` | implemented |  |
+| `GetResist` | implemented |  |
+| `GetSchoolMask` | implemented |  |
+| `GetSpellInfo` | implemented |  |
+| `GetSpellPhaseMask` | implemented |  |
+| `GetSpellTypeMask` | implemented |  |
+| `GetTypeMask` | implemented |  |
+| `HasDamage` | implemented |  |
+| `HasHeal` | implemented |  |
+| `SetAbsorbDamage` | implemented |  |
+| `SetAbsorbHeal` | implemented |  |
+| `SetBlockDamage` | implemented |  |
+| `SetDamage` | implemented |  |
+| `SetEffectiveHeal` | implemented |  |
+| `SetHeal` | **stub** | stub: not available (this core) |
+| `SetResistDamage` | implemented |  |
 ### Class `SpellInfo`
 
 | Documented method | Status | Note |
@@ -1224,18 +1230,18 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `CanDispelAura` | implemented |  |
 | `CanPierceImmuneAura` | implemented |  |
 | `CanSpellProvideImmunityAgainstAura` | implemented |  |
-| `CheckTarget` | **missing** |  |
-| `CheckTargetCreatureType` | **missing** |  |
-| `EffectIsAreaAuraEffect` | **missing** |  |
-| `EffectIsAura` | **missing** |  |
-| `EffectIsAuraType` | **missing** |  |
-| `EffectIsEffect` | **missing** |  |
-| `EffectIsEffectType` | **missing** |  |
-| `EffectIsTargetingArea` | **missing** |  |
-| `EffectIsUnitOwnedAuraEffect` | **missing** |  |
+| `CheckTarget` | implemented |  |
+| `CheckTargetCreatureType` | implemented |  |
+| `EffectIsAreaAuraEffect` | implemented |  |
+| `EffectIsAura` | implemented |  |
+| `EffectIsAuraType` | implemented |  |
+| `EffectIsEffect` | implemented |  |
+| `EffectIsEffectType` | implemented |  |
+| `EffectIsTargetingArea` | implemented |  |
+| `EffectIsUnitOwnedAuraEffect` | implemented |  |
 | `GetActiveIconID` | implemented |  |
-| `GetAllEffectsMechanicMask` | **missing** |  |
-| `GetAllowedMechanicMask` | **missing** |  |
+| `GetAllEffectsMechanicMask` | implemented |  |
+| `GetAllowedMechanicMask` | implemented |  |
 | `GetAreaGroupId` | implemented |  |
 | `GetAttackType` | implemented |  |
 | `GetAttributes` | implemented |  |
@@ -1256,79 +1262,79 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetCategory` | implemented |  |
 | `GetCategoryRecoveryTime` | implemented |  |
 | `GetChannelInterruptFlags` | implemented |  |
-| `GetDiminishingReturnsGroupForSpell` | **missing** |  |
-| `GetDiminishingReturnsGroupType` | **missing** |  |
-| `GetDiminishingReturnsLimitDuration` | **missing** |  |
-| `GetDiminishingReturnsMaxLevel` | **missing** |  |
+| `GetDiminishingReturnsGroupForSpell` | implemented |  |
+| `GetDiminishingReturnsGroupType` | implemented |  |
+| `GetDiminishingReturnsLimitDuration` | implemented |  |
+| `GetDiminishingReturnsMaxLevel` | implemented |  |
 | `GetDispel` | implemented |  |
 | `GetDmgClass` | implemented |  |
 | `GetDuration` | implemented |  |
-| `GetEffectAmplitude` | **missing** |  |
-| `GetEffectApplyAuraName` | **missing** |  |
-| `GetEffectBasePoints` | **missing** |  |
-| `GetEffectBonusMultiplier` | **missing** |  |
-| `GetEffectCalcRadius` | **missing** |  |
-| `GetEffectCalcValue` | **missing** |  |
-| `GetEffectChainTarget` | **missing** |  |
-| `GetEffectDamageMultiplier` | **missing** |  |
-| `GetEffectDieSides` | **missing** |  |
-| `GetEffectHasRadius` | **missing** |  |
-| `GetEffectImplicitTargetType` | **missing** |  |
-| `GetEffectIndex` | **missing** |  |
-| `GetEffectItemType` | **missing** |  |
-| `GetEffectMechanic` | **missing** |  |
-| `GetEffectMechanicMask` | **missing** |  |
-| `GetEffectMiscValue` | **missing** |  |
-| `GetEffectMiscValueB` | **missing** |  |
-| `GetEffectPointsPerComboPoint` | **missing** |  |
-| `GetEffectProvidedTargetMask` | **missing** |  |
-| `GetEffectRealPointsPerLevel` | **missing** |  |
-| `GetEffectSpellClassMask` | **missing** |  |
-| `GetEffectTargetACheckType` | **missing** |  |
-| `GetEffectTargetADirectionAngle` | **missing** |  |
-| `GetEffectTargetADirectionType` | **missing** |  |
-| `GetEffectTargetAIsArea` | **missing** |  |
-| `GetEffectTargetAObjectType` | **missing** |  |
-| `GetEffectTargetAReferenceType` | **missing** |  |
-| `GetEffectTargetASelectionCategory` | **missing** |  |
-| `GetEffectTargetATarget` | **missing** |  |
-| `GetEffectTargetBCheckType` | **missing** |  |
-| `GetEffectTargetBDirectionAngle` | **missing** |  |
-| `GetEffectTargetBDirectionType` | **missing** |  |
-| `GetEffectTargetBIsArea` | **missing** |  |
-| `GetEffectTargetBObjectType` | **missing** |  |
-| `GetEffectTargetBReferenceType` | **missing** |  |
-| `GetEffectTargetBSelectionCategory` | **missing** |  |
-| `GetEffectTargetBTarget` | **missing** |  |
-| `GetEffectTriggerSpell` | **missing** |  |
-| `GetEffectType` | **missing** |  |
-| `GetEffectUsedTargetObjectType` | **missing** |  |
-| `GetEffectValueMultiplier` | **missing** |  |
+| `GetEffectAmplitude` | implemented |  |
+| `GetEffectApplyAuraName` | implemented |  |
+| `GetEffectBasePoints` | implemented |  |
+| `GetEffectBonusMultiplier` | implemented |  |
+| `GetEffectCalcRadius` | implemented |  |
+| `GetEffectCalcValue` | implemented |  |
+| `GetEffectChainTarget` | implemented |  |
+| `GetEffectDamageMultiplier` | implemented |  |
+| `GetEffectDieSides` | implemented | returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others) |
+| `GetEffectHasRadius` | implemented |  |
+| `GetEffectImplicitTargetType` | implemented |  |
+| `GetEffectIndex` | implemented |  |
+| `GetEffectItemType` | implemented |  |
+| `GetEffectMechanic` | implemented |  |
+| `GetEffectMechanicMask` | implemented |  |
+| `GetEffectMiscValue` | implemented |  |
+| `GetEffectMiscValueB` | implemented |  |
+| `GetEffectPointsPerComboPoint` | implemented |  |
+| `GetEffectProvidedTargetMask` | implemented |  |
+| `GetEffectRealPointsPerLevel` | implemented |  |
+| `GetEffectSpellClassMask` | implemented |  |
+| `GetEffectTargetACheckType` | implemented |  |
+| `GetEffectTargetADirectionAngle` | implemented |  |
+| `GetEffectTargetADirectionType` | implemented |  |
+| `GetEffectTargetAIsArea` | implemented |  |
+| `GetEffectTargetAObjectType` | implemented |  |
+| `GetEffectTargetAReferenceType` | implemented |  |
+| `GetEffectTargetASelectionCategory` | implemented |  |
+| `GetEffectTargetATarget` | implemented |  |
+| `GetEffectTargetBCheckType` | implemented |  |
+| `GetEffectTargetBDirectionAngle` | implemented |  |
+| `GetEffectTargetBDirectionType` | implemented |  |
+| `GetEffectTargetBIsArea` | implemented |  |
+| `GetEffectTargetBObjectType` | implemented |  |
+| `GetEffectTargetBReferenceType` | implemented |  |
+| `GetEffectTargetBSelectionCategory` | implemented |  |
+| `GetEffectTargetBTarget` | implemented |  |
+| `GetEffectTriggerSpell` | implemented |  |
+| `GetEffectType` | implemented |  |
+| `GetEffectUsedTargetObjectType` | implemented |  |
+| `GetEffectValueMultiplier` | implemented |  |
 | `GetEquippedItemClass` | implemented |  |
 | `GetEquippedItemInventoryTypeMask` | implemented |  |
 | `GetEquippedItemSubClassMask` | implemented |  |
-| `GetExcludeCasterAuraSpell` | **missing** |  |
-| `GetExcludeTargetAuraSpell` | **missing** |  |
+| `GetExcludeCasterAuraSpell` | implemented |  |
+| `GetExcludeTargetAuraSpell` | implemented |  |
 | `GetExplicitTargetMask` | implemented |  |
 | `GetFacingCasterFlags` | implemented |  |
 | `GetId` | implemented |  |
 | `GetInterruptFlags` | implemented |  |
 | `GetManaCost` | implemented |  |
-| `GetManaCostPercentage` | **missing** |  |
+| `GetManaCostPercentage` | implemented |  |
 | `GetManaCostPerlevel` | implemented |  |
 | `GetManaPerSecond` | implemented |  |
-| `GetManaPerSecondPerLevel` | **missing** |  |
+| `GetManaPerSecondPerLevel` | **stub** | stub: not available (this core) |
 | `GetMaxAffectedTargets` | implemented |  |
 | `GetMaxDuration` | implemented |  |
 | `GetMaxLevel` | implemented |  |
 | `GetMaxRange` | implemented |  |
 | `GetMaxTargetLevel` | implemented |  |
-| `GetMaxTicks` | **missing** |  |
+| `GetMaxTicks` | implemented |  |
 | `GetMechanic` | implemented |  |
 | `GetMinRange` | implemented |  |
 | `GetPowerType` | implemented |  |
 | `GetPreventionType` | implemented |  |
-| `GetPriority` | **missing** |  |
+| `GetPriority` | **stub** | stub: not available (this core) |
 | `GetProcChance` | implemented |  |
 | `GetProcCharges` | implemented |  |
 | `GetProcFlags` | implemented |  |
@@ -1337,16 +1343,16 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetReagentCount` | implemented |  |
 | `GetRecoveryTime` | implemented |  |
 | `GetRequiresSpellFocus` | implemented |  |
-| `GetRuneCostID` | **missing** |  |
+| `GetRuneCostID` | **stub** | stub: not available (this core) |
 | `GetSchoolMask` | implemented |  |
 | `GetSpeed` | implemented |  |
 | `GetSpellFamilyFlags` | implemented |  |
 | `GetSpellFamilyName` | implemented |  |
 | `GetSpellIconID` | implemented |  |
 | `GetSpellLevel` | implemented |  |
-| `GetSpellMechanicMaskByEffectMask` | **missing** |  |
+| `GetSpellMechanicMaskByEffectMask` | implemented |  |
 | `GetSpellSpecific` | implemented |  |
-| `GetSpellVisual` | **missing** |  |
+| `GetSpellVisual` | implemented |  |
 | `GetStackAmount` | implemented |  |
 | `GetStances` | implemented |  |
 | `GetStancesNot` | implemented |  |
@@ -1364,51 +1370,51 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HasEffect` | implemented |  |
 | `HasInitialAggro` | implemented |  |
 | `HasOnlyDamageEffects` | implemented |  |
-| `IsAbilityLearnedWithProfession` | **missing** |  |
-| `IsAbilityOfSkillType` | **missing** |  |
-| `IsAffected` | **missing** |  |
-| `IsAffectedBySpellMod` | **missing** |  |
+| `IsAbilityLearnedWithProfession` | implemented |  |
+| `IsAbilityOfSkillType` | implemented |  |
+| `IsAffected` | implemented |  |
+| `IsAffectedBySpellMod` | **stub** | stub: not available (this core) |
 | `IsAffectedBySpellMods` | implemented |  |
 | `IsAffectingArea` | implemented |  |
 | `IsAllowingDeadTarget` | implemented |  |
-| `IsAuraExclusiveBySpecificPerCasterWith` | **missing** |  |
-| `IsAuraExclusiveBySpecificWith` | **missing** |  |
+| `IsAuraExclusiveBySpecificPerCasterWith` | implemented |  |
+| `IsAuraExclusiveBySpecificWith` | implemented |  |
 | `IsAutocastable` | implemented |  |
 | `IsAutoRepeatRangedSpell` | implemented |  |
-| `IsBreakingStealth` | **missing** |  |
+| `IsBreakingStealth` | implemented |  |
 | `IsChanneled` | implemented |  |
 | `IsCooldownStartedOnEvent` | implemented |  |
 | `IsDeathPersistent` | implemented |  |
 | `IsDifferentRankOf` | implemented |  |
-| `IsExplicitDiscovery` | **missing** |  |
+| `IsExplicitDiscovery` | implemented |  |
 | `IsGroupBuff` | implemented |  |
 | `IsHighRankOf` | implemented |  |
-| `IsItemFitToSpellRequirements` | **missing** |  |
-| `IsLootCrafting` | **missing** |  |
+| `IsItemFitToSpellRequirements` | implemented |  |
+| `IsLootCrafting` | implemented |  |
 | `IsMoveAllowedChannel` | implemented |  |
 | `IsMultiSlotAura` | implemented |  |
 | `IsNextMeleeSwingSpell` | implemented |  |
 | `IsPassive` | implemented |  |
-| `IsPassiveStackableWithRanks` | **missing** |  |
+| `IsPassiveStackableWithRanks` | implemented |  |
 | `IsPositive` | implemented |  |
 | `IsPositiveEffect` | implemented |  |
-| `IsPrimaryProfession` | **missing** |  |
-| `IsPrimaryProfessionFirstRank` | **missing** |  |
-| `IsProfession` | **missing** |  |
-| `IsProfessionOrRiding` | **missing** |  |
+| `IsPrimaryProfession` | implemented |  |
+| `IsPrimaryProfessionFirstRank` | implemented |  |
+| `IsProfession` | implemented |  |
+| `IsProfessionOrRiding` | implemented |  |
 | `IsRangedWeaponSpell` | implemented |  |
 | `IsRanked` | implemented |  |
 | `IsRankOf` | implemented |  |
 | `IsRequiringDeadTarget` | implemented |  |
-| `IsSelfCast` | **missing** |  |
+| `IsSelfCast` | implemented |  |
 | `IsSingleTarget` | implemented |  |
-| `IsStackableOnOneSlotWithDifferentCasters` | **missing** |  |
+| `IsStackableOnOneSlotWithDifferentCasters` | implemented |  |
 | `IsStackableWithRanks` | implemented |  |
 | `IsTargetingArea` | implemented |  |
-| `NeedsComboPoints` | **missing** |  |
+| `NeedsComboPoints` | implemented |  |
 | `NeedsExplicitUnitTarget` | implemented |  |
 | `NeedsToBeTriggeredByCaster` | implemented |  |
-| `SpellCancelsAuraEffect` | **missing** |  |
+| `SpellCancelsAuraEffect` | implemented |  |
 ### Events: server
 
 | id | Documented name | Registered name | Status | Requires | Note |

@@ -125,6 +125,8 @@ char const* eluClassName(ObjKind kind)
         case ObjKind::Vehicle: return "Vehicle";
         case ObjKind::Bot: return "Bot";
         case ObjKind::SpellInfo: return "SpellInfo";
+        case ObjKind::AuraEffect: return "AuraEffect";
+        case ObjKind::ElunaProcInfo: return "ElunaProcInfo";
     }
     return "Object";
 }
@@ -190,11 +192,13 @@ void registerElunaClasses(lua_State* L)
     createClass(L, "Vehicle", nullptr);        // E5: Classic 1.60 has no vehicles; only the section 7 stubs exist
     createClass(L, "Bot", nullptr);            // our bot API: a read-only handle over the bot snapshot
     createClass(L, "SpellInfo", nullptr);      // long tail: a documented spell entry (GetSpellInfo, Aura/Spell:GetSpellInfo)
+    createClass(L, "AuraEffect", nullptr);     // long tail: a transient aura effect of the running call
+    createClass(L, "ElunaProcInfo", nullptr);  // long tail: a transient proc event of the running call
 
     // __eq/__tostring/__newindex on every class metatable.
     for (char const* name : {"Object", "WorldObject", "Unit", "Player", "Creature", "GameObject", "Item", "Map", "Group",
                              "Guild", "Quest", "Spell", "Aura", "ElunaQuery", "WorldPacket", "Corpse", "BattleGround",
-                             "Vehicle", "Bot", "SpellInfo"})
+                             "Vehicle", "Bot", "SpellInfo", "AuraEffect", "ElunaProcInfo"})
     {
         luaL_getmetatable(L, metaName(name).c_str());
         lua_pushcfunction(L, safe<eluEq>);
@@ -225,6 +229,8 @@ void registerEluna(lua_State* L)
     flu::registerSpellMethods(L);
     flu::registerAuraMethods(L);
     flu::registerSpellInfoMethods(L);
+    flu::registerAuraEffectMethods(L);
+    flu::registerProcInfoMethods(L);
     flu::registerCorpseMethods(L);
     flu::registerBattleGroundMethods(L);
     flu::registerPacketMethods(L);

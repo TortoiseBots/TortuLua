@@ -701,10 +701,88 @@ public:
         bool canBeUsedInCombat = false, cooldownStartedOnEvent = false, ranked = false, singleTarget = false;
         bool multiSlotAura = false, groupBuff = false, moveAllowedChannel = false, nextMeleeSwingSpell = false;
         bool rangedWeaponSpell = false, autoRepeatRangedSpell = false, affectedBySpellMods = false;
+
+        // Extended SpellInfo fields and per-effect table.
+        int64_t allEffectsMechanicMask = 0, allowedMechanicMask = 0;
+        int64_t excludeCasterAuraSpell = 0, excludeTargetAuraSpell = 0;
+        int64_t manaCostPercentage = 0, maxTicks = 0;
+        int64_t spellVisual[2] = {};
+        int64_t diminishingGroup = 0, diminishingGroupType = 0, diminishingLimitDuration = 0, diminishingMaxLevel = 0;
+        bool abilityLearnedWithProfession = false, breakingStealth = false, explicitDiscovery = false;
+        bool lootCrafting = false, passiveStackableWithRanks = false, primaryProfession = false;
+        bool primaryProfessionFirstRank = false, profession = false, professionOrRiding = false;
+        bool stackableOnOneSlotWithDifferentCasters = false, needsComboPoints = false;
+        std::set<uint32_t> skillTypes;
+        uint32_t affectedFamilyName = 0;
+        uint32_t affectedFlags[3] = {};
+        std::set<uint32_t> exclusiveWith, exclusivePerCasterWith;
+        std::set<uint64_t> fitItems, checkTargetCreatureTypes, cancelsAuraEffects;
+        int64_t checkTargetResult = 0;
+        struct FakeTargetInfo
+        {
+            int64_t checkType = 0, directionType = 0, objectType = 0, referenceType = 0, selectionCategory = 0, target = 0;
+            double directionAngle = 0.0;
+            bool isArea = false;
+        };
+        struct FakeEffect
+        {
+            bool isEffect = false, isAura = false, isAreaAuraEffect = false, isTargetingArea = false;
+            bool isUnitOwnedAuraEffect = false, hasRadius = false;
+            int64_t auraType = 0, effectType = 0, amplitude = 0, basePoints = 0, calcValue = 0, chainTarget = 0;
+            int64_t dieSides = 0;
+            int64_t implicitTargetType = 0, effectIndex = 0, itemType = 0, mechanic = 0, mechanicMask = 0;
+            int64_t miscValue = 0, miscValueB = 0, providedTargetMask = 0, triggerSpell = 0, usedTargetObjectType = 0;
+            int64_t spellClassMask[3] = {};
+            double bonusMultiplier = 0.0, calcRadius = 0.0, damageMultiplier = 0.0, pointsPerComboPoint = 0.0;
+            double realPointsPerLevel = 0.0, valueMultiplier = 0.0;
+            FakeTargetInfo targetA, targetB;
+        };
+        std::vector<FakeEffect> effectSlots;
     };
     std::map<uint32_t, FakeSpellInfo> spellInfos;         // by spell id
     FakeSpellInfo& spellInfo(uint32_t id) { FakeSpellInfo& s = spellInfos[id]; s.id = id; return s; }
     bool spellExists(uint32_t id) override { return spellInfos.count(id) != 0; }
+
+    struct FakeAuraEffect
+    {
+        uint32_t id = 0;
+        uint32_t effIndex = 0;
+        int64_t auraType = 0;
+        int32_t amount = 0, baseAmount = 0, periodicTimer = 0;
+        uint32_t amplitude = 0, tickNumber = 0, totalTicks = 0, remainingTicks = 0;
+        bool canBeRecalculated = true;
+        bool hasCaster = false;
+        fl::HandleData caster;
+        fl::Guid casterGuid;
+        bool hasBase = false;
+        uint32_t baseAuraId = 0;
+        std::vector<fl::HandleData> targetList;
+        int32_t calculatedAmount = 0;
+        std::vector<std::string> actions;
+    };
+    std::map<uint32_t, FakeAuraEffect> auraEffects;
+    std::vector<std::string> auraEffectActions;
+
+    struct FakeProcInfo
+    {
+        bool hasActor = false;
+        fl::HandleData actor;
+        bool hasActionTarget = false;
+        fl::HandleData actionTarget;
+        bool hasMap = false;
+        fl::HandleData map;
+        bool hasProcSpell = false;
+        fl::HandleData procSpell;
+        uint32_t spellId = 0;
+        bool hasDamage = false, hasHeal = false;
+        uint32_t attackType = 0, block = 0, damage = 0, damageAbsorb = 0, damageType = 0;
+        uint32_t effectiveHeal = 0, heal = 0, healAbsorb = 0, hitMask = 0, resist = 0;
+        uint32_t schoolMask = 0, spellPhaseMask = 0, spellTypeMask = 0, typeMask = 0;
+        std::vector<std::string> actions;
+    };
+    std::map<uint32_t, FakeProcInfo> procInfos;
+    std::vector<std::string> procInfoActions;
+
     bool spellStateCall(fl::HandleData const& self, std::string const& op, std::vector<fl::EventValue> const& args,
                         std::vector<fl::EventValue>& out);
 
@@ -804,6 +882,8 @@ public:
         // The real host's store of the running call (src/host/EluWorld.cpp): a handle kept past its call finds nothing.
         spells.clear();
         auras.clear();
+        auraEffects.clear();
+        procInfos.clear();
     }
 
     // ---- GM bridge ----

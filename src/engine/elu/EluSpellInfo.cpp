@@ -140,6 +140,57 @@ int siGetEquippedItemInventoryTypeMask(lua_State* L)
 int siGetStances(lua_State* L) { return siRead(L, "spellinfo.getStances", "GetStances"); }
 int siGetStancesNot(lua_State* L) { return siRead(L, "spellinfo.getStancesNot", "GetStancesNot"); }
 int siCalcCastTime(lua_State* L) { return siRead(L, "spellinfo.calcCastTime", "CalcCastTime"); }
+int siGetAllEffectsMechanicMask(lua_State* L)
+{
+    return siRead(L, "spellinfo.getAllEffectsMechanicMask", "GetAllEffectsMechanicMask");
+}
+int siGetAllowedMechanicMask(lua_State* L)
+{
+    return siRead(L, "spellinfo.getAllowedMechanicMask", "GetAllowedMechanicMask");
+}
+int siGetExcludeCasterAuraSpell(lua_State* L)
+{
+    return siRead(L, "spellinfo.getExcludeCasterAuraSpell", "GetExcludeCasterAuraSpell");
+}
+int siGetExcludeTargetAuraSpell(lua_State* L)
+{
+    return siRead(L, "spellinfo.getExcludeTargetAuraSpell", "GetExcludeTargetAuraSpell");
+}
+int siGetManaCostPercentage(lua_State* L)
+{
+    return siRead(L, "spellinfo.getManaCostPercentage", "GetManaCostPercentage");
+}
+int siGetMaxTicks(lua_State* L) { return siRead(L, "spellinfo.getMaxTicks", "GetMaxTicks"); }
+int siGetDiminishingReturnsGroupForSpell(lua_State* L)
+{
+    return siRead(L, "spellinfo.getDiminishingReturnsGroupForSpell", "GetDiminishingReturnsGroupForSpell",
+                  {EventValue(argBool(L, 2, "triggered"))});
+}
+int siGetDiminishingReturnsGroupType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getDiminishingReturnsGroupType", "GetDiminishingReturnsGroupType",
+                  {EventValue(argBool(L, 2, "triggered"))});
+}
+int siGetDiminishingReturnsLimitDuration(lua_State* L)
+{
+    return siRead(L, "spellinfo.getDiminishingReturnsLimitDuration", "GetDiminishingReturnsLimitDuration",
+                  {EventValue(argBool(L, 2, "triggered"))});
+}
+int siGetDiminishingReturnsMaxLevel(lua_State* L)
+{
+    return siRead(L, "spellinfo.getDiminishingReturnsMaxLevel", "GetDiminishingReturnsMaxLevel",
+                  {EventValue(argBool(L, 2, "triggered"))});
+}
+int siGetSpellMechanicMaskByEffectMask(lua_State* L)
+{
+    return siRead(L, "spellinfo.getSpellMechanicMaskByEffectMask", "GetSpellMechanicMaskByEffectMask",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effectMask")))});
+}
+int siGetSpellVisual(lua_State* L)
+{
+    return siRead(L, "spellinfo.getSpellVisual", "GetSpellVisual",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "index")))});
+}
 
 // ---- indexed getters (the docs' own bounds are checked here; the host checks them again) ----
 int siGetSpellFamilyFlags(lua_State* L)
@@ -232,6 +283,7 @@ int siIsAffectedBySpellMods(lua_State* L)
 {
     return siRead(L, "spellinfo.isAffectedBySpellMods", "IsAffectedBySpellMods");
 }
+int siIsSelfCast(lua_State* L) { return siRead(L, "spellinfo.isSelfCast", "IsSelfCast"); }
 
 // ---- methods that take another SpellInfo ----
 int siNeedsToBeTriggeredByCaster(lua_State* L)
@@ -264,6 +316,324 @@ int siCanSpellProvideImmunityAgainstAura(lua_State* L)
 {
     return siRead(L, "spellinfo.canSpellProvideImmunityAgainstAura", "CanSpellProvideImmunityAgainstAura",
                   {EventValue(otherSpellId(L, 2, "auraSpellInfo"))});
+}
+int siIsAuraExclusiveBySpecificWith(lua_State* L)
+{
+    return siRead(L, "spellinfo.isAuraExclusiveBySpecificWith", "IsAuraExclusiveBySpecificWith",
+                  {EventValue(otherSpellId(L, 2, "spellInfo"))});
+}
+int siIsAuraExclusiveBySpecificPerCasterWith(lua_State* L)
+{
+    return siRead(L, "spellinfo.isAuraExclusiveBySpecificPerCasterWith", "IsAuraExclusiveBySpecificPerCasterWith",
+                  {EventValue(otherSpellId(L, 2, "spellInfo"))});
+}
+
+// ---- target / item / skill / profession / aura effect checks ----
+int siCheckTarget(lua_State* L)
+{
+    return siRead(L, "spellinfo.checkTarget", "CheckTarget",
+                  {EventValue(objArg(L, 2, kWorldObject, "caster")),
+                   EventValue(objArg(L, 3, kWorldObject, "target"))});
+}
+int siCheckTargetCreatureType(lua_State* L)
+{
+    return siRead(L, "spellinfo.checkTargetCreatureType", "CheckTargetCreatureType",
+                  {EventValue(objArg(L, 2, kUnit, "target"))});
+}
+int siIsAbilityLearnedWithProfession(lua_State* L)
+{
+    return siRead(L, "spellinfo.isAbilityLearnedWithProfession", "IsAbilityLearnedWithProfession");
+}
+int siIsAbilityOfSkillType(lua_State* L)
+{
+    return siRead(L, "spellinfo.isAbilityOfSkillType", "IsAbilityOfSkillType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "skillType")))});
+}
+int siIsAffected(lua_State* L)
+{
+    return siRead(L, "spellinfo.isAffected", "IsAffected",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "familyName"))),
+                   EventValue(static_cast<int64_t>(argUInt(L, 3, "flag0"))),
+                   EventValue(static_cast<int64_t>(argUInt(L, 4, "flag1"))),
+                   EventValue(static_cast<int64_t>(argUInt(L, 5, "flag2")))});
+}
+int siIsBreakingStealth(lua_State* L) { return siRead(L, "spellinfo.isBreakingStealth", "IsBreakingStealth"); }
+int siIsExplicitDiscovery(lua_State* L) { return siRead(L, "spellinfo.isExplicitDiscovery", "IsExplicitDiscovery"); }
+int siIsItemFitToSpellRequirements(lua_State* L)
+{
+    return siRead(L, "spellinfo.isItemFitToSpellRequirements", "IsItemFitToSpellRequirements",
+                  {EventValue(objArg(L, 2, kItem, "item"))});
+}
+int siIsLootCrafting(lua_State* L) { return siRead(L, "spellinfo.isLootCrafting", "IsLootCrafting"); }
+int siIsPassiveStackableWithRanks(lua_State* L)
+{
+    return siRead(L, "spellinfo.isPassiveStackableWithRanks", "IsPassiveStackableWithRanks");
+}
+int siIsPrimaryProfession(lua_State* L) { return siRead(L, "spellinfo.isPrimaryProfession", "IsPrimaryProfession"); }
+int siIsPrimaryProfessionFirstRank(lua_State* L)
+{
+    return siRead(L, "spellinfo.isPrimaryProfessionFirstRank", "IsPrimaryProfessionFirstRank");
+}
+int siIsProfession(lua_State* L) { return siRead(L, "spellinfo.isProfession", "IsProfession"); }
+int siIsProfessionOrRiding(lua_State* L)
+{
+    return siRead(L, "spellinfo.isProfessionOrRiding", "IsProfessionOrRiding");
+}
+int siIsStackableOnOneSlotWithDifferentCasters(lua_State* L)
+{
+    return siRead(L, "spellinfo.isStackableOnOneSlotWithDifferentCasters",
+                  "IsStackableOnOneSlotWithDifferentCasters");
+}
+int siNeedsComboPoints(lua_State* L) { return siRead(L, "spellinfo.needsComboPoints", "NeedsComboPoints"); }
+int siSpellCancelsAuraEffect(lua_State* L)
+{
+    return siRead(L, "spellinfo.spellCancelsAuraEffect", "SpellCancelsAuraEffect",
+                  {EventValue(static_cast<int64_t>(kindArg(L, 2, kAuraEffect, "aurEff").instanceId))});
+}
+
+// ---- per-effect readers and predicates ----
+int siEffectIsAreaAuraEffect(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsAreaAuraEffect", "EffectIsAreaAuraEffect",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siEffectIsAura(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsAura", "EffectIsAura",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siEffectIsAuraType(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsAuraType", "EffectIsAuraType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex"))),
+                   EventValue(static_cast<int64_t>(argUInt(L, 3, "aura")))});
+}
+int siEffectIsEffect(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsEffect", "EffectIsEffect",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siEffectIsEffectType(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsEffectType", "EffectIsEffectType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex"))),
+                   EventValue(static_cast<int64_t>(argUInt(L, 3, "effect")))});
+}
+int siEffectIsTargetingArea(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsTargetingArea", "EffectIsTargetingArea",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siEffectIsUnitOwnedAuraEffect(lua_State* L)
+{
+    return siRead(L, "spellinfo.effectIsUnitOwnedAuraEffect", "EffectIsUnitOwnedAuraEffect",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectAmplitude(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectAmplitude", "GetEffectAmplitude",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectApplyAuraName(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectApplyAuraName", "GetEffectApplyAuraName",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectBasePoints(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectBasePoints", "GetEffectBasePoints",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectBonusMultiplier(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectBonusMultiplier", "GetEffectBonusMultiplier",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectCalcRadius(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectCalcRadius", "GetEffectCalcRadius",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectCalcValue(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectCalcValue", "GetEffectCalcValue",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectChainTarget(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectChainTarget", "GetEffectChainTarget",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectDamageMultiplier(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectDamageMultiplier", "GetEffectDamageMultiplier",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectDieSides(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectDieSides", "GetEffectDieSides",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectHasRadius(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectHasRadius", "GetEffectHasRadius",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectImplicitTargetType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectImplicitTargetType", "GetEffectImplicitTargetType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectIndex(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectIndex", "GetEffectIndex",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectItemType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectItemType", "GetEffectItemType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectMechanic(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectMechanic", "GetEffectMechanic",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectMechanicMask(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectMechanicMask", "GetEffectMechanicMask",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectMiscValue(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectMiscValue", "GetEffectMiscValue",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectMiscValueB(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectMiscValueB", "GetEffectMiscValueB",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectPointsPerComboPoint(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectPointsPerComboPoint", "GetEffectPointsPerComboPoint",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectProvidedTargetMask(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectProvidedTargetMask", "GetEffectProvidedTargetMask",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectRealPointsPerLevel(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectRealPointsPerLevel", "GetEffectRealPointsPerLevel",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectSpellClassMask(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectSpellClassMask", "GetEffectSpellClassMask",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex"))),
+                   EventValue(static_cast<int64_t>(argUInt(L, 3, "maskIndex")))});
+}
+int siGetEffectTargetACheckType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetACheckType", "GetEffectTargetACheckType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetADirectionAngle(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetADirectionAngle", "GetEffectTargetADirectionAngle",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetADirectionType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetADirectionType", "GetEffectTargetADirectionType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetAIsArea(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetAIsArea", "GetEffectTargetAIsArea",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetAObjectType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetAObjectType", "GetEffectTargetAObjectType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetAReferenceType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetAReferenceType", "GetEffectTargetAReferenceType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetASelectionCategory(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetASelectionCategory", "GetEffectTargetASelectionCategory",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetATarget(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetATarget", "GetEffectTargetATarget",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBCheckType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBCheckType", "GetEffectTargetBCheckType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBDirectionAngle(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBDirectionAngle", "GetEffectTargetBDirectionAngle",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBDirectionType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBDirectionType", "GetEffectTargetBDirectionType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBIsArea(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBIsArea", "GetEffectTargetBIsArea",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBObjectType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBObjectType", "GetEffectTargetBObjectType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBReferenceType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBReferenceType", "GetEffectTargetBReferenceType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBSelectionCategory(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBSelectionCategory", "GetEffectTargetBSelectionCategory",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTargetBTarget(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTargetBTarget", "GetEffectTargetBTarget",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectTriggerSpell(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectTriggerSpell", "GetEffectTriggerSpell",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectType", "GetEffectType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectUsedTargetObjectType(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectUsedTargetObjectType", "GetEffectUsedTargetObjectType",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectValueMultiplier(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectValueMultiplier", "GetEffectValueMultiplier",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
 }
 }  // namespace
 
@@ -376,6 +746,86 @@ void registerSpellInfoMethods(lua_State* L)
         {"CanDispelAura", fl::safe<siCanDispelAura>},
         {"CanPierceImmuneAura", fl::safe<siCanPierceImmuneAura>},
         {"CanSpellProvideImmunityAgainstAura", fl::safe<siCanSpellProvideImmunityAgainstAura>},
+        {"CheckTarget", fl::safe<siCheckTarget>},
+        {"CheckTargetCreatureType", fl::safe<siCheckTargetCreatureType>},
+        {"EffectIsAreaAuraEffect", fl::safe<siEffectIsAreaAuraEffect>},
+        {"EffectIsAura", fl::safe<siEffectIsAura>},
+        {"EffectIsAuraType", fl::safe<siEffectIsAuraType>},
+        {"EffectIsEffect", fl::safe<siEffectIsEffect>},
+        {"EffectIsEffectType", fl::safe<siEffectIsEffectType>},
+        {"EffectIsTargetingArea", fl::safe<siEffectIsTargetingArea>},
+        {"EffectIsUnitOwnedAuraEffect", fl::safe<siEffectIsUnitOwnedAuraEffect>},
+        {"GetAllEffectsMechanicMask", fl::safe<siGetAllEffectsMechanicMask>},
+        {"GetAllowedMechanicMask", fl::safe<siGetAllowedMechanicMask>},
+        {"GetDiminishingReturnsGroupForSpell", fl::safe<siGetDiminishingReturnsGroupForSpell>},
+        {"GetDiminishingReturnsGroupType", fl::safe<siGetDiminishingReturnsGroupType>},
+        {"GetDiminishingReturnsLimitDuration", fl::safe<siGetDiminishingReturnsLimitDuration>},
+        {"GetDiminishingReturnsMaxLevel", fl::safe<siGetDiminishingReturnsMaxLevel>},
+        {"GetEffectAmplitude", fl::safe<siGetEffectAmplitude>},
+        {"GetEffectApplyAuraName", fl::safe<siGetEffectApplyAuraName>},
+        {"GetEffectBasePoints", fl::safe<siGetEffectBasePoints>},
+        {"GetEffectBonusMultiplier", fl::safe<siGetEffectBonusMultiplier>},
+        {"GetEffectCalcRadius", fl::safe<siGetEffectCalcRadius>},
+        {"GetEffectCalcValue", fl::safe<siGetEffectCalcValue>},
+        {"GetEffectChainTarget", fl::safe<siGetEffectChainTarget>},
+        {"GetEffectDamageMultiplier", fl::safe<siGetEffectDamageMultiplier>},
+        {"GetEffectDieSides", fl::safe<siGetEffectDieSides>},
+        {"GetEffectHasRadius", fl::safe<siGetEffectHasRadius>},
+        {"GetEffectImplicitTargetType", fl::safe<siGetEffectImplicitTargetType>},
+        {"GetEffectIndex", fl::safe<siGetEffectIndex>},
+        {"GetEffectItemType", fl::safe<siGetEffectItemType>},
+        {"GetEffectMechanic", fl::safe<siGetEffectMechanic>},
+        {"GetEffectMechanicMask", fl::safe<siGetEffectMechanicMask>},
+        {"GetEffectMiscValue", fl::safe<siGetEffectMiscValue>},
+        {"GetEffectMiscValueB", fl::safe<siGetEffectMiscValueB>},
+        {"GetEffectPointsPerComboPoint", fl::safe<siGetEffectPointsPerComboPoint>},
+        {"GetEffectProvidedTargetMask", fl::safe<siGetEffectProvidedTargetMask>},
+        {"GetEffectRealPointsPerLevel", fl::safe<siGetEffectRealPointsPerLevel>},
+        {"GetEffectSpellClassMask", fl::safe<siGetEffectSpellClassMask>},
+        {"GetEffectTargetACheckType", fl::safe<siGetEffectTargetACheckType>},
+        {"GetEffectTargetADirectionAngle", fl::safe<siGetEffectTargetADirectionAngle>},
+        {"GetEffectTargetADirectionType", fl::safe<siGetEffectTargetADirectionType>},
+        {"GetEffectTargetAIsArea", fl::safe<siGetEffectTargetAIsArea>},
+        {"GetEffectTargetAObjectType", fl::safe<siGetEffectTargetAObjectType>},
+        {"GetEffectTargetAReferenceType", fl::safe<siGetEffectTargetAReferenceType>},
+        {"GetEffectTargetASelectionCategory", fl::safe<siGetEffectTargetASelectionCategory>},
+        {"GetEffectTargetATarget", fl::safe<siGetEffectTargetATarget>},
+        {"GetEffectTargetBCheckType", fl::safe<siGetEffectTargetBCheckType>},
+        {"GetEffectTargetBDirectionAngle", fl::safe<siGetEffectTargetBDirectionAngle>},
+        {"GetEffectTargetBDirectionType", fl::safe<siGetEffectTargetBDirectionType>},
+        {"GetEffectTargetBIsArea", fl::safe<siGetEffectTargetBIsArea>},
+        {"GetEffectTargetBObjectType", fl::safe<siGetEffectTargetBObjectType>},
+        {"GetEffectTargetBReferenceType", fl::safe<siGetEffectTargetBReferenceType>},
+        {"GetEffectTargetBSelectionCategory", fl::safe<siGetEffectTargetBSelectionCategory>},
+        {"GetEffectTargetBTarget", fl::safe<siGetEffectTargetBTarget>},
+        {"GetEffectTriggerSpell", fl::safe<siGetEffectTriggerSpell>},
+        {"GetEffectType", fl::safe<siGetEffectType>},
+        {"GetEffectUsedTargetObjectType", fl::safe<siGetEffectUsedTargetObjectType>},
+        {"GetEffectValueMultiplier", fl::safe<siGetEffectValueMultiplier>},
+        {"GetExcludeCasterAuraSpell", fl::safe<siGetExcludeCasterAuraSpell>},
+        {"GetExcludeTargetAuraSpell", fl::safe<siGetExcludeTargetAuraSpell>},
+        {"GetManaCostPercentage", fl::safe<siGetManaCostPercentage>},
+        {"GetMaxTicks", fl::safe<siGetMaxTicks>},
+        {"GetSpellMechanicMaskByEffectMask", fl::safe<siGetSpellMechanicMaskByEffectMask>},
+        {"GetSpellVisual", fl::safe<siGetSpellVisual>},
+        {"IsAbilityLearnedWithProfession", fl::safe<siIsAbilityLearnedWithProfession>},
+        {"IsAbilityOfSkillType", fl::safe<siIsAbilityOfSkillType>},
+        {"IsAffected", fl::safe<siIsAffected>},
+        {"IsAuraExclusiveBySpecificPerCasterWith", fl::safe<siIsAuraExclusiveBySpecificPerCasterWith>},
+        {"IsAuraExclusiveBySpecificWith", fl::safe<siIsAuraExclusiveBySpecificWith>},
+        {"IsBreakingStealth", fl::safe<siIsBreakingStealth>},
+        {"IsExplicitDiscovery", fl::safe<siIsExplicitDiscovery>},
+        {"IsItemFitToSpellRequirements", fl::safe<siIsItemFitToSpellRequirements>},
+        {"IsLootCrafting", fl::safe<siIsLootCrafting>},
+        {"IsPassiveStackableWithRanks", fl::safe<siIsPassiveStackableWithRanks>},
+        {"IsPrimaryProfession", fl::safe<siIsPrimaryProfession>},
+        {"IsPrimaryProfessionFirstRank", fl::safe<siIsPrimaryProfessionFirstRank>},
+        {"IsProfession", fl::safe<siIsProfession>},
+        {"IsProfessionOrRiding", fl::safe<siIsProfessionOrRiding>},
+        {"IsSelfCast", fl::safe<siIsSelfCast>},
+        {"IsStackableOnOneSlotWithDifferentCasters", fl::safe<siIsStackableOnOneSlotWithDifferentCasters>},
+        {"NeedsComboPoints", fl::safe<siNeedsComboPoints>},
+        {"SpellCancelsAuraEffect", fl::safe<siSpellCancelsAuraEffect>},
         {nullptr, nullptr}};
     addMethods(L, "SpellInfo", regs);
 }

@@ -100,6 +100,12 @@ void registerStubMethods(lua_State* L)
     // Item random properties/suffixes: ForeverCore uses ItemRandomBonusListId instead of legacy random property/suffix DB2s.
     for (char const* m : {"GetRandomProperty", "GetRandomSuffix", "SetRandomProperty", "SetRandomSuffix"})
         addCoreStubMethod(L, "Item", m);
+    // SpellInfo fields/methods absent on this core: SpellPowerEntry has no ManaPerSecondPerLevel, SpellInfo has no
+    // Priority or RuneCostID, and SpellModifier has no Lua class.
+    for (char const* m : {"GetManaPerSecondPerLevel", "GetPriority", "GetRuneCostID", "IsAffectedBySpellMod"})
+        addCoreStubMethod(L, "SpellInfo", m);
+    // ElunaProcInfo: HealInfo exposes AbsorbHeal and SetEffectiveHeal but has no SetHeal/ModifyHeal mutator.
+    addCoreStubMethod(L, "ElunaProcInfo", "SetHeal");
 }
 
 void registerVehicleMethods(lua_State* L)
