@@ -3288,7 +3288,8 @@
    "inherits": null,
    "methods": {
     "GetFlags": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetId": {
      "status": "implemented",
@@ -3299,36 +3300,44 @@
      "declared": "Quest"
     },
     "GetMaxLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetMinLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetNextQuestId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetNextQuestInChain": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetPrevQuestId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetTitle": {
      "status": "implemented",
      "declared": "Quest"
     },
     "GetType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "HasFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "IsDaily": {
      "status": "implemented",
      "declared": "Quest"
     },
     "IsRepeatable": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     }
    }
   },
@@ -3578,7 +3587,9 @@
      "declared": "Map"
     },
     "GetInstanceData": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Map"
     },
     "GetInstanceId": {
      "status": "implemented",
@@ -3629,7 +3640,9 @@
      "declared": "Map"
     },
     "SaveInstanceData": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Map"
     },
     "SetWeather": {
      "status": "implemented",
@@ -6013,21 +6026,6 @@
     "GetSpeed",
     "SetRandomProperty",
     "SetRandomSuffix"
-   ],
-   "Quest": [
-    "GetFlags",
-    "GetMaxLevel",
-    "GetMinLevel",
-    "GetNextQuestId",
-    "GetNextQuestInChain",
-    "GetPrevQuestId",
-    "GetType",
-    "HasFlag",
-    "IsRepeatable"
-   ],
-   "Map": [
-    "GetInstanceData",
-    "SaveInstanceData"
    ],
    "WorldPacket": [
     "ReadByte",

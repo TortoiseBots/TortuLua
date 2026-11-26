@@ -1428,6 +1428,8 @@ bool FakeHost::gameCall(fl::HandleData const& self, std::string_view op, std::ve
         return true;
     if (self.kind == fl::ObjKind::GameObject && gameObjectStateCall(self, std::string(op), args, out))
         return true;
+    if (self.kind == fl::ObjKind::Quest && questStateCall(self, std::string(op), args, out))
+        return true;
     if (self.kind == fl::ObjKind::Item && itemStateCall(self, std::string(op), args, out))
         return true;
     if (playerStateCall(self, std::string(op), args, out))
@@ -2975,6 +2977,44 @@ bool FakeHost::gameObjectStateCall(fl::HandleData const& self, std::string const
         g.respawnTime = static_cast<int32_t>(intAt(args, 0, 0));
     else if (op == "gameobject.setSpawnedByDefault")
         g.spawnedByDefault = boolAt(args, 0, true);
+    return true;
+}
+
+bool FakeHost::questStateCall(fl::HandleData const& self, std::string const& op,
+                              std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out)
+{
+    auto it = questStates.find(static_cast<uint32_t>(self.guid.lo));
+    if (it == questStates.end())
+        return false;
+    FakeQuest const& q = it->second;
+    if (op == "quest.getFlags")
+        out.emplace_back(static_cast<int64_t>(q.flags));
+    else if (op == "quest.getId")
+        out.emplace_back(static_cast<int64_t>(q.id));
+    else if (op == "quest.getLevel")
+        out.emplace_back(static_cast<int64_t>(q.level));
+    else if (op == "quest.getMaxLevel")
+        out.emplace_back(static_cast<int64_t>(q.maxLevel));
+    else if (op == "quest.getMinLevel")
+        out.emplace_back(static_cast<int64_t>(q.minLevel));
+    else if (op == "quest.getNextQuestId")
+        out.emplace_back(static_cast<int64_t>(q.nextQuestId));
+    else if (op == "quest.getNextQuestInChain")
+        out.emplace_back(static_cast<int64_t>(q.nextQuestInChain));
+    else if (op == "quest.getPrevQuestId")
+        out.emplace_back(static_cast<int64_t>(q.prevQuestId));
+    else if (op == "quest.getTitle")
+        out.emplace_back(q.title);
+    else if (op == "quest.getType")
+        out.emplace_back(static_cast<int64_t>(q.type));
+    else if (op == "quest.hasFlag")
+        out.emplace_back((q.flags & static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "quest.isDaily")
+        out.emplace_back(q.daily);
+    else if (op == "quest.isRepeatable")
+        out.emplace_back(q.repeatable);
+    else
+        return false;
     return true;
 }
 

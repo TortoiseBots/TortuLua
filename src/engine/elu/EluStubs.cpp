@@ -93,6 +93,10 @@ void registerStubMethods(lua_State* L)
     // WorldObject bitmask phasing: this core uses PhaseShift phase ids rather than a 32-bit phase mask.
     for (char const* m : {"GetPhaseMask", "SetPhaseMask"})
         addCoreStubMethod(L, "WorldObject", m);
+    // Map instance script data: InstanceMapScript is database-bound (instance_template.script) with no Lua instance-data
+    // object or SaveToDB API (InstanceScript persists boss states and values incrementally through InstanceLockMgr).
+    for (char const* m : {"GetInstanceData", "SaveInstanceData"})
+        addCoreStubMethod(L, "Map", m);
 }
 
 void registerVehicleMethods(lua_State* L)

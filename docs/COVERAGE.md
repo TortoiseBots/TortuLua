@@ -20,10 +20,10 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Item | 66 | 56 | 4 | 6 | 85% | 91% |
 | Group | 27 | 27 | 0 | 0 | 100% | 100% |
 | Guild | 16 | 14 | 2 | 0 | 88% | 100% |
-| Quest | 13 | 4 | 0 | 9 | 31% | 31% |
+| Quest | 13 | 13 | 0 | 0 | 100% | 100% |
 | Spell | 40 | 40 | 0 | 0 | 100% | 100% |
 | Aura | 14 | 14 | 0 | 0 | 100% | 100% |
-| Map | 19 | 17 | 0 | 2 | 89% | 89% |
+| Map | 19 | 17 | 2 | 0 | 89% | 100% |
 | ElunaQuery | 17 | 17 | 0 | 0 | 100% | 100% |
 | WorldPacket | 23 | 9 | 0 | 14 | 39% | 39% |
 | Corpse | 5 | 5 | 0 | 0 | 100% | 100% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1049** | **102** | **292** | **73%** | **80%** |
+| **all** | **1443** | **1058** | **104** | **281** | **73%** | **81%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -964,19 +964,19 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 | Documented method | Status | Note |
 |---|---|---|
-| `GetFlags` | **missing** |  |
+| `GetFlags` | implemented |  |
 | `GetId` | implemented |  |
 | `GetLevel` | implemented |  |
-| `GetMaxLevel` | **missing** |  |
-| `GetMinLevel` | **missing** |  |
-| `GetNextQuestId` | **missing** |  |
-| `GetNextQuestInChain` | **missing** |  |
-| `GetPrevQuestId` | **missing** |  |
+| `GetMaxLevel` | implemented |  |
+| `GetMinLevel` | implemented |  |
+| `GetNextQuestId` | implemented |  |
+| `GetNextQuestInChain` | implemented |  |
+| `GetPrevQuestId` | implemented |  |
 | `GetTitle` | implemented |  |
-| `GetType` | **missing** |  |
-| `HasFlag` | **missing** |  |
+| `GetType` | implemented |  |
+| `HasFlag` | implemented |  |
 | `IsDaily` | implemented |  |
-| `IsRepeatable` | **missing** |  |
+| `IsRepeatable` | implemented |  |
 ### Class `Spell`
 
 | Documented method | Status | Note |
@@ -1047,7 +1047,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetAreaId` | implemented |  |
 | `GetDifficulty` | implemented |  |
 | `GetHeight` | implemented |  |
-| `GetInstanceData` | **missing** |  |
+| `GetInstanceData` | **stub** | stub: not available (this core) |
 | `GetInstanceId` | implemented |  |
 | `GetMapId` | implemented |  |
 | `GetName` | implemented |  |
@@ -1060,7 +1060,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsEmpty` | implemented |  |
 | `IsHeroic` | implemented |  |
 | `IsRaid` | implemented |  |
-| `SaveInstanceData` | **missing** |  |
+| `SaveInstanceData` | **stub** | stub: not available (this core) |
 | `SetWeather` | implemented |  |
 ### Class `ElunaQuery`
 

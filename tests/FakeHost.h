@@ -358,6 +358,25 @@ public:
     FakeGameObject& goState(fl::HandleData const& h) { return goStates[{h.guid.hi, h.guid.lo}]; }
     bool gameObjectStateCall(fl::HandleData const& self, std::string const& op,
                              std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out);
+
+    struct FakeQuest
+    {
+        uint32_t id = 0;
+        int32_t level = 0;
+        int32_t minLevel = 0;
+        uint32_t maxLevel = 0;
+        uint32_t type = 0;
+        uint32_t flags = 0;
+        int32_t prevQuestId = 0;
+        uint32_t nextQuestId = 0;
+        uint32_t nextQuestInChain = 0;
+        std::string title;
+        bool daily = false;
+        bool repeatable = false;
+    };
+    std::map<uint32_t, FakeQuest> questStates;
+    bool questStateCall(fl::HandleData const& self, std::string const& op, std::vector<fl::EventValue> const& args,
+                        std::vector<fl::EventValue>& out);
     std::vector<fl::HandleData> objectsInRange(fl::HandleData const& self, int kind, float range, uint32_t entry,
                                                int hostile, int dead) override;
     std::map<std::string, fl::DbRows> rawResults;   // sql -> rows (rawQuery)
@@ -399,7 +418,7 @@ public:
     std::string areaName(uint32_t id) override { return id == 12 ? "Elwynn Forest" : std::string(); }
     std::string coreVersion() override { return "test-1.0"; }
     bool mapExists(uint32_t mapId, uint32_t) override { return mapId == 0 || mapId == 1; }
-    bool questExists(uint32_t id) override { return id == 100; }
+    bool questExists(uint32_t id) override { return id == 100 || questStates.count(id) != 0; }
     bool rawQuery(std::string const&, std::string const& sql, size_t, size_t, fl::DbRows& out,
                   std::string& error) override;
     bool rawExecute(std::string const&, std::string const& sql) override;

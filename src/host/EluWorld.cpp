@@ -1470,6 +1470,11 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         Quest const* quest = sObjectMgr->GetQuestTemplate(id);
         if (!quest)
             return false;   // "Quest no longer exists"
+        if (name == "quest.getFlags")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetFlags()));
+            return true;
+        }
         if (name == "quest.getId")
         {
             out.emplace_back(static_cast<int64_t>(quest->GetQuestId()));
@@ -1480,14 +1485,54 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(static_cast<int64_t>(quest->GetClassicQuestLevel()));
             return true;
         }
+        if (name == "quest.getMaxLevel")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetMaxLevel()));
+            return true;
+        }
+        if (name == "quest.getMinLevel")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetClassicMinLevel()));
+            return true;
+        }
+        if (name == "quest.getNextQuestId")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetNextQuestId()));
+            return true;
+        }
+        if (name == "quest.getNextQuestInChain")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetNextQuestInChain()));
+            return true;
+        }
+        if (name == "quest.getPrevQuestId")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetPrevQuestId()));
+            return true;
+        }
         if (name == "quest.getTitle")
         {
             out.emplace_back(quest->GetLogTitle());
             return true;
         }
+        if (name == "quest.getType")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetQuestType()));
+            return true;
+        }
+        if (name == "quest.hasFlag")
+        {
+            out.emplace_back(quest->HasFlag(static_cast<QuestFlags>(static_cast<uint32>(iArg(args, 0)))));
+            return true;
+        }
         if (name == "quest.isDaily")
         {
             out.emplace_back(quest->IsDaily());
+            return true;
+        }
+        if (name == "quest.isRepeatable")
+        {
+            out.emplace_back(quest->IsRepeatable());
             return true;
         }
         return false;
