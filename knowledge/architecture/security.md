@@ -12,6 +12,7 @@ TortuLua is designed for **test servers only**. Whoever can write to `ForeverLua
 
 - In **`test` mode**, scripts run inside a hardened sandbox with strict budgets and read-only schema-validated queries.
 - In **`eluna` mode**, scripts are trusted (raw SQL is enabled, execution budgets default to `0`, and `OpenStdLibs = 1` can open `io`/`os`/`debug`/`package`).
+- **Packets are unguarded:** `SendPacket` takes any opcode and can send to any player, group, guild or creature set with no allowlist, so scripts are trusted code.
 
 # Sandbox Controls
 

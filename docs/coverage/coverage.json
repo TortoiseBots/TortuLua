@@ -3785,7 +3785,8 @@
      "declared": "WorldPacket"
     },
     "ReadByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadDouble": {
      "status": "implemented",
@@ -3796,33 +3797,40 @@
      "declared": "WorldPacket"
     },
     "ReadGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadLong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadString": {
      "status": "implemented",
      "declared": "WorldPacket"
     },
     "ReadUByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadULong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadUShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "SetOpcode": {
      "status": "implemented",
      "declared": "WorldPacket"
     },
     "WriteByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteDouble": {
      "status": "implemented",
@@ -3833,26 +3841,32 @@
      "declared": "WorldPacket"
     },
     "WriteGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteLong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteString": {
      "status": "implemented",
      "declared": "WorldPacket"
     },
     "WriteUByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteULong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteUShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     }
    }
   },
@@ -6163,22 +6177,6 @@
     "IsTargetableForAttack",
     "RemoveFromWorld",
     "SetAggroEnabled"
-   ],
-   "WorldPacket": [
-    "ReadByte",
-    "ReadGUID",
-    "ReadLong",
-    "ReadShort",
-    "ReadUByte",
-    "ReadULong",
-    "ReadUShort",
-    "WriteByte",
-    "WriteGUID",
-    "WriteLong",
-    "WriteShort",
-    "WriteUByte",
-    "WriteULong",
-    "WriteUShort"
    ]
   },
   "events": {

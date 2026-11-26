@@ -18,7 +18,7 @@ status: stable
 Eluna mode (E2-E6) shares the test-server boundary plus gaps imposed by the pinned ForeverCore version:
 
 - **Missing core hooks:** Group `CREATE` requires core hook C10; map `LOAD`, `CREATURE_CREATE`, `GAMEOBJECT_CREATE`, and `CHECK_ENCOUNTER` on dungeon/raid maps require C11 (`InstanceScript` forwarding).
-- **Packets:** `RegisterPacketEvent` runs on a read-only copy from `ServerScript` (returning `false` cannot alter the wire packet and logs once). `Player`/`Group`/`Guild:SendPacket` work via `CreatePacket`.
+- **Packets:** `RegisterPacketEvent` runs on a read-only copy from `ServerScript` (returning `false` cannot alter the wire packet and logs once). `Player`/`Group`/`Guild:SendPacket` work via `CreatePacket`; `SendPacket` takes any opcode and can send to any player, group, guild or creature set with no allowlist, so scripts are trusted code.
 - **Taxi paths:** `AddTaxiPath` raises an error because taxi paths are DB2-backed and cannot be extended by scripts.
 - **Classic 1.60 stubs:** Guild bank, vehicle, achievement, arena, dual spec, LFG, and destructible gameobject methods/events are documented stubs (see the per-symbol notes in [`docs/COVERAGE.md`](../../docs/COVERAGE.md)).
 

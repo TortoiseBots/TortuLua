@@ -25,7 +25,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Aura | 14 | 14 | 0 | 0 | 100% | 100% |
 | Map | 19 | 17 | 2 | 0 | 89% | 100% |
 | ElunaQuery | 17 | 17 | 0 | 0 | 100% | 100% |
-| WorldPacket | 23 | 9 | 0 | 14 | 39% | 39% |
+| WorldPacket | 23 | 23 | 0 | 0 | 100% | 100% |
 | Corpse | 5 | 5 | 0 | 0 | 100% | 100% |
 | BattleGround | 18 | 18 | 0 | 0 | 100% | 100% |
 | Vehicle | 6 | 0 | 6 | 0 | 0% | 100% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1233** | **114** | **96** | **85%** | **93%** |
+| **all** | **1443** | **1247** | **114** | **82** | **86%** | **94%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -1091,27 +1091,27 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 |---|---|---|
 | `GetOpcode` | implemented | only what CreatePacket made or a packet event passes; the events get a read-only copy |
 | `GetSize` | implemented |  |
-| `ReadByte` | **missing** |  |
+| `ReadByte` | implemented |  |
 | `ReadDouble` | implemented |  |
 | `ReadFloat` | implemented |  |
-| `ReadGUID` | **missing** |  |
-| `ReadLong` | **missing** |  |
-| `ReadShort` | **missing** |  |
+| `ReadGUID` | implemented |  |
+| `ReadLong` | implemented |  |
+| `ReadShort` | implemented |  |
 | `ReadString` | implemented |  |
-| `ReadUByte` | **missing** |  |
-| `ReadULong` | **missing** |  |
-| `ReadUShort` | **missing** |  |
+| `ReadUByte` | implemented |  |
+| `ReadULong` | implemented |  |
+| `ReadUShort` | implemented |  |
 | `SetOpcode` | implemented |  |
-| `WriteByte` | **missing** |  |
+| `WriteByte` | implemented |  |
 | `WriteDouble` | implemented |  |
 | `WriteFloat` | implemented |  |
-| `WriteGUID` | **missing** |  |
-| `WriteLong` | **missing** |  |
-| `WriteShort` | **missing** |  |
+| `WriteGUID` | implemented |  |
+| `WriteLong` | implemented |  |
+| `WriteShort` | implemented |  |
 | `WriteString` | implemented |  |
-| `WriteUByte` | **missing** |  |
-| `WriteULong` | **missing** |  |
-| `WriteUShort` | **missing** |  |
+| `WriteUByte` | implemented |  |
+| `WriteULong` | implemented |  |
+| `WriteUShort` | implemented |  |
 ### Class `Corpse` (inherits `WorldObject`)
 
 | Documented method | Status | Note |
