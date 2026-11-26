@@ -217,22 +217,22 @@ function WorldObject:RemoveEvents() end
 ---@return any
 function WorldObject:SendPacket() end
 
----@param msg any
+---@param arg1 any
 ---@param language any
 ---@return any
-function WorldObject:SendUnitSay(msg, language) end
+function WorldObject:SendUnitSay(arg1, language) end
 
----@param msg any
+---@param arg1 any
 ---@param lang any
 ---@param receiver any
 ---@param arg4 any
 ---@return any
-function WorldObject:SendUnitWhisper(msg, lang, receiver, arg4) end
+function WorldObject:SendUnitWhisper(arg1, lang, receiver, arg4) end
 
----@param msg any
+---@param arg1 any
 ---@param language any
 ---@return any
-function WorldObject:SendUnitYell(msg, language) end
+function WorldObject:SendUnitYell(arg1, language) end
 
 ---@deprecated not available (this core)
 ---@return any

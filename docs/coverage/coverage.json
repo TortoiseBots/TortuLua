@@ -388,7 +388,8 @@
      "declared": "Object"
     },
     "GetUInt32Value": {
-     "status": "implemented",
+     "status": "stub",
+     "note": "stub: not available (this core)",
      "declared": "Object"
     },
     "GetUInt64Value": {
@@ -397,7 +398,8 @@
      "declared": "Object"
     },
     "HasFlag": {
-     "status": "implemented",
+     "status": "stub",
+     "note": "stub: not available (this core)",
      "declared": "Object"
     },
     "IsInWorld": {

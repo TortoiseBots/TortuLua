@@ -1,8 +1,10 @@
 // Eluna Object, WorldObject and GameObject coverage: every documented method added in this round, its arguments,
 // returns, round-trips through the fake world, stale-handle refusal, cross-map checks, and core/server stubs.
+#include "NearSearch.h"
 #include "Support.h"
 
 #include <cmath>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -121,9 +123,10 @@ TEST_CASE("eluna object: ToCorpse and the generic update-field core stubs")
 
     std::vector<std::string> const coreStubs = {
         "GetByteValue(1, 0)",     "GetFloatValue(1)",        "GetInt32Value(1)",       "GetUInt16Value(1, 0)",
-        "GetUInt64Value(1)",      "RemoveFlag(1, 2)",        "SetByteValue(1, 0, 3)",  "SetFlag(1, 2)",
-        "SetFloatValue(1, 1.5)",  "SetInt16Value(1, 0, -2)", "SetInt32Value(1, -5)",   "SetUInt16Value(1, 0, 2)",
-        "SetUInt32Value(1, 5)",   "SetUInt64Value(1, 5)",    "UpdateUInt32Value(1, 1)"};
+        "GetUInt32Value(1)",      "GetUInt64Value(1)",       "HasFlag(1, 2)",          "RemoveFlag(1, 2)",
+        "SetByteValue(1, 0, 3)",  "SetFlag(1, 2)",           "SetFloatValue(1, 1.5)",  "SetInt16Value(1, 0, -2)",
+        "SetInt32Value(1, -5)",   "SetUInt16Value(1, 0, 2)", "SetUInt32Value(1, 5)",   "SetUInt64Value(1, 5)",
+        "UpdateUInt32Value(1, 1)"};
     for (std::string const& call : coreStubs)
     {
         INFO("stub: p:" << call);
@@ -228,10 +231,19 @@ TEST_CASE("eluna worldobject: geometry, range, sound, chat, packet, Data and stu
     CHECK(rig.ok("return #p:GetNearObjects(20, 128) .. ',' .. p:GetNearObject(20, 128):GetGUIDLow()") == "1,24");
     CHECK(rig.ok("return #p:GetNearObjects(20, 8, 600, 1, 1)") == "1");
 
-    // Per-object Data() table persists across calls on the same WorldObject
+    // Per-object Data() table persists across calls on the same WorldObject and is pruned after despawn
     rig.ok("go:Data().counter = 42");
     CHECK(rig.ok("return go:Data().counter") == "42");
     CHECK(rig.ok("return tostring(mob:Data().counter)") == "nil");
+    rig.ok("mob:Data().tag = 'alive'");
+    rig.host.advance(1000);
+    rig.e().tick();
+    CHECK(rig.ok("return mob:Data().tag") == "alive");
+    rig.host.remove(mob);
+    rig.host.advance(1000);
+    rig.e().tick();
+    rig.host.add(mob, mInfo);
+    CHECK(rig.ok("return tostring(mob:Data().tag)") == "nil");
 
     // SendPacket on non-Player WorldObject (Creature / GameObject / Corpse) reaches FakeHost::sendPacket
     rig.host.packets.clear();
@@ -241,7 +253,7 @@ TEST_CASE("eluna worldobject: geometry, range, sound, chat, packet, Data and stu
     CHECK(rig.host.packets[1].target.kind == fl::ObjKind::Creature);
     CHECK(rig.host.packets[2].target.kind == fl::ObjKind::Corpse);
 
-    // SendUnitSay/Yell/Whisper also work on a non-Unit WorldObject (GameObject)
+    // SendUnitSay/Yell/Whisper also work on a non-Unit WorldObject (GameObject), capped at 255 bytes
     rig.host.woState(go).chats.clear();
     rig.ok("go:SendUnitSay('open', 0) go:SendUnitYell('alert', 0) go:SendUnitWhisper('secret', 0, p, true)");
     REQUIRE(rig.host.woState(go).chats.size() == 3);
@@ -249,6 +261,12 @@ TEST_CASE("eluna worldobject: geometry, range, sound, chat, packet, Data and stu
     CHECK(rig.host.woState(go).chats[1].op == "worldobject.yell");
     CHECK(rig.host.woState(go).chats[2].boss == true);
     CHECK(rig.host.woState(go).chats[2].targetLow == 21);
+    CHECK(rig.run("go:SendUnitSay(string.rep('a', 255), 0)").ok);
+    CHECK(rig.run("go:SendUnitYell(string.rep('a', 255), 0)").ok);
+    CHECK(rig.run("go:SendUnitWhisper(string.rep('a', 255), 0, p, false)").ok);
+    CHECK(rig.run("go:SendUnitSay(string.rep('a', 256), 0)").error.find("255") != std::string::npos);
+    CHECK(rig.run("go:SendUnitYell(string.rep('a', 256), 0)").error.find("255") != std::string::npos);
+    CHECK(rig.run("go:SendUnitWhisper(string.rep('a', 256), 0, p, false)").error.find("255") != std::string::npos);
 
     // Sounds recorded with optional player target
     REQUIRE(rig.host.woState(p).sounds.size() >= 3);
@@ -266,11 +284,18 @@ TEST_CASE("eluna worldobject: geometry, range, sound, chat, packet, Data and stu
         CHECK(r.error.find("not available on this core") != std::string::npos);
     }
 
-    // Bad arguments raise before reaching the host
+    // Bad arguments and non-finite search ranges raise before reaching the host
     CHECK_FALSE(rig.run("p:GetAngle('bad', 1)").ok);
     CHECK_FALSE(rig.run("p:IsInRange(mob, 'a', 5)").ok);
     CHECK_FALSE(rig.run("p:PlayDirectSound(-1)").ok);
     CHECK_FALSE(rig.run("p:SendPacket(123)").ok);
+    CHECK(rig.run("p:GetNearObjects(1/0)").error.find("range must be a finite number") != std::string::npos);
+    CHECK(rig.run("p:GetNearObject(0/0)").error.find("range must be a finite number") != std::string::npos);
+    CHECK(rig.run("p:GetNearObjects(-1/0)").error.find("range must be a finite number") != std::string::npos);
+    CHECK(rig.run("p:GetNearObjects(1e309)").error.find("range must be a finite number") != std::string::npos);
+    CHECK(rig.run("p:GetGameObjectsInRange(1/0)").error.find("range must be a finite number") != std::string::npos);
+    CHECK(rig.ok("return #p:GetNearObjects(1e30)") == "3");
+    CHECK(rig.ok("return #p:GetNearObjects(-5)") == "0");
 
     // Cross-map refusal
     rig.host.denyAccess = true;
@@ -335,18 +360,23 @@ TEST_CASE("eluna gameobject: reads, setters, RemoveFromWorld and SaveToDB stub")
     CHECK(gs.respawnTime == 30);
     CHECK_FALSE(gs.spawnedByDefault);
 
-    // SaveToDB refuses blocking WorldDatabase transactions on a game thread
+    // SaveToDB refuses unsynchronised shared spawn data writes from a map thread
     fl::CallResult save = rig.run("go:SaveToDB()");
     REQUIRE_FALSE(save.ok);
     CHECK(save.error.find("not available on this server") != std::string::npos);
+    CHECK(save.error.find("spawn data") != std::string::npos);
 
-    // RemoveFromWorld(true) refuses DB delete on game thread; RemoveFromWorld() removes from world
+    // RemoveFromWorld(true) refuses DB delete on game thread; RemoveFromWorld() removes from world and prunes Data()
+    rig.ok("go:Data().kept = true");
     fl::CallResult delDb = rig.run("go:RemoveFromWorld(true)");
     REQUIRE_FALSE(delDb.ok);
     CHECK(delDb.error.find("database delete") != std::string::npos);
 
     rig.ok("go:RemoveFromWorld()");
     CHECK(rig.ok("return tostring(go:IsInWorld())") == "false");
+    rig.host.add(go, info);
+    CHECK(rig.ok("return tostring(go:Data().kept)") == "nil");
+    rig.host.remove(go);
 
     // Gone GameObject raises on all methods
     for (std::string const& call : gameObjectCalls())
@@ -358,4 +388,41 @@ TEST_CASE("eluna gameobject: reads, setters, RemoveFromWorld and SaveToDB stub")
     }
     CHECK(rig.run("go:SaveToDB()").error.find("GameObject no longer exists") != std::string::npos);
     CHECK(rig.run("go:RemoveFromWorld()").error.find("GameObject no longer exists") != std::string::npos);
+}
+
+TEST_CASE("eluna worldobject: pure near-search range clamp and VisitAllObjects dispatch")
+{
+    CHECK(flh::clampSearchRange(-10.0) == 0.0f);
+    CHECK(flh::clampSearchRange(25.0) == 25.0f);
+    CHECK(flh::clampSearchRange(1e30) == 533.333f);
+    CHECK(flh::clampSearchRange(std::numeric_limits<double>::infinity()) == 533.333f);
+    CHECK(flh::clampSearchRange(-std::numeric_limits<double>::infinity()) == 533.333f);
+    CHECK(flh::clampSearchRange(std::numeric_limits<double>::quiet_NaN()) == 533.333f);
+
+    // Core GridDefines.h:91-92 splits GameObject and non-pet Creature into GridTypeMapContainer; only
+    // VisitAllObjects visits both containers so GetNearObjects/GetNearObject see creatures and game objects.
+    struct FakeCell
+    {
+        static void VisitWorldObjects(int*, std::vector<char const*>& out, float)
+        {
+            out.push_back("player");
+            out.push_back("corpse");
+        }
+        static void VisitGridObjects(int*, std::vector<char const*>& out, float)
+        {
+            out.push_back("creature");
+            out.push_back("gameobject");
+        }
+        static void VisitAllObjects(int* o, std::vector<char const*>& out, float r)
+        {
+            VisitWorldObjects(o, out, r);
+            VisitGridObjects(o, out, r);
+        }
+    };
+    int origin = 0;
+    std::vector<char const*> visited;
+    flh::visitAllNearObjects<FakeCell>(&origin, visited, flh::clampSearchRange(100.0));
+    REQUIRE(visited.size() == 4);
+    CHECK(std::string(visited[2]) == "creature");
+    CHECK(std::string(visited[3]) == "gameobject");
 }

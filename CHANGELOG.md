@@ -30,7 +30,7 @@ core without the optional C1-C4 core hooks.
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
 | Global | 110 | 94 | 4 | 12 | 85% | 89% |
-| Object | 30 | 15 | 15 | 0 | 50% | 100% |
+| Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 132 | 3 | 32 | 79% | 81% |
 | Player | 263 | 195 | 20 | 48 | 74% | 82% |
@@ -67,7 +67,7 @@ core without the optional C1-C4 core hooks.
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1051** | **100** | **292** | **73%** | **80%** |
+| **all** | **1443** | **1049** | **102** | **292** | **73%** | **80%** |
 
 ### Known limits
 
@@ -76,7 +76,7 @@ core without the optional C1-C4 core hooks.
   console. Read the [Security Model](knowledge/architecture/security.md) and [Limits](knowledge/architecture/limits.md)
   before enabling the module.
 * **Low-coverage classes.** AuraEffect, ElunaProcInfo and the spell events are not implemented (0%); Quest (31%),
-  WorldPacket (39%), Object (50%) and Player (74%) are
+  WorldPacket (39%), Object (43%) and Player (74%) are
   only partly covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG) are documented
   stubs that raise an error; documented Object, WorldObject and Player calls the core has no API for are stubs that raise
   `not available on this core`.

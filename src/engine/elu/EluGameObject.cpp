@@ -61,13 +61,14 @@ int gRemoveFromWorld(lua_State* L)
         return luaL_error(L, "RemoveFromWorld: database delete blocks the game thread");
     std::vector<EventValue> out;
     gameCall(L, h, "gameobject.removeFromWorld", {}, out, "RemoveFromWorld");
+    eng(L).removeWorldObjectData(h);
     return 0;
 }
-// The core writes the spawn through a synchronous WorldDatabase transaction, which must not run on a game thread.
+// GameObject::SaveToDB writes shared ObjectMgr spawn data (NewOrExistGameObjectData) without synchronisation from a map thread.
 int gSaveToDB(lua_State* L)
 {
     self(L, kGameObject);
-    return luaL_error(L, "SaveToDB: not available on this server (the write blocks the game thread)");
+    return luaL_error(L, "SaveToDB: not available on this server (unsynchronised shared spawn data write from a map thread)");
 }
 int gSetRespawnTime(lua_State* L)
 {

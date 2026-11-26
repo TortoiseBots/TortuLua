@@ -82,6 +82,7 @@ uint32_t argU16(lua_State* L, int idx, char const* what);
 int32_t argInt(lua_State* L, int idx, char const* what);
 int64_t argI64(lua_State* L, int idx, char const* what);
 float argFloat(lua_State* L, int idx, char const* what);
+double argFinite(lua_State* L, int idx, char const* what);
 std::string argStr(lua_State* L, int idx, char const* what);
 bool optBool(lua_State* L, int idx, bool def);
 // A required boolean (a documented argument with no default).

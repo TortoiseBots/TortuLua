@@ -123,16 +123,6 @@ int oSetScale(lua_State* L)
 {
     return actionOp(L, kObject, "object.setScale", "SetScale", {EventValue(argFloat(L, 2, "scale"))});
 }
-int oHasFlag(lua_State* L)
-{
-    return readOp(L, kObject, "object.hasFlag", "HasFlag",
-                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "index"))), EventValue(static_cast<int64_t>(argUInt(L, 3, "flag")))});
-}
-int oGetUInt32Value(lua_State* L)
-{
-    return readOp(L, kObject, "object.getUInt32", "GetUInt32Value",
-                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "index")))});
-}
 
 // ---- WorldObject ----
 int wGetName(lua_State* L)
@@ -243,6 +233,7 @@ int wData(lua_State* L)
         lua_newtable(L);
         lua_pushvalue(L, -1);
         lua_setfield(L, -3, key.c_str());
+        eng(L).trackWorldObjectData(h, key);
     }
     lua_remove(L, -2);
     return 1;
@@ -357,28 +348,43 @@ int wSendPacket(lua_State* L)
     sendPacketArg(L, h, 2, "SendPacket");
     return 0;
 }
+namespace
+{
+std::string chatTextArg(lua_State* L, int idx)
+{
+    std::string msg = argStr(L, idx, "msg");
+    if (msg.size() > 255)
+        luaL_error(L, "msg is longer than 255 bytes");
+    return msg;
+}
+}  // namespace
+
 int wSendUnitSay(lua_State* L)
 {
-    std::string const msg = argStr(L, 2, "msg");
+    std::string const msg = chatTextArg(L, 2);
     return actionOp(L, kWorldObject, "worldobject.say", "SendUnitSay",
                     {EventValue(msg), EventValue(static_cast<int64_t>(argUInt(L, 3, "language")))});
 }
 int wSendUnitYell(lua_State* L)
 {
-    std::string const msg = argStr(L, 2, "msg");
+    std::string const msg = chatTextArg(L, 2);
     return actionOp(L, kWorldObject, "worldobject.yell", "SendUnitYell",
                     {EventValue(msg), EventValue(static_cast<int64_t>(argUInt(L, 3, "language")))});
 }
 int wSendUnitWhisper(lua_State* L)
 {
-    std::string const msg = argStr(L, 2, "msg");
+    std::string const msg = chatTextArg(L, 2);
     HandleData const& receiver = objArg(L, 4, kPlayer, "receiver");
     return actionOp(L, kWorldObject, "worldobject.whisper", "SendUnitWhisper",
                     {EventValue(msg), EventValue(static_cast<int64_t>(argUInt(L, 3, "lang"))), EventValue(receiver),
                      EventValue(optBool(L, 5, false))});
 }
 
-float rangeArg(lua_State* L, int idx) { return static_cast<float>(luaL_optnumber(L, idx, 533.33333)); }
+// The search radius: the core turns it into grid cells with a float-to-int conversion, so it must be finite.
+float rangeArg(lua_State* L, int idx)
+{
+    return lua_isnoneornil(L, idx) ? 533.333f : static_cast<float>(argFinite(L, idx, "range"));
+}
 
 int rangeList(lua_State* L, int kind, uint32_t entry, int hostile, int dead)
 {
@@ -534,9 +540,8 @@ void registerObjectMethods(lua_State* L)
         {"ToCreature", fl::safe<oToCreature>},   {"ToGameObject", fl::safe<oToGameObject>},
         {"ToCorpse", fl::safe<oToCorpse>},
         {"ToUnit", fl::safe<oToUnit>},           {"IsInWorld", fl::safe<oIsInWorld>},
-        {"GetScale", fl::safe<oGetScale>},
-        {"SetScale", fl::safe<oSetScale>},       {"HasFlag", fl::safe<oHasFlag>},
-        {"GetUInt32Value", fl::safe<oGetUInt32Value>}, {nullptr, nullptr}};
+        {"GetScale", fl::safe<oGetScale>},       {"SetScale", fl::safe<oSetScale>},
+        {nullptr, nullptr}};
     addMethods(L, "Object", regs);
 }
 

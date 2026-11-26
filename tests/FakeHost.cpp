@@ -1,6 +1,7 @@
 #include "FakeHost.h"
 
 #include "CreatureLookup.h"
+#include "NearSearch.h"
 
 #include "engine/GuidText.h"
 
@@ -2616,6 +2617,7 @@ fl::HandleData handleFromObjKey(std::tuple<int, uint64_t, uint64_t> const& key, 
 std::vector<fl::HandleData> FakeHost::objectsInRange(fl::HandleData const& self, int kind, float range, uint32_t entry,
                                                      int hostile, int dead)
 {
+    range = flh::clampSearchRange(range);
     std::vector<std::pair<double, fl::HandleData>> found;
     auto selfIt = _objects.find(keyOf(self));
     if (selfIt == _objects.end())
@@ -2853,7 +2855,7 @@ bool FakeHost::worldObjectStateCall(fl::HandleData const& self, std::string cons
     }
     else if (op == "worldobject.getNearObjects" || op == "worldobject.getNearObject")
     {
-        double const range = doubleAt(args, 0, 533.33333);
+        double const range = static_cast<double>(flh::clampSearchRange(doubleAt(args, 0, 533.33333)));
         uint32_t const typeMask = static_cast<uint32_t>(intAt(args, 1, 0));
         uint32_t const entry = static_cast<uint32_t>(intAt(args, 2, 0));
         int const hostile = static_cast<int>(intAt(args, 3, 0));

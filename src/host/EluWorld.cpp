@@ -10,6 +10,7 @@
 #include "CharacterCache.h"
 #include "DataSql.h"
 #include "GuildWrite.h"
+#include "NearSearch.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
@@ -2041,10 +2042,6 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         obj->SetObjectScale(static_cast<float>(dArg(args, 0, 1.0)));
         return true;
     }
-    // The pinned core has no generic update-field accessors (GetUInt32Value(index) / HasFlag(index, flag) were
-    // removed): the two Object methods answer "not available" (docs/E0-E1-NOTES.md).
-    if (name == "object.hasFlag" || name == "object.getUInt32")
-        return false;
     if (name == "worldobject.getName")
     {
         out.emplace_back(obj->GetName());
@@ -2266,7 +2263,7 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
     {
         if (!obj->GetMap())
             return true;
-        float const range = static_cast<float>(dArg(args, 0, 533.33333));
+        float const range = flh::clampSearchRange(dArg(args, 0, 533.333));
         uint32 const typeMask = static_cast<uint32>(iArg(args, 1, 0));
         uint32 const entry = static_cast<uint32>(iArg(args, 2, 0));
         int const hostile = static_cast<int>(iArg(args, 3, 0));
@@ -2310,7 +2307,7 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 found.emplace_back(dist, *h);
         };
         Trinity::WorldObjectWorker worker(obj, work);
-        Cell::VisitWorldObjects(obj, worker, range);
+        flh::visitAllNearObjects<::Cell>(obj, worker, range);
         std::sort(found.begin(), found.end(),
                   [](auto const& a, auto const& b) { return a.first < b.first; });
         if (name == "worldobject.getNearObject")
@@ -5522,6 +5519,7 @@ void ForeverHost::runCommand(std::string const& line)
 std::vector<fl::HandleData> ForeverHost::objectsInRange(fl::HandleData const& self, int kind, float range,
                                                         uint32_t entry, int hostile, int dead)
 {
+    range = flh::clampSearchRange(range);
     std::vector<fl::HandleData> out;
     WorldObject* me = findObject(self);
     if (!me || !me->GetMap())

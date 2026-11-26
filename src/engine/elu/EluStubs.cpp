@@ -86,9 +86,9 @@ void registerStubMethods(lua_State* L)
     // Object generic update-field and flag accessors: this core stores typed update-field fragments rather than a
     // flat indexable values array.
     for (char const* m :
-         {"GetByteValue", "GetFloatValue", "GetInt32Value", "GetUInt16Value", "GetUInt64Value", "RemoveFlag",
-          "SetByteValue", "SetFlag", "SetFloatValue", "SetInt16Value", "SetInt32Value", "SetUInt16Value",
-          "SetUInt32Value", "SetUInt64Value", "UpdateUInt32Value"})
+         {"GetByteValue", "GetFloatValue", "GetInt32Value", "GetUInt16Value", "GetUInt32Value", "GetUInt64Value",
+          "HasFlag", "RemoveFlag", "SetByteValue", "SetFlag", "SetFloatValue", "SetInt16Value", "SetInt32Value",
+          "SetUInt16Value", "SetUInt32Value", "SetUInt64Value", "UpdateUInt32Value"})
         addCoreStubMethod(L, "Object", m);
     // WorldObject bitmask phasing: this core uses PhaseShift phase ids rather than a 32-bit phase mask.
     for (char const* m : {"GetPhaseMask", "SetPhaseMask"})

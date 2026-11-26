@@ -35,18 +35,17 @@ function Object:GetTypeId() end
 ---@return any
 function Object:GetUInt16Value() end
 
----@param index any
+---@deprecated not available (this core)
 ---@return any
-function Object:GetUInt32Value(index) end
+function Object:GetUInt32Value() end
 
 ---@deprecated not available (this core)
 ---@return any
 function Object:GetUInt64Value() end
 
----@param index any
----@param flag any
+---@deprecated not available (this core)
 ---@return any
-function Object:HasFlag(index, flag) end
+function Object:HasFlag() end
 
 ---@return any
 function Object:IsInWorld() end

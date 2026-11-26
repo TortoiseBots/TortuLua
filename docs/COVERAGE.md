@@ -11,7 +11,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
 | Global | 110 | 94 | 4 | 12 | 85% | 89% |
-| Object | 30 | 15 | 15 | 0 | 50% | 100% |
+| Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 132 | 3 | 32 | 79% | 81% |
 | Player | 263 | 195 | 20 | 48 | 74% | 82% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1051** | **100** | **292** | **73%** | **80%** |
+| **all** | **1443** | **1049** | **102** | **292** | **73%** | **80%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -203,9 +203,9 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetScale` | implemented |  |
 | `GetTypeId` | implemented |  |
 | `GetUInt16Value` | **stub** | stub: not available (this core) |
-| `GetUInt32Value` | implemented |  |
+| `GetUInt32Value` | **stub** | stub: not available (this core) |
 | `GetUInt64Value` | **stub** | stub: not available (this core) |
-| `HasFlag` | implemented |  |
+| `HasFlag` | **stub** | stub: not available (this core) |
 | `IsInWorld` | implemented |  |
 | `IsPlayer` | implemented |  |
 | `RemoveFlag` | **stub** | stub: not available (this core) |
