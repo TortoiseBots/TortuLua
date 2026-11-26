@@ -3,7 +3,7 @@
 ---@class Guild
 local Guild = {}
 
----an explicit rankId the guild has no rank for is refused and nothing is written (the core would otherwise store it and leave the member without a rank)
+---an explicit rankId is validated by the core: the member is added at the lowest rank, then moved to rankId only if the guild has that rank; if it has not, the member stays at the lowest rank and a warning is logged (the call is queued, so it cannot return the refusal)
 ---@param player any
 ---@param rankId any
 ---@return any
