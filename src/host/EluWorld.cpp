@@ -507,6 +507,20 @@ SpellInfoBoolOp const kSpellInfoBoolOps[] = {
     {"spellinfo.isProfession", [](SpellInfo const* s) { return s->IsProfession(); }},
     {"spellinfo.isStackableOnOneSlotWithDifferentCasters",
      [](SpellInfo const* s) { return s->IsStackableOnOneSlotWithDifferentCasters(); }},
+    {"spellinfo.isSelfCast",
+     [](SpellInfo const* s) {
+         bool hasEffect = false;
+         for (SpellEffectInfo const& eff : s->GetEffects())
+         {
+             if (!eff.IsEffect())
+                 continue;
+             hasEffect = true;
+             if (eff.TargetA.GetTarget() != TARGET_UNIT_CASTER ||
+                 (eff.TargetB.GetTarget() != 0 && eff.TargetB.GetTarget() != TARGET_UNIT_CASTER))
+                 return false;
+         }
+         return hasEffect;
+     }},
 };
 }  // namespace
 
@@ -1922,6 +1936,14 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             else if (name == "spellinfo.getEffectChainTarget") out.emplace_back(static_cast<int64_t>(eff.ChainTargets));
             else if (name == "spellinfo.getEffectDamageMultiplier")
                 out.emplace_back(static_cast<double>(eff.CalcDamageMultiplier(nullptr)));
+            else if (name == "spellinfo.getEffectDieSides")
+            {
+                uint32 const vanillaId = sSpellMgr->GetClassicValueSpellId(info->Id);
+                ClassicSpellValue::Value const* vanilla =
+                    ClassicSpellValue::AppliesToSpell(vanillaId) ? sSpellMgr->GetClassicSpellValue(vanillaId, effIdx)
+                                                                 : nullptr;
+                out.emplace_back(static_cast<int64_t>(vanilla ? vanilla->DieSides : 0));
+            }
             else if (name == "spellinfo.getEffectHasRadius")
                 out.emplace_back(eff.HasRadius(SpellTargetIndex::TargetA));
             else if (name == "spellinfo.getEffectImplicitTargetType")

@@ -720,6 +720,7 @@ TEST_CASE("spellinfo: extended scalar, predicate, effect, target and stub method
     eff0.basePoints = -45;
     eff0.calcValue = -44;
     eff0.chainTarget = 4;
+    eff0.dieSides = 13;
     eff0.implicitTargetType = 2;
     eff0.effectIndex = 0;
     eff0.itemType = 999;
@@ -823,6 +824,7 @@ TEST_CASE("spellinfo: extended scalar, predicate, effect, target and stub method
     CHECK(call(rig, "info:GetEffectBasePoints(0)") == "-45");
     CHECK(call(rig, "info:GetEffectCalcValue(0)") == "-44");
     CHECK(call(rig, "info:GetEffectChainTarget(0)") == "4");
+    CHECK(call(rig, "info:GetEffectDieSides(0)") == "13");
     CHECK(call(rig, "info:GetEffectHasRadius(0)") == "true");
     CHECK(call(rig, "info:GetEffectImplicitTargetType(0)") == "2");
     CHECK(call(rig, "info:GetEffectIndex(0)") == "0");
@@ -859,13 +861,41 @@ TEST_CASE("spellinfo: extended scalar, predicate, effect, target and stub method
     CHECK(call(rig, "info:GetEffectTargetBTarget(0)") == "12");
     CHECK(call(rig, "info:GetEffectTargetBIsArea(0)") == "false");
 
+    // Self-cast detection from effect targets (TARGET_UNIT_CASTER == 1).
+    CHECK(call(rig, "info:IsSelfCast()") == "false");
+    {
+        FakeHost::FakeSpellInfo& selfInfo = rig.host.spellInfo(733);
+        FakeHost::FakeSpellInfo::FakeEffect se0;
+        se0.isEffect = true;
+        se0.targetA.target = 1;
+        se0.targetB.target = 0;
+        FakeHost::FakeSpellInfo::FakeEffect se1;
+        se1.isEffect = false;
+        se1.targetA.target = 6;
+        selfInfo.effectSlots = {se0, se1};
+        CHECK(call(rig, "GetSpellInfo(733):IsSelfCast()") == "true");
+
+        FakeHost::FakeSpellInfo& areaInfo = rig.host.spellInfo(734);
+        FakeHost::FakeSpellInfo::FakeEffect ae0;
+        ae0.isEffect = true;
+        ae0.targetA.target = 1;
+        ae0.targetB.target = 20;
+        areaInfo.effectSlots = {ae0};
+        CHECK(call(rig, "GetSpellInfo(734):IsSelfCast()") == "false");
+
+        rig.host.spellInfo(735);
+        CHECK(call(rig, "GetSpellInfo(735):IsSelfCast()") == "false");
+    }
+
     // Bounds checks and core stubs.
     CHECK(errorOf(rig, "return info:GetEffectType(1)").find("is not an effect") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetEffectDieSides(1)").find("is not an effect") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetEffectDieSides(-1)").find("0..4294967295") != std::string::npos);
     CHECK(errorOf(rig, "return info:GetEffectSpellClassMask(0, 3)").find("0..2") != std::string::npos);
     CHECK(errorOf(rig, "return info:GetSpellVisual(2)").find("0..1") != std::string::npos);
     CHECK(errorOf(rig, "return info:GetDiminishingReturnsGroupForSpell()").find("boolean") != std::string::npos);
-    for (char const* stubCall : {"info:GetEffectDieSides(0)", "info:GetManaPerSecondPerLevel()", "info:GetPriority()",
-                                 "info:GetRuneCostID()", "info:IsAffectedBySpellMod()", "info:IsSelfCast()"})
+    for (char const* stubCall : {"info:GetManaPerSecondPerLevel()", "info:GetPriority()",
+                                 "info:GetRuneCostID()", "info:IsAffectedBySpellMod()"})
     {
         std::string const err = errorOf(rig, std::string("return ") + stubCall);
         INFO("stub " << stubCall << ": " << err);

@@ -109,6 +109,11 @@ EVENT_NOTES = {
 }
 
 # Engine caveats of a documented name, from README.md ('Eluna mode') and knowledge/modes/eluna-mode.md.
+CLASS_NOTES = {
+    "AuraEffect": "implemented, but unreachable from scripts until spell events exist",
+    "ElunaProcInfo": "implemented, but unreachable from scripts until spell events exist",
+}
+
 METHOD_NOTES = {
     ("Guild", "AddMember"): "an explicit rankId is validated by the core: the member is added at the lowest rank, then "
                             "moved to rankId only if the guild has that rank; if it has not, the member stays at the "
@@ -119,6 +124,8 @@ METHOD_NOTES = {
                                      "team and faction unchanged",
     ("Unit", "SetName"): "non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist "
                          "an oversized name); capped at 64 bytes",
+    ("SpellInfo", "GetEffectDieSides"): "returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing "
+                                        "effects; 0 for others)",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
 }
 GLOBAL_NOTES = {
@@ -868,6 +875,8 @@ class Coverage:
                     row = dict(row)
                     row["note"] = (row.get("note") + "; " if row.get("note") else "") + METHOD_NOTES[(cls, name)]
                 self.json["classes"].setdefault(cls, {"inherits": self.e.inherits.get(cls), "methods": {}})
+                if cls in CLASS_NOTES:
+                    self.json["classes"][cls]["note"] = CLASS_NOTES[cls]
                 self.json["classes"][cls]["methods"][name] = row
                 rows.append((name, row))
             extra = []
@@ -887,8 +896,10 @@ class Coverage:
                 self.json["missing"].setdefault("classes", {})[cls] = missing
 
             lines = [f"### Class `{cls}`" +
-                     (f" (inherits `{self.e.inherits[cls]}`)" if self.e.inherits.get(cls) else ""), "",
-                     "| Documented method | Status | Note |", "|---|---|---|"]
+                     (f" (inherits `{self.e.inherits[cls]}`)" if self.e.inherits.get(cls) else ""), ""]
+            if cls in CLASS_NOTES:
+                lines += [f"Note: {CLASS_NOTES[cls]}.", ""]
+            lines += ["| Documented method | Status | Note |", "|---|---|---|"]
             if not documented_methods:
                 lines = [f"### Class `{cls}` (engine only: no documented counterpart)", ""]
             for name, row in rows:
@@ -1064,8 +1075,11 @@ class Coverage:
                   "`Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the "
                   "documented stubs (the call exists and raises the documented error instead of `attempt to call a nil "
                   "value`). A class row counts the class's own documented methods; inherited ones are counted on the "
-                  "class the documentation declares them on.",
-                  "",
+                  "class the documentation declares them on."]
+        class_notes = [(c, CLASS_NOTES[c]) for c in self.class_order if c in CLASS_NOTES and c in self.json["classes"]]
+        if class_notes:
+            lines += ["", "Class notes: " + "; ".join(f"`{c}` — {n}" for c, n in class_notes) + "."]
+        lines += ["",
                   f"Test-mode only: {self.test_mode_count} names in {len(self.e.test_mode)} toolkit tables (`Event`, "
                   "`Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and "
                   "are not part of the eluna surface (appendix A).",

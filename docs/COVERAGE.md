@@ -31,7 +31,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Vehicle | 6 | 0 | 6 | 0 | 0% | 100% |
 | AuraEffect | 23 | 23 | 0 | 0 | 100% | 100% |
 | ElunaProcInfo | 28 | 27 | 1 | 0 | 96% | 100% |
-| SpellInfo | 190 | 184 | 6 | 0 | 97% | 100% |
+| SpellInfo | 190 | 186 | 4 | 0 | 98% | 100% |
 | events: server | 34 | 31 | 3 | 0 | 91% | 100% |
 | events: player | 51 | 27 | 24 | 0 | 53% | 100% |
 | events: creature | 28 | 27 | 1 | 0 | 96% | 100% |
@@ -48,9 +48,11 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1231** | **116** | **96** | **85%** | **93%** |
+| **all** | **1443** | **1233** | **114** | **96** | **85%** | **93%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
+
+Class notes: `AuraEffect` — implemented, but unreachable from scripts until spell events exist; `ElunaProcInfo` — implemented, but unreachable from scripts until spell events exist.
 
 Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and are not part of the eluna surface (appendix A).
 
@@ -1158,6 +1160,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 ### Class `AuraEffect`
 
+Note: implemented, but unreachable from scripts until spell events exist.
+
 | Documented method | Status | Note |
 |---|---|---|
 | `CalculateAmount` | implemented |  |
@@ -1184,6 +1188,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetCanBeRecalculated` | implemented |  |
 | `SetPeriodicTimer` | implemented |  |
 ### Class `ElunaProcInfo`
+
+Note: implemented, but unreachable from scripts until spell events exist.
 
 | Documented method | Status | Note |
 |---|---|---|
@@ -1271,7 +1277,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetEffectCalcValue` | implemented |  |
 | `GetEffectChainTarget` | implemented |  |
 | `GetEffectDamageMultiplier` | implemented |  |
-| `GetEffectDieSides` | **stub** | stub: not available (this core) |
+| `GetEffectDieSides` | implemented | returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others) |
 | `GetEffectHasRadius` | implemented |  |
 | `GetEffectImplicitTargetType` | implemented |  |
 | `GetEffectIndex` | implemented |  |
@@ -1400,7 +1406,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsRanked` | implemented |  |
 | `IsRankOf` | implemented |  |
 | `IsRequiringDeadTarget` | implemented |  |
-| `IsSelfCast` | **stub** | stub: not available (this core) |
+| `IsSelfCast` | implemented |  |
 | `IsSingleTarget` | implemented |  |
 | `IsStackableOnOneSlotWithDifferentCasters` | implemented |  |
 | `IsStackableWithRanks` | implemented |  |

@@ -2035,6 +2035,24 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
                 out.emplace_back(info.*(f.member));
                 return true;
             }
+        if (op == "spellinfo.isSelfCast")
+        {
+            bool hasEffect = false;
+            bool selfCast = true;
+            for (FakeSI::FakeEffect const& e : info.effectSlots)
+            {
+                if (!e.isEffect)
+                    continue;
+                hasEffect = true;
+                if (e.targetA.target != 1 || (e.targetB.target != 0 && e.targetB.target != 1))
+                {
+                    selfCast = false;
+                    break;
+                }
+            }
+            out.emplace_back(hasEffect && selfCast);
+            return true;
+        }
         for (IntField const& f : kExtInts)
             if (op == f.op)
             {
@@ -2130,6 +2148,7 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
             else if (op == "spellinfo.getEffectCalcValue") out.emplace_back(e.calcValue);
             else if (op == "spellinfo.getEffectChainTarget") out.emplace_back(e.chainTarget);
             else if (op == "spellinfo.getEffectDamageMultiplier") out.emplace_back(e.damageMultiplier);
+            else if (op == "spellinfo.getEffectDieSides") out.emplace_back(e.dieSides);
             else if (op == "spellinfo.getEffectHasRadius") out.emplace_back(e.hasRadius);
             else if (op == "spellinfo.getEffectImplicitTargetType") out.emplace_back(e.implicitTargetType);
             else if (op == "spellinfo.getEffectIndex") out.emplace_back(e.effectIndex);

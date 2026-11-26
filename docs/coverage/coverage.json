@@ -4088,7 +4088,8 @@
      "status": "implemented",
      "declared": "AuraEffect"
     }
-   }
+   },
+   "note": "implemented, but unreachable from scripts until spell events exist"
   },
   "ElunaProcInfo": {
    "inherits": null,
@@ -4206,7 +4207,8 @@
      "status": "implemented",
      "declared": "ElunaProcInfo"
     }
-   }
+   },
+   "note": "implemented, but unreachable from scripts until spell events exist"
   },
   "SpellInfo": {
    "inherits": null,
@@ -4420,9 +4422,9 @@
      "declared": "SpellInfo"
     },
     "GetEffectDieSides": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
-     "declared": "SpellInfo"
+     "status": "implemented",
+     "declared": "SpellInfo",
+     "note": "returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others)"
     },
     "GetEffectHasRadius": {
      "status": "implemented",
@@ -4941,8 +4943,7 @@
      "declared": "SpellInfo"
     },
     "IsSelfCast": {
-     "status": "stub",
-     "note": "stub: not available (this core)",
+     "status": "implemented",
      "declared": "SpellInfo"
     },
     "IsSingleTarget": {

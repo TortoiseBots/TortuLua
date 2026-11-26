@@ -283,6 +283,7 @@ int siIsAffectedBySpellMods(lua_State* L)
 {
     return siRead(L, "spellinfo.isAffectedBySpellMods", "IsAffectedBySpellMods");
 }
+int siIsSelfCast(lua_State* L) { return siRead(L, "spellinfo.isSelfCast", "IsSelfCast"); }
 
 // ---- methods that take another SpellInfo ----
 int siNeedsToBeTriggeredByCaster(lua_State* L)
@@ -466,6 +467,11 @@ int siGetEffectChainTarget(lua_State* L)
 int siGetEffectDamageMultiplier(lua_State* L)
 {
     return siRead(L, "spellinfo.getEffectDamageMultiplier", "GetEffectDamageMultiplier",
+                  {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
+}
+int siGetEffectDieSides(lua_State* L)
+{
+    return siRead(L, "spellinfo.getEffectDieSides", "GetEffectDieSides",
                   {EventValue(static_cast<int64_t>(argUInt(L, 2, "effIndex")))});
 }
 int siGetEffectHasRadius(lua_State* L)
@@ -763,6 +769,7 @@ void registerSpellInfoMethods(lua_State* L)
         {"GetEffectCalcValue", fl::safe<siGetEffectCalcValue>},
         {"GetEffectChainTarget", fl::safe<siGetEffectChainTarget>},
         {"GetEffectDamageMultiplier", fl::safe<siGetEffectDamageMultiplier>},
+        {"GetEffectDieSides", fl::safe<siGetEffectDieSides>},
         {"GetEffectHasRadius", fl::safe<siGetEffectHasRadius>},
         {"GetEffectImplicitTargetType", fl::safe<siGetEffectImplicitTargetType>},
         {"GetEffectIndex", fl::safe<siGetEffectIndex>},
@@ -815,6 +822,7 @@ void registerSpellInfoMethods(lua_State* L)
         {"IsPrimaryProfessionFirstRank", fl::safe<siIsPrimaryProfessionFirstRank>},
         {"IsProfession", fl::safe<siIsProfession>},
         {"IsProfessionOrRiding", fl::safe<siIsProfessionOrRiding>},
+        {"IsSelfCast", fl::safe<siIsSelfCast>},
         {"IsStackableOnOneSlotWithDifferentCasters", fl::safe<siIsStackableOnOneSlotWithDifferentCasters>},
         {"NeedsComboPoints", fl::safe<siNeedsComboPoints>},
         {"SpellCancelsAuraEffect", fl::safe<siSpellCancelsAuraEffect>},

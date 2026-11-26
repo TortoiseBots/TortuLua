@@ -186,9 +186,10 @@ function SpellInfo:GetEffectChainTarget(effIndex) end
 ---@return any
 function SpellInfo:GetEffectDamageMultiplier(effIndex) end
 
----@deprecated not available (this core)
+---returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others)
+---@param effIndex any
 ---@return any
-function SpellInfo:GetEffectDieSides() end
+function SpellInfo:GetEffectDieSides(effIndex) end
 
 ---@param effIndex any
 ---@return any
@@ -632,7 +633,6 @@ function SpellInfo:IsRankOf(spellInfo) end
 ---@return any
 function SpellInfo:IsRequiringDeadTarget() end
 
----@deprecated not available (this core)
 ---@return any
 function SpellInfo:IsSelfCast() end
 

@@ -729,6 +729,7 @@ public:
             bool isEffect = false, isAura = false, isAreaAuraEffect = false, isTargetingArea = false;
             bool isUnitOwnedAuraEffect = false, hasRadius = false;
             int64_t auraType = 0, effectType = 0, amplitude = 0, basePoints = 0, calcValue = 0, chainTarget = 0;
+            int64_t dieSides = 0;
             int64_t implicitTargetType = 0, effectIndex = 0, itemType = 0, mechanic = 0, mechanicMask = 0;
             int64_t miscValue = 0, miscValueB = 0, providedTargetMask = 0, triggerSpell = 0, usedTargetObjectType = 0;
             int64_t spellClassMask[3] = {};
