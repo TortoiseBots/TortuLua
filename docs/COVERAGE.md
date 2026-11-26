@@ -185,7 +185,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetBotsOfMaster` | our extension (B1): the bots a player masters or commands |
 | `GetBotsOfOwner` | our extension (B1): the bots of a player's Battle.net account |
 | `IsBotApiAvailable` | our extension (B1): the bot API is built into this server |
-| `RegisterBotEvent` | our extension (B1): the nine bot events, world state only |
+| `RegisterBotEvent` | our extension (B1): the ten bot events, world state only |
 | `RegisterCommand` | our extension (E3): a GM command slot, README 'Writing scripts' |
 | `print` | Lua sandbox builtin (Api.cpp registerCommon, both modes) |
 | `require` | Lua sandbox module loader (Api.cpp registerCommon, both modes) |
@@ -1689,6 +1689,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | 7 | WIPE |
 | 8 | RUN_STEP |
 | 9 | RUN_STOPPED |
+| 10 | RUN_LOST |
 
 
 ## Appendix A: test-mode surface (not available in eluna mode)

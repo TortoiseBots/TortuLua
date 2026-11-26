@@ -135,6 +135,7 @@ void stopEngine()
     if (!g_states)
         return;
     fl::Engine* world = g_live.load(std::memory_order_acquire);
+    pumpBots();
     if (world && g_settings.engine.mode == fl::EngineMode::Eluna)
     {
         fl::EventResult ignored = world->emitEluna(fl::EluKind::Server, 0, 15, {});   // SHUTDOWN

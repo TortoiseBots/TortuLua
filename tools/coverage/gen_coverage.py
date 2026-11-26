@@ -73,7 +73,7 @@ KNOWN_EXTRA_GLOBALS = {
     "GetBotsOfOwner": "our extension (B1): the bots of a player's Battle.net account",
     "GetBotsOfMaster": "our extension (B1): the bots a player masters or commands",
     "GetBotsInGroup": "our extension (B1): the bots of a group",
-    "RegisterBotEvent": "our extension (B1): the nine bot events, world state only",
+    "RegisterBotEvent": "our extension (B1): the ten bot events, world state only",
     "ClearBotEvents": "our extension (B1): clears the bot handlers",
     # Our bot API (stage B2): the party-level order calls; the per-bot orders are Bot methods.
     "BotsInterrupt": "our extension (B2): the party's interrupt for a unit, one order returned",

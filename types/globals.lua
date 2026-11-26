@@ -530,7 +530,7 @@ function IsBotApiAvailable() end
 ---@return any
 function print(...) end
 
----our extension (B1): the nine bot events, world state only
+---our extension (B1): the ten bot events, world state only
 ---@param event any
 ---@param arg2 any
 ---@param arg3 any

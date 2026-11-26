@@ -210,7 +210,7 @@ int pRegisterBotEvent(lua_State* L)
     if (eng(L).stateMapId() >= 0)
         return luaL_error(L, "RegisterBotEvent: only available in the world state");
     uint32_t event = argUInt(L, 1, "event");
-    if (event < 1 || event > 9)
+    if (event < 1 || event > 10)
         return luaL_error(L, "RegisterBotEvent: unknown event id %d", static_cast<int>(event));
     luaL_checktype(L, 2, LUA_TFUNCTION);
     uint32_t shots = static_cast<uint32_t>(optUInt(L, 3, 0));
@@ -234,7 +234,7 @@ int pClearBotEvents(lua_State* L)
     if (!lua_isnoneornil(L, 1))
     {
         uint32_t id = argUInt(L, 1, "event_type");
-        if (id < 1 || id > 9)
+        if (id < 1 || id > 10)
             return luaL_error(L, "ClearBotEvents: unknown event id %d", static_cast<int>(id));
         event = id;
     }

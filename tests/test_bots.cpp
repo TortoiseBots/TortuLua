@@ -1,5 +1,5 @@
 // Bot API B1 (the maintainers' bot API specification sections 3-6): the null provider, every getter, the name-ordered lists and
-// lookups, RegisterBotEvent in a map state, all nine events with their argument order and exactly once, stale/relog/
+// lookups, RegisterBotEvent in a map state, all ten events with their argument order and exactly once, stale/relog/
 // removed handles, the test-mode names, the snapshot rebuild policy and the cross-thread snapshot swap.
 #include "Support.h"
 
@@ -62,7 +62,8 @@ char const* kRecorder =
     "for _, b in ipairs(bots) do names[#names+1] = b:GetName() end "
     "add(e .. ' wipe ' .. tostring(g) .. ' ' .. #bots .. ' ' .. table.concat(names, ',')) end) "
     "RegisterBotEvent(8, function(e, l, p, s, leg) add(e .. ' step ' .. tostring(l) .. ' ' .. p .. ' ' .. s .. ' ' .. leg) end) "
-    "RegisterBotEvent(9, function(e, l, p, s, w) add(e .. ' stopped ' .. tostring(l) .. ' ' .. p .. ' ' .. s .. ' ' .. w) end)";
+    "RegisterBotEvent(9, function(e, l, p, s, w) add(e .. ' stopped ' .. tostring(l) .. ' ' .. p .. ' ' .. s .. ' ' .. w) end) "
+    "RegisterBotEvent(10, function(e, count) add(e .. ' lost ' .. count) end)";
 
 std::string logText(Rig& rig) { return rig.ok("return table.concat(log, '|')"); }
 }  // namespace
@@ -181,7 +182,7 @@ TEST_CASE("bots: the lists are in name order and the lookups answer")
 
 // MORE_TESTS
 
-TEST_CASE("bots: all nine events, with the spec's argument order, exactly once")
+TEST_CASE("bots: all ten events, with the spec's argument order, exactly once")
 {
     FakeBotProvider provider;
     BotProviderGuard guard(&provider);
@@ -260,7 +261,7 @@ TEST_CASE("bots: all nine events, with the spec's argument order, exactly once")
     rig.e().pumpBots();
     CHECK(logText(rig) == "");
 
-    // RUN_STEP and RUN_STOPPED from the ring, in ring order; `done` and `stopped` are the two state words.
+    // RUN_STEP, RUN_STOPPED and RUN_LOST from the ring, in ring order; `done` and `stopped` are the two state words.
     rig.ok("log = {}");
     fl::RunEventInfo step;
     step.kind = fl::RunEventKind::Step;
@@ -278,11 +279,14 @@ TEST_CASE("bots: all nine events, with the spec's argument order, exactly once")
     stop.leader = master;
     stop.plan = "deadmines";
     stop.why = "wipe";
-    provider.runRing = {step, done, stop};
+    fl::RunEventInfo lost;
+    lost.kind = fl::RunEventKind::Lost;
+    lost.lost = 12;
+    provider.runRing = {step, done, stop, lost};
     rig.e().pumpBots();
     CHECK(logText(rig) == "8 step " + rig.host.guidToString(master.guid) + " deadmines 2 1|" + "9 stopped " +
                               rig.host.guidToString(master.guid) + " deadmines done all bosses dead|" + "9 stopped " +
-                              rig.host.guidToString(master.guid) + " deadmines stopped wipe");
+                              rig.host.guidToString(master.guid) + " deadmines stopped wipe|10 lost 12");
 
     // BOT_REMOVED: the handle it hands out never resolves.
     rig.ok("log = {}");
@@ -554,4 +558,123 @@ TEST_CASE("bots: a snapshot swap while a map state reads (TSan)")
     pump.join();
     CHECK(reads > 0);
     states.shutdown();
+}
+
+TEST_CASE("bots: FinalTakeAfterUnavailable")
+{
+    FakeBotProvider provider;
+    BotProviderGuard guard(&provider);
+    Rig rig;
+    rig.ok("log = {} "
+           "Event.on('bot.run_stop', function(l, p, s, w) "
+           "log[#log+1] = 'stop ' .. l:kind() .. ' ' .. l:guid() .. ' ' .. p .. ' ' .. s .. ' ' .. w end)");
+    fl::HandleData const leader = FakeHost::player(100);
+    provider.next.bots = {FakeBotProvider::bot(7, "Alpha")};
+    rig.e().pumpBots();
+    CHECK(fl::botHub().snapshot()->bots.size() == 1);
+
+    fl::RunEventInfo stop;
+    stop.kind = fl::RunEventKind::Stop;
+    stop.leader = leader;
+    stop.plan = "deadmines";
+    stop.why = "shutdown";
+    provider.runRing = {stop};
+    provider.isAvailable = false;
+    rig.e().pumpBots();
+
+    CHECK(rig.ok("return table.concat(log, '|')") ==
+          "stop player " + rig.host.guidToString(leader.guid) + " deadmines stopped shutdown");
+    CHECK(fl::botHub().snapshot()->bots.empty());
+}
+
+TEST_CASE("bots: FinalTakeOnlyOnce")
+{
+    FakeBotProvider provider;
+    BotProviderGuard guard(&provider);
+    Rig rig;
+    provider.next.bots = {FakeBotProvider::bot(7, "Alpha")};
+    rig.e().pumpBots();
+    int const drainsBeforeFlip = provider.runDrains;
+
+    fl::RunEventInfo stop;
+    stop.kind = fl::RunEventKind::Stop;
+    stop.leader = FakeHost::player(100);
+    stop.plan = "deadmines";
+    stop.why = "shutdown";
+    provider.runRing = {stop};
+    provider.isAvailable = false;
+
+    rig.e().pumpBots();
+    CHECK(provider.runDrains == drainsBeforeFlip + 1);
+    rig.e().pumpBots();
+    rig.e().pumpBots();
+    CHECK(provider.runDrains == drainsBeforeFlip + 1);
+}
+
+TEST_CASE("bots: RunLostEmittedBeforeSurvivors")
+{
+    static_assert(fl::kBotApiVersion == 2);
+
+    SECTION("test mode")
+    {
+        FakeBotProvider provider;
+        BotProviderGuard guard(&provider);
+        Rig rig;
+        rig.ok("log = {} "
+               "Event.on('bot.run_lost', function(c) log[#log+1] = 'lost ' .. c end) "
+               "Event.on('bot.run_step', function(l, p, s, leg) "
+               "log[#log+1] = 'step ' .. l:guid() .. ' ' .. p .. ' ' .. s .. ' ' .. leg end)");
+        fl::HandleData const leader = FakeHost::player(100);
+
+        fl::RunEventInfo lost;
+        lost.kind = fl::RunEventKind::Lost;
+        lost.lost = 50;
+        fl::RunEventInfo step;
+        step.kind = fl::RunEventKind::Step;
+        step.leader = leader;
+        step.plan = "deadmines";
+        step.step = 7;
+        step.leg = 2;
+        provider.runRing = {lost, step};
+        rig.e().pumpBots();
+
+        CHECK(rig.ok("return table.concat(log, '|')") ==
+              "lost 50|step " + rig.host.guidToString(leader.guid) + " deadmines 7 2");
+    }
+
+    SECTION("eluna mode")
+    {
+        FakeBotProvider provider;
+        BotProviderGuard guard(&provider);
+        Rig rig(elunaBots);
+        rig.ok("log = {} "
+               "RegisterBotEvent(10, function(e, c) log[#log+1] = e .. ' lost ' .. c end) "
+               "RegisterBotEvent(8, function(e, l, p, s, leg) "
+               "log[#log+1] = e .. ' step ' .. tostring(l) .. ' ' .. p .. ' ' .. s .. ' ' .. leg end)");
+        fl::HandleData const leader = FakeHost::player(100);
+
+        fl::RunEventInfo lost;
+        lost.kind = fl::RunEventKind::Lost;
+        lost.lost = 50;
+        fl::RunEventInfo step;
+        step.kind = fl::RunEventKind::Step;
+        step.leader = leader;
+        step.plan = "deadmines";
+        step.step = 7;
+        step.leg = 2;
+        provider.runRing = {lost, step};
+        rig.e().pumpBots();
+
+        CHECK(rig.ok("return table.concat(log, '|')") ==
+              "10 lost 50|8 step " + rig.host.guidToString(leader.guid) + " deadmines 7 2");
+
+        rig.ok("log = {} ClearBotEvents(10)");
+        provider.runRing = {lost, step};
+        rig.e().pumpBots();
+        CHECK(rig.ok("return table.concat(log, '|')") ==
+              "8 step " + rig.host.guidToString(leader.guid) + " deadmines 7 2");
+
+        CHECK_FALSE(rig.run("RegisterBotEvent(11, function() end)").ok);
+        CHECK_FALSE(rig.run("ClearBotEvents(11)").ok);
+    }
 }

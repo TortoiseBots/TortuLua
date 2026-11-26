@@ -1,6 +1,6 @@
 // Bot API: the once-per-tick snapshot and the event diff (B1) and the order outbox with its tickets and outcomes (B2).
 // The world thread pumps the provider (snapshot + the run ring), diffs it against the last tick and emits BOT_ADDED ...
-// RUN_STOPPED in the world state, then hands the queued orders over and polls the open tickets. Every other thread reads
+// RUN_LOST in the world state, then hands the queued orders over and polls the open tickets. Every other thread reads
 // the last immutable snapshot and posts orders; nothing here touches the provider off the world thread.
 #pragma once
 
