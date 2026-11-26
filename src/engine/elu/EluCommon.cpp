@@ -197,6 +197,13 @@ int32_t optInt(lua_State* L, int idx, int32_t def, char const* what)
     return argInt(L, idx, what);
 }
 
+float optFloat(lua_State* L, int idx, float def, char const* what)
+{
+    if (lua_isnoneornil(L, idx))
+        return def;
+    return argFloat(L, idx, what);
+}
+
 uint64_t optUInt(lua_State* L, int idx, uint64_t def)
 {
     if (lua_isnoneornil(L, idx))

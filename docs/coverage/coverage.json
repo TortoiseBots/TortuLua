@@ -1320,40 +1320,47 @@
      "status": "missing"
     },
     "CanBlock": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanCompleteQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "CanCompleteRepeatableQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanEquipItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "CanFly": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanParry": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanRewardQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "CanShareQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanSpeak": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanTitanGrip": {
      "status": "missing"
     },
     "CanUninviteFromGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanUseItem": {
      "status": "implemented",
@@ -1367,22 +1374,28 @@
      "declared": "Player"
     },
     "DurabilityLoss": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityLossAll": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityPointLossForEquipSlot": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityPointsLoss": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityPointsLossAll": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityRepair": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityRepairAll": {
      "status": "implemented",
@@ -1427,10 +1440,13 @@
      "declared": "Player"
     },
     "GetChampioningFaction": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetChatTag": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetClass": {
      "status": "implemented",
@@ -1451,24 +1467,29 @@
      "declared": "Player"
     },
     "GetDbcLocale": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetDbLocaleIndex": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetDifficulty": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetDrunkValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetEquippedItemBySlot": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetFreeTalentPoints": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetGender": {
      "status": "implemented",
@@ -1486,7 +1507,8 @@
      "declared": "Player"
     },
     "GetGroupInvite": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetGuild": {
      "status": "implemented",
@@ -1501,17 +1523,20 @@
      "declared": "Player"
     },
     "GetGuildRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetHealthBonusFromStamina": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetHonorPoints": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetInGameTime": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetItemByEntry": {
      "status": "implemented",
@@ -1543,35 +1568,47 @@
      "declared": "Player"
     },
     "GetLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetMailCount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetMailItem": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetManaBonusFromIntellect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetMaxSkillValue": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetNearbyGameObject": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetNextRandomRaidMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetOriginalGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetOriginalSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetPhaseMaskForSpawn": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetPlayerIP": {
      "status": "implemented",
@@ -1586,7 +1623,8 @@
      "declared": "Player"
     },
     "GetQuestLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetQuestRewardStatus": {
      "status": "implemented",
@@ -1601,7 +1639,8 @@
      "declared": "Unit"
     },
     "GetRecruiterId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetReputation": {
      "status": "implemented",
@@ -1620,17 +1659,20 @@
      "declared": "Player"
     },
     "GetSelectedPlayer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetSelectedUnit": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetSelection": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetShieldBlockValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetSkillPermBonusValue": {
      "status": "implemented",
@@ -1654,7 +1696,8 @@
      "declared": "Player"
     },
     "GetSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetTeam": {
      "status": "implemented",
@@ -1673,7 +1716,8 @@
      "declared": "Player"
     },
     "GetXPRestBonus": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GiveXP": {
      "status": "implemented",
@@ -1718,14 +1762,16 @@
      "declared": "Player"
     },
     "HasAtLoginFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "HasPendingBind": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasQuest": {
      "status": "implemented",
@@ -1759,20 +1805,24 @@
      "declared": "Player"
     },
     "HasTalent": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasTitle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "InArena": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "InBattleground": {
      "status": "implemented",
      "declared": "Player"
     },
     "InBattlegroundQueue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IncompleteQuest": {
      "status": "implemented",
@@ -1784,7 +1834,8 @@
      "declared": "Player"
     },
     "IsAcceptingWhispers": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsAFK": {
      "status": "implemented",
@@ -1795,7 +1846,8 @@
      "declared": "Player"
     },
     "IsARecruiter": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsDND": {
      "status": "implemented",
@@ -1814,16 +1866,21 @@
      "declared": "Player"
     },
     "IsGMChat": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsGMVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsGroupVisibleFor": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsHonorOrXPTarget": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "IsHorde": {
      "status": "implemented",
@@ -1851,10 +1908,12 @@
      "declared": "Player"
     },
     "IsInSameGroupWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsInSameRaidWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsInWater": {
      "status": "implemented",
@@ -1865,10 +1924,12 @@
      "declared": "Player"
     },
     "IsNeverVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsOutdoorPvPActive": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsRecruited": {
      "status": "missing"
@@ -1887,7 +1948,9 @@
      "declared": "Player"
     },
     "IsVisibleForPlayer": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "KickPlayer": {
      "status": "implemented",
@@ -1904,7 +1967,8 @@
      "status": "missing"
     },
     "KillPlayer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "LearnSpell": {
      "status": "implemented",
@@ -1993,10 +2057,12 @@
      "declared": "Player"
     },
     "ResetTalents": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "ResetTalentsCost": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "ResetTypeCooldowns": {
      "status": "implemented",
@@ -2035,7 +2101,8 @@
      "declared": "Player"
     },
     "SendCinematicStart": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendGuildInvite": {
      "status": "missing"
@@ -2045,7 +2112,8 @@
      "declared": "Player"
     },
     "SendMovieStart": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendNotification": {
      "status": "implemented",
@@ -2066,7 +2134,8 @@
      "status": "missing"
     },
     "SendSpiritResurrect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendTabardVendorActivate": {
      "status": "missing"
@@ -2080,10 +2149,12 @@
      "declared": "Player"
     },
     "SendUpdateWorldState": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetAcceptWhispers": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetAchievement": {
      "status": "stub",
@@ -2096,7 +2167,8 @@
      "declared": "Player"
     },
     "SetAtLoginFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetBindPoint": {
      "status": "implemented",
@@ -2107,10 +2179,13 @@
      "declared": "Player"
     },
     "SetDrunkValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetFactionForRace": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player",
+     "note": "refuses a race id the core's race store does not know with an error and leaves team and faction unchanged"
     },
     "SetFFA": {
      "status": "implemented",
@@ -2120,16 +2195,20 @@
      "status": "missing"
     },
     "SetGameMaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGender": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGMChat": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGMVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGuildRank": {
      "status": "missing"
@@ -2155,7 +2234,8 @@
      "status": "missing"
     },
     "SetPvPDeath": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetQuestStatus": {
      "status": "missing"
@@ -2181,7 +2261,8 @@
      "declared": "Player"
     },
     "SpawnBones": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "StartTaxi": {
      "status": "missing"
@@ -5851,75 +5932,18 @@
     "AdvanceSkill",
     "AdvanceSkillsToMax",
     "BindToInstance",
-    "CanBlock",
-    "CanCompleteRepeatableQuest",
-    "CanFly",
-    "CanParry",
-    "CanShareQuest",
-    "CanSpeak",
     "CanTitanGrip",
-    "CanUninviteFromGroup",
     "ClearComboPoints",
-    "DurabilityLoss",
-    "DurabilityLossAll",
-    "DurabilityPointLossForEquipSlot",
-    "DurabilityPointsLoss",
-    "DurabilityPointsLossAll",
-    "DurabilityRepair",
-    "GetChampioningFaction",
-    "GetChatTag",
     "GetComboPoints",
     "GetComboTarget",
-    "GetDbcLocale",
-    "GetDifficulty",
-    "GetDrunkValue",
-    "GetFreeTalentPoints",
     "GetGossipTextId",
-    "GetGroupInvite",
-    "GetGuildRank",
-    "GetHealthBonusFromStamina",
-    "GetInGameTime",
-    "GetLifetimeKills",
-    "GetMailCount",
-    "GetMailItem",
-    "GetManaBonusFromIntellect",
-    "GetNearbyGameObject",
-    "GetNextRandomRaidMember",
-    "GetOriginalGroup",
-    "GetOriginalSubGroup",
-    "GetPhaseMaskForSpawn",
-    "GetQuestLevel",
-    "GetRecruiterId",
-    "GetSelectedPlayer",
-    "GetSelectedUnit",
-    "GetShieldBlockValue",
-    "GetSubGroup",
-    "GetXPRestBonus",
     "GossipSendPOI",
     "GroupCreate",
     "GroupInvite",
-    "HasAtLoginFlag",
-    "HasPendingBind",
     "HasRecruited",
-    "HasTalent",
-    "HasTitle",
-    "InArena",
-    "InBattlegroundQueue",
-    "IsAcceptingWhispers",
-    "IsARecruiter",
-    "IsGMChat",
-    "IsGMVisible",
-    "IsGroupVisibleFor",
-    "IsHonorOrXPTarget",
-    "IsInSameGroupWith",
-    "IsInSameRaidWith",
-    "IsNeverVisible",
-    "IsOutdoorPvPActive",
     "IsRecruited",
-    "IsVisibleForPlayer",
     "KilledPlayerCredit",
     "KillGOCredit",
-    "KillPlayer",
     "LearnTalent",
     "LeaveBattleground",
     "Mute",
@@ -5929,37 +5953,21 @@
     "RemoveLifetimeKills",
     "RemovePet",
     "ResetPetTalents",
-    "ResetTalents",
-    "ResetTalentsCost",
     "RunCommand",
     "SendAddonMessage",
     "SendAreaTriggerMessage",
     "SendAuctionMenu",
-    "SendCinematicStart",
     "SendGuildInvite",
-    "SendMovieStart",
     "SendQuestTemplate",
     "SendShowMailBox",
-    "SendSpiritResurrect",
     "SendTabardVendorActivate",
-    "SendUpdateWorldState",
-    "SetAcceptWhispers",
-    "SetAtLoginFlag",
-    "SetDrunkValue",
-    "SetFactionForRace",
     "SetFreeTalentPoints",
-    "SetGameMaster",
-    "SetGender",
-    "SetGMChat",
-    "SetGMVisible",
     "SetGuildRank",
     "SetKnownTitle",
     "SetLifetimeKills",
     "SetMovement",
     "SetPlayerLock",
-    "SetPvPDeath",
     "SetQuestStatus",
-    "SpawnBones",
     "StartTaxi",
     "SummonPet",
     "UnbindAllInstances",

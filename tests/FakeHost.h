@@ -410,6 +410,19 @@ public:
         uint32_t entry = 0;
         uint32_t bag = 0, slot = 0;
     };
+    // One durability call of E7 round 2, with the arguments the binding sent.
+    struct FakeDurability
+    {
+        std::string op;
+        uint64_t itemLow = 0;
+        double percent = 0;
+        int64_t points = 0;
+        int64_t slot = 0;
+        bool inventory = true;
+        int64_t pos = 0;
+        bool takeCost = true;
+        double discount = 1.0;
+    };
     struct FakePlayer
     {
         int64_t money = 0;
@@ -447,6 +460,31 @@ public:
         bool repaired = false, repairTakeCost = false, repairGuildBank = false;
         double repairDiscount = 0;
         bool pvp = false;
+        // E7 long tail, round 2: the documented reads.
+        bool canBlock = false, canCompleteRepeatable = false, canFly = false, canParry = false, canShare = false;
+        bool canSpeak = true;
+        uint8_t partyResult = 0;
+        uint32_t championing = 0;
+        int dbcLocale = 0, difficulty = 0;
+        uint8_t drunk = 0, guildRank = 0, subGroup = 0, originalSubGroup = 0;
+        double healthBonus = 0, manaBonus = 0;
+        uint32_t inGameTime = 0, mailCount = 0, recruiterId = 0, atLoginFlags = 0, shieldBlockValue = 0;
+        uint32_t xpRestBonus = 0;                        // GetXPRestBonus(answer for any xp)
+        int32_t questLevel = 0;
+        bool pendingBind = false, inArena = false, inBgQueue = false, acceptWhispers = false, isRecruiter = false;
+        bool gmChat = false, gmVisible = true, neverVisible = false, outdoorPvp = false;
+        uint32_t resetTalentsCost = 0;
+        uint64_t groupInvite = 0, originalGroup = 0;     // a group handle's low guid, 0 = none
+        uint64_t nearbyGameObject = 0, nextRaidMember = 0, selectedPlayer = 0, selectedUnitCreature = 0;
+        std::set<std::pair<uint32_t, uint8_t>> talents;  // HasTalent(spellId, spec)
+        std::set<uint32_t> titles;                       // HasTitle(bitIndex)
+        std::set<uint64_t> groupMates, raidMates, visibleFor;  // IsInSameGroupWith / IsInSameRaidWith / IsGroupVisibleFor
+        // E7 long tail, round 2: the writes.
+        bool gameMaster = false, pvpDeath = false, bonesSpawned = false, killed = false;
+        uint8_t gender = 0, factionRace = 0;
+        bool resetTalentsNoCost = false, resetTalentsResult = true;
+        int resetTalentsCalls = 0;
+        std::vector<FakeDurability> durabilities;
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };

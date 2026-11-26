@@ -4,7 +4,7 @@ What an Eluna-style script can call in TortuLua, and every documented Eluna name
 
 Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook (`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one (C5-C11) has no path on this core.
 
-Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the documented error (`not available on Classic 1.60`, `needs core hook Cn`); **missing** = documented and not in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).
+Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); **missing** = documented and not in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).
 
 ## Summary
 
@@ -14,7 +14,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Object | 30 | 14 | 0 | 16 | 47% | 47% |
 | WorldObject | 51 | 23 | 0 | 28 | 45% | 45% |
 | Unit | 167 | 132 | 3 | 32 | 79% | 81% |
-| Player | 263 | 129 | 13 | 121 | 49% | 54% |
+| Player | 263 | 195 | 20 | 48 | 74% | 82% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 9 | 0 | 11 | 45% | 45% |
 | Item | 66 | 56 | 4 | 6 | 85% | 91% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **948** | **75** | **420** | **66%** | **71%** |
+| **all** | **1443** | **1014** | **82** | **347** | **70%** | **76%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -464,26 +464,26 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `AdvanceSkillsToMax` | **missing** |  |
 | `AreaExploredOrEventHappens` | implemented |  |
 | `BindToInstance` | **missing** |  |
-| `CanBlock` | **missing** |  |
+| `CanBlock` | implemented |  |
 | `CanCompleteQuest` | implemented |  |
-| `CanCompleteRepeatableQuest` | **missing** |  |
+| `CanCompleteRepeatableQuest` | implemented |  |
 | `CanEquipItem` | implemented |  |
-| `CanFly` | **missing** |  |
-| `CanParry` | **missing** |  |
+| `CanFly` | implemented |  |
+| `CanParry` | implemented |  |
 | `CanRewardQuest` | implemented |  |
-| `CanShareQuest` | **missing** |  |
-| `CanSpeak` | **missing** |  |
+| `CanShareQuest` | implemented |  |
+| `CanSpeak` | implemented |  |
 | `CanTitanGrip` | **missing** |  |
-| `CanUninviteFromGroup` | **missing** |  |
+| `CanUninviteFromGroup` | implemented |  |
 | `CanUseItem` | implemented |  |
 | `ClearComboPoints` | **missing** |  |
 | `CompleteQuest` | implemented |  |
-| `DurabilityLoss` | **missing** |  |
-| `DurabilityLossAll` | **missing** |  |
-| `DurabilityPointLossForEquipSlot` | **missing** |  |
-| `DurabilityPointsLoss` | **missing** |  |
-| `DurabilityPointsLossAll` | **missing** |  |
-| `DurabilityRepair` | **missing** |  |
+| `DurabilityLoss` | implemented |  |
+| `DurabilityLossAll` | implemented |  |
+| `DurabilityPointLossForEquipSlot` | implemented |  |
+| `DurabilityPointsLoss` | implemented |  |
+| `DurabilityPointsLossAll` | implemented |  |
+| `DurabilityRepair` | implemented |  |
 | `DurabilityRepairAll` | implemented |  |
 | `EquipItem` | implemented |  |
 | `FailQuest` | implemented |  |
@@ -494,31 +494,31 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetBaseSkillValue` | implemented |  |
 | `GetBattlegroundId` | implemented |  |
 | `GetBattlegroundTypeId` | implemented |  |
-| `GetChampioningFaction` | **missing** |  |
-| `GetChatTag` | **missing** |  |
+| `GetChampioningFaction` | implemented |  |
+| `GetChatTag` | **stub** | stub: not available (this core) |
 | `GetClass` | implemented | declared on `Unit` |
 | `GetCoinage` | implemented |  |
 | `GetComboPoints` | **missing** |  |
 | `GetComboTarget` | **missing** |  |
 | `GetCorpse` | implemented |  |
-| `GetDbcLocale` | **missing** |  |
+| `GetDbcLocale` | implemented |  |
 | `GetDbLocaleIndex` | implemented |  |
-| `GetDifficulty` | **missing** |  |
-| `GetDrunkValue` | **missing** |  |
+| `GetDifficulty` | implemented |  |
+| `GetDrunkValue` | implemented |  |
 | `GetEquippedItemBySlot` | implemented |  |
-| `GetFreeTalentPoints` | **missing** |  |
+| `GetFreeTalentPoints` | **stub** | stub: not available (this core) |
 | `GetGender` | implemented | declared on `Unit` |
 | `GetGMRank` | implemented |  |
 | `GetGossipTextId` | **missing** |  |
 | `GetGroup` | implemented |  |
-| `GetGroupInvite` | **missing** |  |
+| `GetGroupInvite` | implemented |  |
 | `GetGuild` | implemented |  |
 | `GetGuildId` | implemented |  |
 | `GetGuildName` | implemented |  |
-| `GetGuildRank` | **missing** |  |
-| `GetHealthBonusFromStamina` | **missing** |  |
+| `GetGuildRank` | implemented |  |
+| `GetHealthBonusFromStamina` | implemented |  |
 | `GetHonorPoints` | implemented |  |
-| `GetInGameTime` | **missing** |  |
+| `GetInGameTime` | implemented |  |
 | `GetItemByEntry` | implemented |  |
 | `GetItemByGUID` | implemented |  |
 | `GetItemByPos` | implemented |  |
@@ -526,43 +526,43 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetLatency` | implemented |  |
 | `GetLevelPlayedTime` | implemented |  |
 | `GetLFGRole` | **stub** | stub: not available (Classic 1.60) |
-| `GetLifetimeKills` | **missing** |  |
-| `GetMailCount` | **missing** |  |
-| `GetMailItem` | **missing** |  |
-| `GetManaBonusFromIntellect` | **missing** |  |
+| `GetLifetimeKills` | **stub** | stub: not available (this core) |
+| `GetMailCount` | implemented |  |
+| `GetMailItem` | **stub** | stub: not available (this core) |
+| `GetManaBonusFromIntellect` | implemented |  |
 | `GetMaxSkillValue` | implemented |  |
-| `GetNearbyGameObject` | **missing** |  |
-| `GetNextRandomRaidMember` | **missing** |  |
-| `GetOriginalGroup` | **missing** |  |
-| `GetOriginalSubGroup` | **missing** |  |
-| `GetPhaseMaskForSpawn` | **missing** |  |
+| `GetNearbyGameObject` | implemented |  |
+| `GetNextRandomRaidMember` | implemented |  |
+| `GetOriginalGroup` | implemented |  |
+| `GetOriginalSubGroup` | implemented |  |
+| `GetPhaseMaskForSpawn` | **stub** | stub: not available (this core) |
 | `GetPlayerIP` | implemented |  |
 | `GetPureMaxSkillValue` | implemented |  |
 | `GetPureSkillValue` | implemented |  |
-| `GetQuestLevel` | **missing** |  |
+| `GetQuestLevel` | implemented |  |
 | `GetQuestRewardStatus` | implemented |  |
 | `GetQuestStatus` | implemented |  |
 | `GetRace` | implemented | declared on `Unit` |
-| `GetRecruiterId` | **missing** |  |
+| `GetRecruiterId` | implemented |  |
 | `GetReputation` | implemented |  |
 | `GetReputationRank` | implemented |  |
 | `GetReqKillOrCastCurrentCount` | implemented |  |
 | `GetRestBonus` | implemented |  |
-| `GetSelectedPlayer` | **missing** |  |
-| `GetSelectedUnit` | **missing** |  |
+| `GetSelectedPlayer` | implemented |  |
+| `GetSelectedUnit` | implemented |  |
 | `GetSelection` | implemented |  |
-| `GetShieldBlockValue` | **missing** |  |
+| `GetShieldBlockValue` | implemented |  |
 | `GetSkillPermBonusValue` | implemented |  |
 | `GetSkillTempBonusValue` | implemented |  |
 | `GetSkillValue` | implemented |  |
 | `GetSpecsCount` | **stub** | stub: not available (Classic 1.60) |
 | `GetSpellCooldownDelay` | implemented |  |
-| `GetSubGroup` | **missing** |  |
+| `GetSubGroup` | implemented |  |
 | `GetTeam` | implemented |  |
 | `GetTotalPlayedTime` | implemented |  |
 | `GetXP` | implemented |  |
 | `GetXPForNextLevel` | implemented |  |
-| `GetXPRestBonus` | **missing** |  |
+| `GetXPRestBonus` | implemented |  |
 | `GiveXP` | implemented |  |
 | `GossipAddQuests` | implemented |  |
 | `GossipClearMenu` | implemented |  |
@@ -574,9 +574,9 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GroupEventHappens` | implemented |  |
 | `GroupInvite` | **missing** |  |
 | `HasAchieved` | **stub** | stub: not available (Classic 1.60) |
-| `HasAtLoginFlag` | **missing** |  |
+| `HasAtLoginFlag` | implemented |  |
 | `HasItem` | implemented |  |
-| `HasPendingBind` | **missing** |  |
+| `HasPendingBind` | implemented |  |
 | `HasQuest` | implemented |  |
 | `HasQuestForGO` | implemented |  |
 | `HasQuestForItem` | implemented |  |
@@ -585,47 +585,47 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HasSkill` | implemented |  |
 | `HasSpell` | implemented |  |
 | `HasSpellCooldown` | implemented |  |
-| `HasTalent` | **missing** |  |
-| `HasTitle` | **missing** |  |
-| `InArena` | **missing** |  |
+| `HasTalent` | implemented |  |
+| `HasTitle` | implemented |  |
+| `InArena` | implemented |  |
 | `InBattleground` | implemented |  |
-| `InBattlegroundQueue` | **missing** |  |
+| `InBattlegroundQueue` | implemented |  |
 | `IncompleteQuest` | implemented |  |
 | `InRandomLfgDungeon` | **stub** | stub: not available (Classic 1.60) |
-| `IsAcceptingWhispers` | **missing** |  |
+| `IsAcceptingWhispers` | implemented |  |
 | `IsAFK` | implemented |  |
 | `IsAlliance` | implemented |  |
-| `IsARecruiter` | **missing** |  |
+| `IsARecruiter` | implemented |  |
 | `IsDND` | implemented |  |
 | `IsFalling` | implemented |  |
 | `IsFlying` | implemented |  |
 | `IsGM` | implemented |  |
-| `IsGMChat` | **missing** |  |
-| `IsGMVisible` | **missing** |  |
-| `IsGroupVisibleFor` | **missing** |  |
-| `IsHonorOrXPTarget` | **missing** |  |
+| `IsGMChat` | implemented |  |
+| `IsGMVisible` | implemented |  |
+| `IsGroupVisibleFor` | implemented |  |
+| `IsHonorOrXPTarget` | **stub** | stub: not available (this core) |
 | `IsHorde` | implemented |  |
 | `IsImmuneToDamage` | implemented |  |
 | `IsImmuneToEnvironmentalDamage` | implemented |  |
 | `IsInArenaTeam` | **stub** | stub: not available (Classic 1.60) |
 | `IsInGroup` | implemented |  |
 | `IsInGuild` | implemented |  |
-| `IsInSameGroupWith` | **missing** |  |
-| `IsInSameRaidWith` | **missing** |  |
+| `IsInSameGroupWith` | implemented |  |
+| `IsInSameRaidWith` | implemented |  |
 | `IsInWater` | implemented |  |
 | `IsMoving` | implemented |  |
-| `IsNeverVisible` | **missing** |  |
-| `IsOutdoorPvPActive` | **missing** |  |
+| `IsNeverVisible` | implemented |  |
+| `IsOutdoorPvPActive` | implemented |  |
 | `IsRecruited` | **missing** |  |
 | `IsRested` | implemented |  |
 | `IsTaxiCheater` | implemented |  |
 | `IsUsingLfg` | **stub** | stub: not available (Classic 1.60) |
-| `IsVisibleForPlayer` | **missing** |  |
+| `IsVisibleForPlayer` | **stub** | stub: not available (this core) |
 | `KickPlayer` | implemented |  |
 | `KilledMonsterCredit` | implemented |  |
 | `KilledPlayerCredit` | **missing** |  |
 | `KillGOCredit` | **missing** |  |
-| `KillPlayer` | **missing** |  |
+| `KillPlayer` | implemented |  |
 | `LearnSpell` | implemented |  |
 | `LearnTalent` | **missing** |  |
 | `LeaveBattleground` | **missing** |  |
@@ -649,8 +649,8 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `ResetAllCooldowns` | implemented |  |
 | `ResetPetTalents` | **missing** |  |
 | `ResetSpellCooldown` | implemented |  |
-| `ResetTalents` | **missing** |  |
-| `ResetTalentsCost` | **missing** |  |
+| `ResetTalents` | implemented |  |
+| `ResetTalentsCost` | implemented |  |
 | `ResetTypeCooldowns` | implemented |  |
 | `ResurrectPlayer` | implemented |  |
 | `RewardQuest` | implemented |  |
@@ -661,34 +661,34 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SendAreaTriggerMessage` | **missing** |  |
 | `SendAuctionMenu` | **missing** |  |
 | `SendBroadcastMessage` | implemented |  |
-| `SendCinematicStart` | **missing** |  |
+| `SendCinematicStart` | implemented |  |
 | `SendGuildInvite` | **missing** |  |
 | `SendListInventory` | implemented |  |
-| `SendMovieStart` | **missing** |  |
+| `SendMovieStart` | implemented |  |
 | `SendNotification` | implemented |  |
 | `SendPacket` | implemented |  |
 | `SendQuestTemplate` | **missing** |  |
 | `SendShowBank` | implemented |  |
 | `SendShowMailBox` | **missing** |  |
-| `SendSpiritResurrect` | **missing** |  |
+| `SendSpiritResurrect` | implemented |  |
 | `SendTabardVendorActivate` | **missing** |  |
 | `SendTaxiMenu` | implemented |  |
 | `SendTrainerList` | implemented |  |
-| `SendUpdateWorldState` | **missing** |  |
-| `SetAcceptWhispers` | **missing** |  |
+| `SendUpdateWorldState` | implemented |  |
+| `SetAcceptWhispers` | implemented |  |
 | `SetAchievement` | **stub** | stub: not available (Classic 1.60) |
 | `SetArenaPoints` | **stub** | stub: not available (Classic 1.60) |
-| `SetAtLoginFlag` | **missing** |  |
+| `SetAtLoginFlag` | implemented |  |
 | `SetBindPoint` | implemented |  |
 | `SetCoinage` | implemented |  |
-| `SetDrunkValue` | **missing** |  |
-| `SetFactionForRace` | **missing** |  |
+| `SetDrunkValue` | implemented |  |
+| `SetFactionForRace` | implemented | refuses a race id the core's race store does not know with an error and leaves team and faction unchanged |
 | `SetFFA` | implemented |  |
 | `SetFreeTalentPoints` | **missing** |  |
-| `SetGameMaster` | **missing** |  |
-| `SetGender` | **missing** |  |
-| `SetGMChat` | **missing** |  |
-| `SetGMVisible` | **missing** |  |
+| `SetGameMaster` | implemented |  |
+| `SetGender` | implemented |  |
+| `SetGMChat` | implemented |  |
+| `SetGMVisible` | implemented |  |
 | `SetGuildRank` | **missing** |  |
 | `SetHonorPoints` | implemented |  |
 | `SetKnownTitle` | **missing** |  |
@@ -696,14 +696,14 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetLifetimeKills` | **missing** |  |
 | `SetMovement` | **missing** |  |
 | `SetPlayerLock` | **missing** |  |
-| `SetPvPDeath` | **missing** |  |
+| `SetPvPDeath` | implemented |  |
 | `SetQuestStatus` | **missing** |  |
 | `SetReputation` | implemented |  |
 | `SetRestBonus` | implemented |  |
 | `SetSheath` | implemented | declared on `Unit` |
 | `SetSkill` | implemented |  |
 | `SetTaxiCheat` | implemented |  |
-| `SpawnBones` | **missing** |  |
+| `SpawnBones` | implemented |  |
 | `StartTaxi` | **missing** |  |
 | `SummonPet` | **missing** |  |
 | `SummonPlayer` | implemented |  |
@@ -1717,6 +1717,6 @@ The documentation pages list event names without numeric ids; the maintainers' A
 ## Appendix C: how the report is built
 
 * Globals: `set(L, "Name", fl::safe<fn>)` in `registerGlobals`/`registerGameGlobals`, the `ForeverData` table of `registerForeverData`, and `print`/`require` of `registerCommon`.
-* Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the `Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and the section 7 stubs of `addStubMethod`; inheritance from the `createClass` calls.
+* Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the `Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and the section 7 stubs of `addStubMethod` and the core stubs of `addCoreStubMethod`; inheritance from the `createClass` calls.
 * Events: the `SpecRow` tables of `EluAlias.cpp`, joined to the families by `eluEventSpec`; the hook note comes from `hookGapFor` and the Classic-era note from `classicStubFor` (`EluCommon.cpp`), evaluated for a core without the C1-C4 hooks.
-* Stub detection: the registered C++ function (or the single function it only forwards to) raises `not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`.
+* Stub detection: the registered C++ function (or the single function it only forwards to) raises `not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name registered with `addCoreStubMethod` raises `not available on this core`.

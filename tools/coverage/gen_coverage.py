@@ -115,6 +115,8 @@ METHOD_NOTES = {
                             "lowest rank and a warning is logged (the call is queued, so it cannot return the refusal)",
     ("Object", "GetGUID"): "returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the "
                            "type, entry and map live in the high half",
+    ("Player", "SetFactionForRace"): "refuses a race id the core's race store does not know with an error and leaves "
+                                     "team and faction unchanged",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
 }
 GLOBAL_NOTES = {
@@ -128,6 +130,7 @@ STUB_MARKERS = [
     (re.compile(r"not available on Classic 1\.60"), "Classic 1.60"),
     (re.compile(r"needs core hook (C\d+)"), "core hook"),
     (re.compile(r"not available on this server"), "this server"),
+    (re.compile(r"not available on this core"), "this core"),
 ]
 
 FUNCTION_KEYWORDS = {"if", "for", "while", "switch", "return", "sizeof", "catch", "do", "else"}
@@ -321,6 +324,13 @@ class Engine:
                     self._add_stub(loop.group(3), method)
             for call in re.finditer(r"addStubMethod\(L,\s*\"(\w+)\",\s*\"(\w+)\"\);", body):
                 self._add_stub(call.group(1), call.group(2))
+            # A documented call the pinned core has no API for (EluStubs.cpp): "not available on this core".
+            for loop in re.finditer(r"for\s*\(\s*char\s+const\s*\*\s*(\w+)\s*:\s*\{([^}]*)\}\s*\)\s*"
+                                    r"addCoreStubMethod\(L,\s*\"(\w+)\",\s*\1\);", body):
+                for method in re.findall(r'"(\w+)"', loop.group(2)):
+                    self._add_stub(loop.group(3), method, "this core")
+            for call in re.finditer(r"addCoreStubMethod\(L,\s*\"(\w+)\",\s*\"(\w+)\"\);", body):
+                self._add_stub(call.group(1), call.group(2), "this core")
 
         if "registerStubMethods" not in self.fns:
             raise ParseError("registerStubMethods() not found: the section 7 stubs would be missed")
@@ -329,9 +339,9 @@ class Engine:
                 if not info["stub"]:
                     info["reason"] = stub_reason(self._body(info["fn"]), self.fns)
 
-    def _add_stub(self, cls, method):
+    def _add_stub(self, cls, method, why="Classic 1.60"):
         self.methods.setdefault(cls, {})
-        self.methods[cls][method] = {"stub": True, "reason": "stub: not available (Classic 1.60)",
+        self.methods[cls][method] = {"stub": True, "reason": f"stub: not available ({why})",
                                     "declared": cls, "fn": None}
 
     def _scan_eluna_globals(self):
@@ -1016,7 +1026,8 @@ class Coverage:
             "(C5-C11) has no path on this core.",
             "",
             "Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the "
-            "documented error (`not available on Classic 1.60`, `needs core hook Cn`); **missing** = documented and not "
+            "documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); "
+            "**missing** = documented and not "
             "in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).",
             "",
             "## Summary",
@@ -1075,12 +1086,14 @@ class Coverage:
                 "`ForeverData` table of `registerForeverData`, and `print`/`require` of `registerCommon`.",
                 "* Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the "
                 "`Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and "
-                "the section 7 stubs of `addStubMethod`; inheritance from the `createClass` calls.",
+                "the section 7 stubs of `addStubMethod` and the core stubs of `addCoreStubMethod`; inheritance from the "
+                "`createClass` calls.",
                 "* Events: the `SpecRow` tables of `EluAlias.cpp`, joined to the families by `eluEventSpec`; the hook "
                 "note comes from `hookGapFor` and the Classic-era note from `classicStubFor` (`EluCommon.cpp`), "
                 "evaluated for a core without the C1-C4 hooks.",
                 "* Stub detection: the registered C++ function (or the single function it only forwards to) raises "
-                "`not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`.", ""]
+                "`not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name "
+                "registered with `addCoreStubMethod` raises `not available on this core`.", ""]
         return out
 
 
