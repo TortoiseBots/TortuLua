@@ -6267,7 +6267,7 @@
     "table": null
    },
    "RegisterBotEvent": {
-    "note": "our extension (B1): the nine bot events, world state only",
+    "note": "our extension (B1): the ten bot events, world state only",
     "table": null
    },
    "RegisterCommand": {
@@ -6339,7 +6339,8 @@
     "6": "BOT_DIED",
     "7": "WIPE",
     "8": "RUN_STEP",
-    "9": "RUN_STOPPED"
+    "9": "RUN_STOPPED",
+    "10": "RUN_LOST"
    }
   }
  },

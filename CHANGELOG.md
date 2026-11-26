@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* **Bot API interface version 2 (`kBotApiVersion = 2`):** added `RunEventKind::Lost` (`lost` drop count) and event 10 `RUN_LOST` / `bot.run_lost(count)`, one final `takeRunEvents()` call when the provider becomes unavailable, and a final `pumpBots()` inside `stopEngine()` before `server.stop`.
+
 ## 0.1.0-beta
 
 First public release of TortuLua, the Lua 5.4 scripting engine for ForeverCore, loaded as an optional module through

@@ -34,7 +34,7 @@ enum class EluKind : uint8_t
     Instance,
     Packet,
     BattleGround,  // E5: RegisterBGEvent (docs: state MAP, parameters event, bg, bgId, instanceId[, winner])
-    Bot            // our bot API: RegisterBotEvent (world state only, ids 1-9)
+    Bot            // our bot API: RegisterBotEvent (world state only, ids 1-10)
 };
 
 char const* eluKindName(EluKind kind);

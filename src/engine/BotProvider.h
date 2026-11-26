@@ -14,7 +14,7 @@ namespace fl
 {
 // The version of this interface. The provider PR checks it once at register time (the module and the provider are
 // built from the same tree, so a mismatch is a build mistake, not a runtime one).
-constexpr uint32_t kBotApiVersion = 1;
+constexpr uint32_t kBotApiVersion = 2;
 
 // Where a bot's last order stands (B1 reads it; B2 gives the orders).
 enum class OrderState : uint8_t
@@ -95,13 +95,14 @@ struct BotSnapshot
     std::vector<GroupInfo> groups;
 };
 
-// One entry of the run ring that the engine turns into an event (B1 events 8 and 9): the bot module's run events of kind
-// `step`, `done` and `stop` only.
+// One entry of the run ring that the engine turns into an event (B1 events 8-10): the bot module's run events of kind
+// `step`, `done` and `stop`, plus a `Lost` overflow marker.
 enum class RunEventKind : uint8_t
 {
     Step,  // RUN_STEP
     Done,  // RUN_STOPPED with the state `done`
-    Stop   // RUN_STOPPED with the state `stopped`
+    Stop,  // RUN_STOPPED with the state `stopped`
+    Lost   // RUN_LOST: events were dropped before the next one (count in lost)
 };
 
 struct RunEventInfo
@@ -112,6 +113,7 @@ struct RunEventInfo
     int32_t step = -1;      // -1 = the event has no step
     int32_t leg = -1;       // -1 = the event has no leg
     std::string why;        // the stop reason ("" when there is none)
+    uint32_t lost = 0;      // Lost only: how many events were dropped; the other fields are empty/-1
 };
 
 // ---- B2 (orders): declared here because the interface carries them; B1 never calls submit() or outcomes() ----
@@ -153,7 +155,9 @@ public:
     // Fills `out` with the bots (and the groups that hold one) as the world is now. World thread, once per tick.
     // Every value is copied: the module keeps no pointer into the bot engine.
     virtual void snapshot(BotSnapshot& out) = 0;
-    // Moves the run ring's `step`/`done`/`stop` events into `out` (empties them from the ring). World thread.
+    // Moves the run ring's `step`/`done`/`stop` events into `out` (empties them from the ring). World thread. Also
+    // called ONCE after `available()` turned false (the final take of a shutdown or a disable): the provider hands
+    // over what it still holds; it may return nothing.
     virtual void takeRunEvents(std::vector<RunEventInfo>& out) = 0;
     // B2: hands orders over (world thread); each request gets exactly one verdict. Default: not-supported, one verdict
     // per request (a B1-only provider answers a script's order with a clear code instead of silence).

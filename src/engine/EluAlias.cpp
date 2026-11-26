@@ -452,6 +452,7 @@ constexpr SpecRow kBot[] = {
     {7, {"WIPE", EluReturn::None}},
     {8, {"RUN_STEP", EluReturn::None}},
     {9, {"RUN_STOPPED", EluReturn::None}},
+    {10, {"RUN_LOST", EluReturn::None}},
 };
 
 // RegisterBGEvent: the docs table (START, END, CREATE, PRE_DESTROY; state MAP).

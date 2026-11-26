@@ -361,4 +361,6 @@ BotEvents = {
     RUN_STEP = 8,
     ---our extension
     RUN_STOPPED = 9,
+    ---our extension
+    RUN_LOST = 10,
 }
