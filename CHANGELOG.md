@@ -39,10 +39,10 @@ core without the optional C1-C4 core hooks.
 | Item | 66 | 56 | 4 | 6 | 85% | 91% |
 | Group | 27 | 27 | 0 | 0 | 100% | 100% |
 | Guild | 16 | 14 | 2 | 0 | 88% | 100% |
-| Quest | 13 | 4 | 0 | 9 | 31% | 31% |
+| Quest | 13 | 13 | 0 | 0 | 100% | 100% |
 | Spell | 40 | 40 | 0 | 0 | 100% | 100% |
 | Aura | 14 | 14 | 0 | 0 | 100% | 100% |
-| Map | 19 | 17 | 0 | 2 | 89% | 89% |
+| Map | 19 | 17 | 2 | 0 | 89% | 100% |
 | ElunaQuery | 17 | 17 | 0 | 0 | 100% | 100% |
 | WorldPacket | 23 | 9 | 0 | 14 | 39% | 39% |
 | Corpse | 5 | 5 | 0 | 0 | 100% | 100% |
@@ -67,7 +67,7 @@ core without the optional C1-C4 core hooks.
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1049** | **102** | **292** | **73%** | **80%** |
+| **all** | **1443** | **1058** | **104** | **281** | **73%** | **81%** |
 
 ### Known limits
 
@@ -75,11 +75,11 @@ core without the optional C1-C4 core hooks.
   scripts and has raw SQL on the module's own connections, and the GM bridge can reach command handlers that expect a
   console. Read the [Security Model](knowledge/architecture/security.md) and [Limits](knowledge/architecture/limits.md)
   before enabling the module.
-* **Low-coverage classes.** AuraEffect, ElunaProcInfo and the spell events are not implemented (0%); Quest (31%),
-  WorldPacket (39%), Object (43%) and Player (74%) are
+* **Low-coverage classes.** AuraEffect, ElunaProcInfo and the spell events are not implemented (0%); WorldPacket (39%),
+  Object (43%), SpellInfo (56%) and Player (74%) are
   only partly covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG) are documented
-  stubs that raise an error; documented Object, WorldObject and Player calls the core has no API for are stubs that raise
-  `not available on this core`.
+  stubs that raise an error; documented Object, WorldObject, Player and Map calls the core has no API for are stubs
+  that raise `not available on this core`.
 * **Core hooks.** Some events need the optional core hooks C1-C4 (and further hooks for instance maps); without them
   they register and log `needs core hook Cn` once.
 * **The bot API needs a provider module.** Without a bot module that implements `BotProvider`, `IsBotApiAvailable()`

@@ -111,6 +111,14 @@ of those three classes (the 40 Spell, the 14 Aura and the 190 SpellInfo names of
 The pages give the synopsis, the argument ranges and the return types used for the checks in this round. No Eluna source
 was opened; every body was written from the core's own `Spell`, `Aura` and `SpellInfo` API (`~/ForeverCore`, read only).
 
+### Long tail: Quest and Map (2026-11-26)
+
+Uses the documented method names in `docs/coverage/eluna-documented-api.json` (`Quest/index.html`, `Map/index.html`)
+already summarised in this repo. No Eluna source was opened; every Quest body was written from ForeverCore's own `Quest`
+class (`src/server/game/Quests/QuestDef.h`), and `Map:GetInstanceData` / `Map:SaveInstanceData` are core stubs because
+ForeverCore's `InstanceMap::GetInstanceScript` returns a database-bound C++ `InstanceScript` with no Lua `InstanceData`
+or `SaveToDB` API.
+
 ## What the documentation does not say, and where the answer came from
 
 * The documentation gives the event table per `Register*` family as *names*, *state* and *argument lists*. A reviewer
