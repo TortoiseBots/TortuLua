@@ -2742,7 +2742,8 @@
     },
     "RemoveFromWorld": {
      "status": "implemented",
-     "declared": "Creature"
+     "declared": "Creature",
+     "note": "ordinary world creatures only: a creature owned by a player (a pet, guardian, minion, totem or charm) is refused, its owner's pet lifecycle removes it"
     },
     "RemoveLootMode": {
      "status": "implemented",

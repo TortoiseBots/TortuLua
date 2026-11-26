@@ -376,6 +376,49 @@ TEST_CASE("eluna creature long tail: the values flow both ways through the fake 
     CHECK(rig.ok("return tostring(mob:CanCompleteQuest(102)) .. tostring(mob:CanCompleteQuest(100))") == "truefalse");
 }
 
+TEST_CASE("eluna creature: RemoveFromWorld refuses a creature a player owns")
+{
+    CreatureRig rig;
+    fl::HandleData mob = FakeHost::creature(112, 0, 0, 900);
+    fl::HandleData pet = FakeHost::pet(113, 0, 0, 299);
+    fl::ObjectInfo mobInfo, petInfo;
+    mobInfo.name = "Plain";
+    petInfo.name = "Wolf";
+    petInfo.entry = 299;
+    rig.host.add(mob, mobInfo);
+    rig.host.add(pet, petInfo);
+    prepare(rig.host, mob);
+    rig.host.creatureState(pet).isPet = true;
+
+    rig.ok("RegisterCreatureEvent(1, 5, function(ev, c) mob = c end)");
+    rig.ok("RegisterCreatureEvent(299, 5, function(ev, c) pet = c end)");
+    rig.e().emitEluna(fl::EluKind::Creature, 1, 5, {fl::EventValue(mob)});
+    rig.e().emitEluna(fl::EluKind::Creature, 299, 5, {fl::EventValue(pet)});
+
+    // A pet handle is refused; nothing is queued for removal and the handle's world object data survives.
+    rig.ok("pet:Data().kept = true");
+    fl::CallResult petCall = rig.run("pet:RemoveFromWorld()");
+    REQUIRE_FALSE(petCall.ok);
+    CHECK(petCall.error.find("RemoveFromWorld: a creature owned by a player") != std::string::npos);
+    CHECK(rig.host.creatureState(pet).removeFromWorlds == 0);
+    CHECK(rig.ok("return tostring(pet:Data().kept)") == "true");
+
+    // A creature a player controls without a pet guid (a guardian, minion or charm) is refused the same way.
+    rig.host.creatureState(mob).isPet = true;
+    fl::CallResult ownedCall = rig.run("mob:RemoveFromWorld()");
+    REQUIRE_FALSE(ownedCall.ok);
+    CHECK(ownedCall.error.find("RemoveFromWorld: a creature owned by a player") != std::string::npos);
+    CHECK(rig.host.creatureState(mob).removeFromWorlds == 0);
+    rig.host.creatureState(mob).isPet = false;
+
+    // An ordinary world creature is still removed and its data pruned.
+    rig.ok("mob:Data().kept = true");
+    rig.ok("mob:RemoveFromWorld()");
+    CHECK(rig.host.creatureState(mob).removeFromWorlds == 1);
+    rig.host.add(mob, mobInfo);
+    CHECK(rig.ok("return tostring(mob:Data().kept)") == "nil");
+}
+
 TEST_CASE("eluna creature long tail: a bad argument raises before the host is called")
 {
     CreatureRig rig;

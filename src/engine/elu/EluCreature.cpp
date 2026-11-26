@@ -352,12 +352,16 @@ int cGetRespawnDelay(lua_State* L) { return readOp(L, kCreature, "creature.getRe
 int cGetCorpseDelay(lua_State* L) { return readOp(L, kCreature, "creature.getCorpseDelay", "GetCorpseDelay"); }
 int cRemoveCorpse(lua_State* L) { return actionOp(L, kCreature, "creature.removeCorpse", "RemoveCorpse"); }
 // The core removes objects through its deferred removal list (WorldObject::AddObjectToRemoveList); the world object data
-// of the handle is dropped with it, like GameObject:RemoveFromWorld.
+// of the handle is dropped with it, like GameObject:RemoveFromWorld. A creature a player owns is refused: it is removed
+// through the owner's pet lifecycle (Pet::Remove -> Player::RemovePet saves it and updates the stable), not by a script.
 int cRemoveFromWorld(lua_State* L)
 {
     fl::HandleData const& h = self(L, kCreature);
     std::vector<EventValue> out;
     gameCall(L, h, "creature.removeFromWorld", {}, out, "RemoveFromWorld");
+    requireHostOk(L, out, "RemoveFromWorld",
+                  "a creature owned by a player (a pet, guardian, minion or charm) is removed through its owner; "
+                  "only an ordinary world creature can be removed");
     eng(L).removeWorldObjectData(h);
     return 0;
 }

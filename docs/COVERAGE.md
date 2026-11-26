@@ -793,7 +793,7 @@ Note: the 17 update-field and flag stubs: this core stores typed update-field fr
 | `IsWorldBoss` | implemented |  |
 | `MoveWaypoint` | implemented |  |
 | `RemoveCorpse` | implemented |  |
-| `RemoveFromWorld` | implemented |  |
+| `RemoveFromWorld` | implemented | ordinary world creatures only: a creature owned by a player (a pet, guardian, minion, totem or charm) is refused, its owner's pet lifecycle removes it |
 | `RemoveLootMode` | implemented |  |
 | `ResetAllThreat` | implemented |  |
 | `ResetLootMode` | implemented |  |

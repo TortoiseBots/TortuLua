@@ -142,6 +142,8 @@ METHOD_NOTES = {
                                                         "LowerPlayerDamageReq/ResetPlayerDamageReq helpers, but no "
                                                         "loot/reward predicate",
     ("Creature", "SetAggroEnabled"): "no aggro-enabled flag; Creature::SetReactState(REACT_PASSIVE) is the core's control",
+    ("Creature", "RemoveFromWorld"): "ordinary world creatures only: a creature owned by a player (a pet, guardian, "
+                                     "minion, totem or charm) is refused, its owner's pet lifecycle removes it",
     ("Item", "GetRandomProperty"): "this core has no legacy random property id: items carry ItemRandomBonusListId "
                                    "(Item::GetItemRandomBonusListId, m_randomBonusListId)",
     ("Item", "GetRandomSuffix"): "this core has no legacy random suffix id: items carry ItemRandomBonusListId "

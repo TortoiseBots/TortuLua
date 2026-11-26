@@ -242,6 +242,7 @@ function Creature:MoveWaypoint() end
 ---@return any
 function Creature:RemoveCorpse() end
 
+---ordinary world creatures only: a creature owned by a player (a pet, guardian, minion, totem or charm) is refused, its owner's pet lifecycle removes it
 ---@return any
 function Creature:RemoveFromWorld() end
 

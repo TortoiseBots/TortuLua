@@ -4623,6 +4623,16 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "creature.removeFromWorld")
         {
+            // A creature a player owns (a pet, guardian, minion, totem or charmed unit) belongs to that player's
+            // lifecycle: the core removes a live pet through Pet::Remove -> Player::RemovePet, which saves it, updates
+            // the stable and notifies the owner. The removal list below would delete the live pet and skip all of that,
+            // so a player-owned creature is refused (the script removes only ordinary world creatures).
+            if (creature->IsPet() || creature->IsControlledByPlayer() ||
+                creature->GetCharmerOrOwnerPlayerOrPlayerItself() != nullptr)
+            {
+                out.emplace_back(false);
+                return true;
+            }
             // the map's own removal path: it unlinks the creature on its thread and fires the removal hooks, where a
             // direct RemoveFromWorld() would pull it out while the map may still be iterating it
             creature->AddObjectToRemoveList();

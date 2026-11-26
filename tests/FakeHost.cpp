@@ -1155,7 +1155,15 @@ bool FakeHost::creatureStateCall(fl::HandleData const& self, std::string const& 
     else if (op == "creature.removeCorpse")
         ++c.corpseRemovals;
     else if (op == "creature.removeFromWorld")
+    {
+        // a player-owned creature (pet, guardian, minion, charm) is refused: its owner's pet lifecycle removes it
+        if (c.isPet)
+        {
+            out.emplace_back(false);
+            return true;
+        }
         ++c.removeFromWorlds;
+    }
     else if (op == "creature.setDeathState")
     {
         if (unitIntAt(args, 0) == 0 && c.healthZero)

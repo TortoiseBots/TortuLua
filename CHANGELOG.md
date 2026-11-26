@@ -6,6 +6,9 @@
   (93% -> 96% implemented, 93% -> 100% resolvable). The seven documented Creature methods are implemented or honest
   core stubs, and every remaining `Object`, `Item`, `Guild` and `Map` stub is re-checked against the pinned core with
   its reason recorded in `docs/COVERAGE.md`.
+* **`Creature:RemoveFromWorld` safety guard:** a creature a player owns (a pet, guardian, minion, totem or charm) is
+  refused with an error; only an ordinary world creature is queued for removal, so the core's owner-aware `Pet::Remove`
+  keeps the pet saved and the stable and owner state updated.
 
 ## 0.2.0-beta
 
