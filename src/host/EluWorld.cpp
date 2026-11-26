@@ -2357,7 +2357,7 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             Trinity::LocalizedDo<Trinity::CustomChatTextBuilder> localizer(builder);
             Trinity::PlayerDistWorker<Trinity::LocalizedDo<Trinity::CustomChatTextBuilder>> worker(obj, range,
                                                                                                    localizer);
-            Cell::VisitWorldObjects(obj, worker, range);
+            ::Cell::VisitWorldObjects(obj, worker, range);
         }
         return true;
     }
