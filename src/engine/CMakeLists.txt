@@ -31,6 +31,8 @@ add_library(forever-lua-engine STATIC
   elu/EluQuest.cpp
   elu/EluSpell.cpp
   elu/EluSpellInfo.cpp
+  elu/EluAuraEffect.cpp
+  elu/EluProcInfo.cpp
   elu/EluObject.cpp
   elu/EluPlayer.cpp
   elu/EluPacket.cpp

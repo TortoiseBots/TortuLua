@@ -180,7 +180,10 @@ class SourceScanner:
             for tm in re.finditer(r"(?:static\s+)?luaL_Reg\s+const\s+(\w+)\s*\[\]\s*=\s*\{", body):
                 end = find_matching_brace(body, tm.end() - 1, "{", "}")
                 tname = tm.group(1)
-                pairs = re.findall(r'\{\s*"(\w+)"\s*,\s*(?:fl::)?safe<(?:\w+::)?(\w+)>', body[tm.end() : end])
+                pairs = re.findall(
+                    r'\{\s*"(\w+)"\s*,\s*(?:fl::)?safe<(?:\w+::)?(\w+)(?:<[^>{}]+>)?\s*>',
+                    body[tm.end() : end],
+                )
                 tables[tname] = pairs
 
             for am in re.finditer(r"addMethods\(L,\s*\"(\w+)\",\s*(\w+)\)", body):
@@ -190,7 +193,7 @@ class SourceScanner:
                     for method, f in tables[tbl]:
                         self.methods[cls][method] = f
 
-            for m in re.finditer(r"set\(L,\s*\"(\w+)\",\s*(?:fl::)?safe<(?:\w+::)?(\w+)>\)", body):
+            for m in re.finditer(r"set\(L,\s*\"(\w+)\",\s*(?:fl::)?safe<(?:\w+::)?(\w+)(?:<[^>{}]+>)?\s*>\)", body):
                 self.globals[m.group(1)] = m.group(2)
 
     def extract_params(self, fn_name: str, is_method: bool = True, max_depth: int = 2) -> list:

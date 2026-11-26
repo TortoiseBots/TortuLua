@@ -38,7 +38,9 @@ enum class ObjKind : uint8_t
     BattleGround,  // E5: one battleground instance
     Vehicle,       // E5: Classic 1.60 has no vehicles: the class exists for the section 7 stubs
     Bot,           // our bot API: a bot of the bot engine, read from the bot snapshot (never through the host)
-    SpellInfo      // long tail: a documented spell entry (an id, never stale: the core data lives for the whole run)
+    SpellInfo,     // long tail: a documented spell entry (an id, never stale: the core data lives for the whole run)
+    AuraEffect,    // long tail: a transient aura effect of the running call
+    ElunaProcInfo  // long tail: a transient proc event of the running call
 };
 
 // The answer of Host::checkAccess: may the calling thread touch the object behind a handle right now?

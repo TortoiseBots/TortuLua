@@ -7,6 +7,8 @@
 #include "engine/Text.h"
 
 #include <cctype>
+#include <cfloat>
+#include <cmath>
 #include <exception>
 
 namespace flu
@@ -44,6 +46,15 @@ void requireLive(lua_State* L, fl::HandleData const& h)
     fl::ObjectInfo info;
     if (!hh.lookup(h, &info))
         luaL_error(L, "%s no longer exists", classNameOf(h));
+}
+
+void requireWorldRead(lua_State* L, char const* display)
+{
+    if (host(L).worldOnlyReadOk())
+        return;
+    luaL_error(L, "%s is only available on the world thread (server events, timed events, commands), "
+                  "not from a map-thread handler",
+               display);
 }
 
 fl::HandleData const& objArg(lua_State* L, int idx, unsigned kinds, char const* what)
@@ -122,6 +133,14 @@ float argFloat(lua_State* L, int idx, char const* what)
     return static_cast<float>(v);
 }
 
+double argFinite(lua_State* L, int idx, char const* what)
+{
+    lua_Number const v = luaL_checknumber(L, idx);
+    if (!std::isfinite(v) || std::fabs(v) > static_cast<lua_Number>(FLT_MAX))
+        luaL_error(L, "%s must be a finite number", what);
+    return v;
+}
+
 bool argGuid(lua_State* L, int idx, fl::Guid& out, bool* legacyLow)
 {
     if (legacyLow)
@@ -186,6 +205,13 @@ int32_t optInt(lua_State* L, int idx, int32_t def, char const* what)
     if (lua_isnoneornil(L, idx))
         return def;
     return argInt(L, idx, what);
+}
+
+float optFloat(lua_State* L, int idx, float def, char const* what)
+{
+    if (lua_isnoneornil(L, idx))
+        return def;
+    return argFloat(L, idx, what);
 }
 
 uint64_t optUInt(lua_State* L, int idx, uint64_t def)
@@ -314,6 +340,16 @@ void sendPacketArg(lua_State* L, fl::HandleData const& target, int idx, char con
         luaL_error(L, "%s: not available on this server", display);
 }
 
+void sendPacketToRankArg(lua_State* L, fl::HandleData const& target, int idx, uint32_t rank, char const* display)
+{
+    fl::HandleData const& packet = kindArg(L, idx, kPacket, "packet");
+    fl::Engine::PacketValue* value = eng(L).packet(packet.guid.lo);
+    if (!value)
+        luaL_error(L, "%s: WorldPacket no longer exists", display);
+    if (!host(L).sendPacketToRanked(target, value->opcode, value->bytes, rank))
+        luaL_error(L, "%s: not available on this server", display);
+}
+
 int pushHandlerId(lua_State* L, uint64_t id)
 {
     lua_pushinteger(L, static_cast<lua_Integer>(id));
@@ -355,9 +391,11 @@ char const* hookGapFor(fl::Config const& cfg, fl::EluKind kind, uint32_t event)
             return nullptr;   // ScriptName forever_lua_gameobject (noteEventGaps says so)
         case fl::EluKind::Item:
             // C3 (PR #378) adds the use of every item only; quest accept, expire and remove still need the item's
-            // ScriptName forever_lua_item, in every core. DUMMY_EFFECT needs C9.
+            // ScriptName forever_lua_item, in every core. DUMMY_EFFECT needs C9; ADD, EQUIP and UNEQUIP need C13.
             if (event == 1)
                 return "C9";
+            if (event == 6 || event == 7 || event == 8)
+                return "C13";
             return event == 2 && !itemUse ? "C3" : nullptr;
         case fl::EluKind::PlayerGossip: return event == 1 ? nullptr : (gossip ? nullptr : "C3");
         case fl::EluKind::ItemGossip: return (event == 1 ? itemUse : gossip) ? nullptr : "C3";
@@ -400,10 +438,12 @@ char const* hookGapFor(fl::Config const& cfg, fl::EluKind kind, uint32_t event)
             }
         case fl::EluKind::CreatureGossip:
         case fl::EluKind::GameObjectGossip: return nullptr;
-        case fl::EluKind::Group: return event == 6 ? "C10" : nullptr;
+        case fl::EluKind::Group: return (event == 6 || event == 7) ? "C10" : nullptr;
         case fl::EluKind::Guild: return nullptr;
         case fl::EluKind::BattleGround:
             return nullptr;   // E5: the pinned core has BattlegroundScript/BattlegroundMapScript, so C12 is not needed
+        case fl::EluKind::Spell:
+            return "C14";
         case fl::EluKind::Map:
         case fl::EluKind::Instance:
             // LOAD, CREATURE_CREATE, GAMEOBJECT_CREATE and CHECK_ENCOUNTER need InstanceScript forwarding (C11).

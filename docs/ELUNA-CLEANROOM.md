@@ -111,6 +111,14 @@ of those three classes (the 40 Spell, the 14 Aura and the 190 SpellInfo names of
 The pages give the synopsis, the argument ranges and the return types used for the checks in this round. No Eluna source
 was opened; every body was written from the core's own `Spell`, `Aura` and `SpellInfo` API (`~/ForeverCore`, read only).
 
+### Long tail: Quest and Map (2026-11-26)
+
+Uses the documented method names in `docs/coverage/eluna-documented-api.json` (`Quest/index.html`, `Map/index.html`)
+already summarised in this repo. No Eluna source was opened; every Quest body was written from ForeverCore's own `Quest`
+class (`src/server/game/Quests/QuestDef.h`), and `Map:GetInstanceData` / `Map:SaveInstanceData` are core stubs because
+ForeverCore's `InstanceMap::GetInstanceScript` returns a database-bound C++ `InstanceScript` with no Lua `InstanceData`
+or `SaveToDB` API.
+
 ## What the documentation does not say, and where the answer came from
 
 * The documentation gives the event table per `Register*` family as *names*, *state* and *argument lists*. A reviewer
@@ -167,3 +175,12 @@ E4/E5 review round (2026-11-21): `Player/index.html` and `Guild/index.html` were
 Classic-gap systems. The Player index lists no glyph, currency (other than honor), Battlefield or Wintergrasp method, and
 the Guild index's only bank method is `SetBankTabText`; the arena method `RemoveArenaSpellCooldowns` was added to the
 section 7 stubs. No other page was read and no source was opened.
+
+### Player long tail (read 2026-11-26, the same documentation site)
+
+Per-function pages: `Player/GetChatTag`, `Player/GetLifetimeKills`, `Player/GetMailItem`,
+`Player/IsHonorOrXPTarget`, `Player/IsVisibleForPlayer` for their synopsis, argument ranges and return types, and
+`Player/GetPhaseMaskForSpawn` again for the phase-mask contract that keeps it a stub. The pages' argument lists set the
+checks of those bindings; the rest of the round's Player methods take the documented names and argument lists from the
+maintained list the report is generated from. No Eluna source was opened; every body was written from the core's own
+Player API (`~/ForeverCore`, read only).

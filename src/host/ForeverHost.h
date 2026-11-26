@@ -6,6 +6,7 @@
 #include "engine/Host.h"
 
 #include <atomic>
+#include <functional>
 #include <memory>
 
 class ResultSet;   // core type (QueryResult); only referenced here
@@ -110,12 +111,26 @@ public:
     void endLuaCall() override;
     bool sendPacket(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
                     bool ignorePlayersInBg, uint64_t ignore) override;
+    bool sendPacketToRanked(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
+                            uint32_t rank) override;
+    // Group and guild changes (E2 and the long tail). The core calls its script hooks while its own mutation is still
+    // open; a change a hook asks for is therefore queued to the next world tick instead of running inside that mutation.
+    void runSocialWrite(char const* what, std::function<void()> job);
+    void enterSocialHook() override { ++_socialHookDepth; }
+    void leaveSocialHook() override { --_socialHookDepth; }
+    // Both flags are touched on the world thread only (the callers branch on the thread/place first).
+    bool socialWriteBlocked() const { return _socialWriteActive || _socialHookDepth > 0; }
+    bool _socialWriteActive = false;
+    int _socialHookDepth = 0;
     bool dataLoad(std::vector<fl::DataRow>& out, std::string& error) override;
     bool dataWrite(fl::DataWrite const& w) override;
     void takeDataWrites(std::vector<fl::DataWriteResult>& out) override;
     bool worldOnlyReadOk() override;
     bool mapIsInstanced(uint32_t mapId) override;
     bool commandNameReserved(std::string const& name) override;
+    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0) override;
+    uint32_t realmId() override;
+    bool isInventoryPos(int kind, uint8_t bag, uint8_t slot) override;
     // The roots of the core's command table (read once at start, before any Lua command exists).
     void setCoreCommandRoots(std::vector<std::string> roots) { _coreRoots.assign(std::move(roots)); }
     // The LuaDb of the module's own connections, opened on first use.

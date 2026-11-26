@@ -31,8 +31,12 @@ add_executable(forever_lua_tests
   test_eluna_e45_review.cpp
   test_eluna_creature.cpp
   test_eluna_item.cpp
+  test_eluna_object.cpp
+  test_eluna_packet.cpp
   test_eluna_player.cpp
+  test_eluna_quest_map.cpp
   test_eluna_spell.cpp
+  test_eluna_aura_proc.cpp
   test_eluna_scripts.cpp
   test_eluna_unit.cpp
   test_handles.cpp
@@ -41,6 +45,7 @@ add_executable(forever_lua_tests
   test_host_commands.cpp
   test_host_db.cpp
   test_host_router.cpp
+  test_host_writes.cpp
   test_json.cpp
   test_lua_scripts.cpp
   test_memory.cpp

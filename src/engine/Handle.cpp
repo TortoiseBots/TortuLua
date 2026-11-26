@@ -139,6 +139,8 @@ char const* kindName(ObjKind kind)
         case ObjKind::Vehicle: return "vehicle";
         case ObjKind::Bot: return "bot";
         case ObjKind::SpellInfo: return "spellinfo";
+        case ObjKind::AuraEffect: return "auraeffect";
+        case ObjKind::ElunaProcInfo: return "procinfo";
     }
     return "unknown";
 }

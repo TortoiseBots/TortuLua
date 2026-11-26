@@ -12,6 +12,7 @@ TortuLua is designed for **test servers only**. Whoever can write to `ForeverLua
 
 - In **`test` mode**, scripts run inside a hardened sandbox with strict budgets and read-only schema-validated queries.
 - In **`eluna` mode**, scripts are trusted (raw SQL is enabled, execution budgets default to `0`, and `OpenStdLibs = 1` can open `io`/`os`/`debug`/`package`).
+- **Packets are unguarded:** `SendPacket` takes any opcode and can send to any player, group, guild or creature set with no allowlist, so scripts are trusted code.
 
 # Sandbox Controls
 
@@ -21,5 +22,6 @@ TortuLua is designed for **test servers only**. Whoever can write to `ForeverLua
 - **Bounded C functions:** `string.rep`, `table.move`, `table.sort`, `table.insert`/`table.remove` (using raw length; mismatched `__len` is refused), `Json.encode`, `Db.select` (rows, bytes, and 32 in-flight cap), `load` (1 MB), and Lua pattern matching (1 MiB subject, 512-byte pattern, step counter aborting with `"pattern too complex"` via a vendored Lua patch) are all bounded.
 - **Allocation and GC limits:** Single Lua allocations are capped at 4 MiB so no `malloc` stalls the world thread. `__gc` metatables are refused and `collectgarbage` allows only `count`/`step` (step clamped to 64 KB).
 - **Guarded GM bridge:** `Gm.run` and `Player:run` reject `BridgeDeny` and forwarded command roots by prefix, forbid re-entry, and execute at `ForeverLua.BridgeSecurity` RBAC level rather than console privileges.
+- **Eluna `RunCommand`:** the global `RunCommand` and `Player:RunCommand` are not the GM bridge: they run the line at the script's own RBAC level (the player's own for the method form) and keep no deny list. Both are the world thread's work (queued from a map thread), and the player form goes through the re-entry-guarded social write path, so a hook of a group or guild change cannot re-enter the core.
 
 Related: [Configuration](../operations/configuration.md), [Limits and Core Gaps](limits.md), [Test Mode API](../modes/test-mode.md).

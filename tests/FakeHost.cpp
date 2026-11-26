@@ -1,11 +1,14 @@
 #include "FakeHost.h"
 
 #include "CreatureLookup.h"
+#include "NearSearch.h"
+#include "PlayerWrites.h"
 
 #include "engine/GuidText.h"
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <stdexcept>
 #include <fstream>
 #include <unistd.h>
@@ -70,10 +73,10 @@ std::string FakeHost::guidToString(fl::Guid const& g)
     return "Guid-" + std::to_string(g.hi) + "-" + std::to_string(g.lo);
 }
 
-fl::Guid FakeHost::makeGuid(uint64_t type, uint64_t low, uint32_t entry)
+fl::Guid FakeHost::makeGuid(uint64_t type, uint64_t low, uint32_t entry, uint16_t mapId)
 {
     fl::Guid g;
-    g.hi = (type << 58) | (static_cast<uint64_t>(entry) << 20);
+    g.hi = (type << 58) | (static_cast<uint64_t>(mapId & 0x1FFF) << 44) | (static_cast<uint64_t>(entry) << 20);
     g.lo = low;
     return g;
 }
@@ -82,7 +85,7 @@ fl::HandleData FakeHost::creature(uint64_t id, uint32_t map, uint32_t instance, 
 {
     fl::HandleData h;
     h.kind = fl::ObjKind::Creature;
-    h.guid = makeGuid(kTypeCreature, id, entry);
+    h.guid = makeGuid(kTypeCreature, id, entry, static_cast<uint16_t>(map));
     h.mapId = map;
     h.instanceId = instance;
     return h;
@@ -91,7 +94,7 @@ fl::HandleData FakeHost::creature(uint64_t id, uint32_t map, uint32_t instance, 
 fl::HandleData FakeHost::pet(uint64_t id, uint32_t map, uint32_t instance, uint32_t entry)
 {
     fl::HandleData h = creature(id, map, instance, entry);
-    h.guid = makeGuid(kTypePet, id, entry);
+    h.guid = makeGuid(kTypePet, id, entry, static_cast<uint16_t>(map));
     return h;
 }
 
@@ -109,7 +112,17 @@ fl::HandleData FakeHost::gameObject(uint64_t id, uint32_t map, uint32_t instance
 {
     fl::HandleData h;
     h.kind = fl::ObjKind::GameObject;
-    h.guid = makeGuid(kTypeGameObject, id, entry);
+    h.guid = makeGuid(kTypeGameObject, id, entry, static_cast<uint16_t>(map));
+    h.mapId = map;
+    h.instanceId = instance;
+    return h;
+}
+
+fl::HandleData FakeHost::corpse(uint64_t id, uint32_t map, uint32_t instance)
+{
+    fl::HandleData h;
+    h.kind = fl::ObjKind::Corpse;
+    h.guid = makeGuid(kTypeCorpse, id);
     h.mapId = map;
     h.instanceId = instance;
     return h;
@@ -147,7 +160,7 @@ fl::ObjectInfo* FakeHost::find(fl::HandleData const& h)
         return nullptr;
     // A creature or game object is in ONE map's store: a handle naming another map does not find it (the core's
     // Map::GetCreature on the handle's map). Players and items are global tables.
-    if ((h.kind == fl::ObjKind::Creature || h.kind == fl::ObjKind::GameObject) &&
+    if ((h.kind == fl::ObjKind::Creature || h.kind == fl::ObjKind::GameObject || h.kind == fl::ObjKind::Corpse) &&
         it->second.current != flh::MapKey{h.mapId, h.instanceId})
         return nullptr;
     if (h.kind == fl::ObjKind::Creature)
@@ -246,7 +259,8 @@ bool FakeHost::currentMap(fl::HandleData const& h, uint32_t& mapId, uint32_t& in
 
 bool FakeHost::objectInWorld(fl::HandleData const& h)
 {
-    if (h.kind != fl::ObjKind::Creature && h.kind != fl::ObjKind::GameObject && h.kind != fl::ObjKind::Player)
+    if (h.kind != fl::ObjKind::Creature && h.kind != fl::ObjKind::GameObject && h.kind != fl::ObjKind::Corpse &&
+        h.kind != fl::ObjKind::Player)
         return true;
     // Like the real host (findObject): a creature/game object resolves only through its map's store(s), a player globally.
     if (h.kind == fl::ObjKind::Player)
@@ -426,7 +440,15 @@ bool FakeHost::unitStateCall(fl::HandleData const& self, std::string const& op,
         "unit.setNativeDisplayId", "unit.getCreatureType", "unit.getClassAsString", "unit.getRaceAsString",
         "unit.getClassMask", "unit.getRaceMask", "unit.sendChatMessageToPlayer", "unit.performEmote", "unit.emoteState",
         "unit.isMoving", "unit.isFlying", "unit.isVisible", "unit.setSheath", "unit.setWaterWalk", "unit.setSanctuary",
-        "unit.deMorph", "unit.restoreDisplayId", "unit.restoreFaction"};
+        "unit.deMorph", "unit.restoreDisplayId", "unit.restoreFaction",
+        "unit.addFlatStatModifier", "unit.addPctStatModifier", "unit.canModifyStats", "unit.castSpellAoF",
+        "unit.countPctFromCurHealth", "unit.countPctFromMaxHealth", "unit.disableMelee", "unit.getCharmGuid",
+        "unit.getControllerGuids", "unit.getCritterGuid", "unit.getStandState", "unit.isArmorer", "unit.isAuctioneer",
+        "unit.isBattleMaster", "unit.isDying", "unit.isGuildMaster", "unit.isInAccessiblePlaceFor",
+        "unit.isSpiritGuide", "unit.isSpiritService", "unit.isTabardDesigner", "unit.isTaxi",
+        "unit.removeBindSightAuras", "unit.removeCharmAuras", "unit.sendUnitEmote", "unit.setCanFly",
+        "unit.setCreatorGuid", "unit.setCritterGuid", "unit.setFFA", "unit.setImmuneTo", "unit.setName",
+        "unit.setPetGuid", "unit.setVisible"};
     if (!ops.count(op))
         return false;
 
@@ -721,6 +743,130 @@ bool FakeHost::unitStateCall(fl::HandleData const& self, std::string const& op,
         ++u.restoreDisplayId;
     else if (op == "unit.restoreFaction")
         ++u.restoreFaction;
+    else if (op == "unit.addFlatStatModifier")
+    {
+        u.statMods.push_back(FakeUnit::StatMod{static_cast<uint32_t>(unitIntAt(args, 0)),
+                                               static_cast<uint32_t>(unitIntAt(args, 1)), unitDoubleAt(args, 2),
+                                               unitBoolAt(args, 3, true), false});
+    }
+    else if (op == "unit.addPctStatModifier")
+    {
+        u.statMods.push_back(FakeUnit::StatMod{static_cast<uint32_t>(unitIntAt(args, 0)),
+                                               static_cast<uint32_t>(unitIntAt(args, 1)), unitDoubleAt(args, 2),
+                                               true, true});
+    }
+    else if (op == "unit.canModifyStats")
+        out.emplace_back(u.canModifyStats);
+    else if (op == "unit.castSpellAoF")
+    {
+        u.aofCasts.push_back(FakeUnit::AoFCast{unitDoubleAt(args, 0), unitDoubleAt(args, 1), unitDoubleAt(args, 2),
+                                               static_cast<uint32_t>(unitIntAt(args, 3)), unitBoolAt(args, 4, true)});
+    }
+    else if (op == "unit.countPctFromCurHealth")
+    {
+        double const pct = unitDoubleAt(args, 0, 0.0);
+        out.emplace_back(static_cast<int64_t>(static_cast<double>(u.health) * pct / 100.0));
+    }
+    else if (op == "unit.countPctFromMaxHealth")
+    {
+        double const pct = unitDoubleAt(args, 0, 0.0);
+        out.emplace_back(static_cast<int64_t>(static_cast<double>(u.maxHealth) * pct / 100.0));
+    }
+    else if (op == "unit.disableMelee")
+    {
+        if (self.kind != fl::ObjKind::Creature)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        u.meleeDisabled = unitBoolAt(args, 0, true);
+        out.emplace_back(true);
+    }
+    else if (op == "unit.getCharmGuid")
+        out.emplace_back(u.charmGuid);
+    else if (op == "unit.getControllerGuids")
+        out.emplace_back(u.controllerGuids);
+    else if (op == "unit.getCritterGuid")
+        out.emplace_back(u.critterGuid);
+    else if (op == "unit.getStandState")
+        out.emplace_back(static_cast<int64_t>(u.standState));
+    else if (op == "unit.isArmorer")
+        out.emplace_back(u.armorer);
+    else if (op == "unit.isAuctioneer")
+        out.emplace_back(u.auctioneer);
+    else if (op == "unit.isBattleMaster")
+        out.emplace_back(u.battleMaster);
+    else if (op == "unit.isDying")
+        out.emplace_back(u.dying);
+    else if (op == "unit.isGuildMaster")
+        out.emplace_back(u.guildMaster);
+    else if (op == "unit.isInAccessiblePlaceFor")
+    {
+        fl::HandleData target;
+        if (unitHandleAt(args, 0, target))
+            u.accessibleObjLow = target.guid.lo;
+        u.accessibleRadius = unitDoubleAt(args, 1, 0.0);
+        out.emplace_back(u.accessiblePlace);
+    }
+    else if (op == "unit.isSpiritGuide")
+        out.emplace_back(u.spiritGuide);
+    else if (op == "unit.isSpiritService")
+        out.emplace_back(u.spiritService);
+    else if (op == "unit.isTabardDesigner")
+        out.emplace_back(u.tabardDesigner);
+    else if (op == "unit.isTaxi")
+        out.emplace_back(u.taxi);
+    else if (op == "unit.removeBindSightAuras")
+        ++u.removeBindSightAuras;
+    else if (op == "unit.removeCharmAuras")
+        ++u.removeCharmAuras;
+    else if (op == "unit.sendUnitEmote")
+    {
+        FakeUnit::EmoteMsg e;
+        e.msg = unitStringAt(args, 0);
+        fl::HandleData receiver;
+        if (unitHandleAt(args, 1, receiver))
+            e.receiverLow = receiver.guid.lo;
+        e.bossEmote = unitBoolAt(args, 2, false);
+        u.unitEmotes.push_back(std::move(e));
+    }
+    else if (op == "unit.setCanFly")
+        u.canFly = unitBoolAt(args, 0, true);
+    else if (op == "unit.setCreatorGuid")
+        u.creatorGuid = unitStringAt(args, 0);
+    else if (op == "unit.setCritterGuid")
+        u.critterGuid = unitStringAt(args, 0);
+    else if (op == "unit.setFFA")
+    {
+        bool const on = unitBoolAt(args, 0, true);
+        u.ffa = on;
+        if (self.kind == fl::ObjKind::Player)
+            playerState(self).ffa = on;
+    }
+    else if (op == "unit.setImmuneTo")
+    {
+        uint32_t const mech = static_cast<uint32_t>(unitIntAt(args, 0));
+        if (unitBoolAt(args, 1, true))
+            u.immuneMechanics.insert(mech);
+        else
+            u.immuneMechanics.erase(mech);
+    }
+    else if (op == "unit.setName")
+    {
+        auto cit = creatureStates.find({self.guid.hi, self.guid.lo});
+        bool const isPet = (self.guid.hi >> 58) == kTypePet || (cit != creatureStates.end() && cit->second.isPet);
+        if (self.kind != fl::ObjKind::Creature || isPet)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        u.name = unitStringAt(args, 0);
+        out.emplace_back(true);
+    }
+    else if (op == "unit.setPetGuid")
+        u.petGuid = unitStringAt(args, 0);
+    else if (op == "unit.setVisible")
+        u.visible = unitBoolAt(args, 0, true);
     return true;
 }
 
@@ -1127,7 +1273,7 @@ bool FakeHost::itemStateCall(fl::HandleData const& self, std::string const& op,
         "item.isCurrencyToken", "item.isNotEmptyBag", "item.isInBag", "item.isInTrade", "item.isPotion",
         "item.isConjuredConsumable", "item.isRefundExpired", "item.canBeTraded", "item.hasQuest",
         "item.getOwnerGuid", "item.setBinding", "item.getEnchantmentId", "item.setEnchantment",
-        "item.clearEnchantment", "item.getBagSize"};
+        "item.clearEnchantment", "item.getBagSize", "item.getExtraFlags", "item.getSpeed"};
     if (!ops.count(op))
         return false;
 
@@ -1388,6 +1534,18 @@ bool FakeHost::itemStateCall(fl::HandleData const& self, std::string const& op,
         it.enchantments[slot] = 0;
         out.emplace_back(true);
     }
+    else if (op == "item.getExtraFlags")
+    {
+        if (!templated())
+            return true;
+        out.emplace_back(static_cast<int64_t>(it.extraFlags));
+    }
+    else if (op == "item.getSpeed")
+    {
+        if (!templated())
+            return true;
+        out.emplace_back(static_cast<int64_t>(it.speed));
+    }
     else  // item.getBagSize
     {
         if (!templated())
@@ -1409,7 +1567,13 @@ bool FakeHost::gameCall(fl::HandleData const& self, std::string_view op, std::ve
         return true;
     if (unitStateCall(self, std::string(op), args, out))
         return true;
+    if (worldObjectStateCall(self, std::string(op), args, out))
+        return true;
     if (self.kind == fl::ObjKind::Creature && creatureStateCall(self, std::string(op), args, out))
+        return true;
+    if (self.kind == fl::ObjKind::GameObject && gameObjectStateCall(self, std::string(op), args, out))
+        return true;
+    if (self.kind == fl::ObjKind::Quest && questStateCall(self, std::string(op), args, out))
         return true;
     if (self.kind == fl::ObjKind::Item && itemStateCall(self, std::string(op), args, out))
         return true;
@@ -1580,6 +1744,29 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
         {"spellinfo.isRangedWeaponSpell", &FakeSI::rangedWeaponSpell},
         {"spellinfo.isAutoRepeatRangedSpell", &FakeSI::autoRepeatRangedSpell},
         {"spellinfo.isAffectedBySpellMods", &FakeSI::affectedBySpellMods},
+        {"spellinfo.isAbilityLearnedWithProfession", &FakeSI::abilityLearnedWithProfession},
+        {"spellinfo.isBreakingStealth", &FakeSI::breakingStealth},
+        {"spellinfo.isExplicitDiscovery", &FakeSI::explicitDiscovery},
+        {"spellinfo.isLootCrafting", &FakeSI::lootCrafting},
+        {"spellinfo.isPassiveStackableWithRanks", &FakeSI::passiveStackableWithRanks},
+        {"spellinfo.isPrimaryProfession", &FakeSI::primaryProfession},
+        {"spellinfo.isPrimaryProfessionFirstRank", &FakeSI::primaryProfessionFirstRank},
+        {"spellinfo.isProfession", &FakeSI::profession},
+        {"spellinfo.isProfessionOrRiding", &FakeSI::professionOrRiding},
+        {"spellinfo.isStackableOnOneSlotWithDifferentCasters", &FakeSI::stackableOnOneSlotWithDifferentCasters},
+        {"spellinfo.needsComboPoints", &FakeSI::needsComboPoints},
+    };
+    static IntField const kExtInts[] = {
+        {"spellinfo.getAllEffectsMechanicMask", &FakeSI::allEffectsMechanicMask},
+        {"spellinfo.getAllowedMechanicMask", &FakeSI::allowedMechanicMask},
+        {"spellinfo.getExcludeCasterAuraSpell", &FakeSI::excludeCasterAuraSpell},
+        {"spellinfo.getExcludeTargetAuraSpell", &FakeSI::excludeTargetAuraSpell},
+        {"spellinfo.getManaCostPercentage", &FakeSI::manaCostPercentage},
+        {"spellinfo.getMaxTicks", &FakeSI::maxTicks},
+        {"spellinfo.getDiminishingReturnsGroupForSpell", &FakeSI::diminishingGroup},
+        {"spellinfo.getDiminishingReturnsGroupType", &FakeSI::diminishingGroupType},
+        {"spellinfo.getDiminishingReturnsLimitDuration", &FakeSI::diminishingLimitDuration},
+        {"spellinfo.getDiminishingReturnsMaxLevel", &FakeSI::diminishingMaxLevel},
     };
 
     if (self.kind == fl::ObjKind::Spell)
@@ -1849,6 +2036,162 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
                 out.emplace_back(info.*(f.member));
                 return true;
             }
+        if (op == "spellinfo.isSelfCast")
+        {
+            bool hasEffect = false;
+            bool selfCast = true;
+            for (FakeSI::FakeEffect const& e : info.effectSlots)
+            {
+                if (!e.isEffect)
+                    continue;
+                hasEffect = true;
+                if (e.targetA.target != 1 || (e.targetB.target != 0 && e.targetB.target != 1))
+                {
+                    selfCast = false;
+                    break;
+                }
+            }
+            out.emplace_back(hasEffect && selfCast);
+            return true;
+        }
+        for (IntField const& f : kExtInts)
+            if (op == f.op)
+            {
+                out.emplace_back(info.*(f.member));
+                return true;
+            }
+        if (op == "spellinfo.getSpellVisual")
+        {
+            uint32_t const index = static_cast<uint32_t>(unitIntAt(args, 0));
+            if (index > 1)
+                throw std::out_of_range("spell visual index " + std::to_string(index) + " is not 0..1");
+            out.emplace_back(info.spellVisual[index]);
+            return true;
+        }
+        if (op == "spellinfo.getSpellMechanicMaskByEffectMask")
+        {
+            uint32_t const mask = static_cast<uint32_t>(unitIntAt(args, 0));
+            int64_t outMask = info.mechanic ? (int64_t(1) << info.mechanic) : 0;
+            for (size_t i = 0; i < info.effectSlots.size() && i < 32; ++i)
+                if ((mask & (1u << i)) && info.effectSlots[i].mechanic)
+                    outMask |= (int64_t(1) << info.effectSlots[i].mechanic);
+            out.emplace_back(outMask);
+            return true;
+        }
+        if (op == "spellinfo.checkTarget")
+        {
+            out.emplace_back(info.checkTargetResult);
+            return true;
+        }
+        if (op == "spellinfo.checkTargetCreatureType")
+        {
+            fl::HandleData h;
+            handleAt(args, 0, h);
+            out.emplace_back(info.checkTargetCreatureTypes.count(h.guid.lo) != 0);
+            return true;
+        }
+        if (op == "spellinfo.isAbilityOfSkillType")
+        {
+            out.emplace_back(info.skillTypes.count(static_cast<uint32_t>(unitIntAt(args, 0))) != 0);
+            return true;
+        }
+        if (op == "spellinfo.isAffected")
+        {
+            uint32_t const fam = static_cast<uint32_t>(unitIntAt(args, 0));
+            uint32_t const f0 = static_cast<uint32_t>(unitIntAt(args, 1));
+            uint32_t const f1 = static_cast<uint32_t>(unitIntAt(args, 2));
+            uint32_t const f2 = static_cast<uint32_t>(unitIntAt(args, 3));
+            bool ok = (fam == 0 || fam == info.affectedFamilyName) &&
+                      ((f0 == 0 && f1 == 0 && f2 == 0) || (f0 & info.affectedFlags[0]) ||
+                       (f1 & info.affectedFlags[1]) || (f2 & info.affectedFlags[2]));
+            out.emplace_back(ok);
+            return true;
+        }
+        if (op == "spellinfo.isItemFitToSpellRequirements")
+        {
+            fl::HandleData h;
+            handleAt(args, 0, h);
+            out.emplace_back(info.fitItems.count(h.guid.lo) != 0);
+            return true;
+        }
+        if (op == "spellinfo.spellCancelsAuraEffect")
+        {
+            uint32_t const aeId = static_cast<uint32_t>(unitIntAt(args, 0));
+            if (auraEffects.count(aeId) == 0)
+                throw std::out_of_range("AuraEffect no longer exists");
+            out.emplace_back(info.cancelsAuraEffects.count(aeId) != 0);
+            return true;
+        }
+        auto effSlot = [&](uint32_t idx) -> FakeSI::FakeEffect const&
+        {
+            if (idx >= info.effectSlots.size())
+                throw std::out_of_range("effect index " + std::to_string(idx) + " is not an effect of spell " +
+                                        std::to_string(info.id));
+            return info.effectSlots[idx];
+        };
+        if (op.rfind("spellinfo.effectIs", 0) == 0 || op.rfind("spellinfo.getEffect", 0) == 0)
+        {
+            FakeSI::FakeEffect const& e = effSlot(static_cast<uint32_t>(unitIntAt(args, 0)));
+            if (op == "spellinfo.effectIsAreaAuraEffect") out.emplace_back(e.isAreaAuraEffect);
+            else if (op == "spellinfo.effectIsAura") out.emplace_back(e.isAura);
+            else if (op == "spellinfo.effectIsAuraType")
+                out.emplace_back(e.isAura && e.auraType == unitIntAt(args, 1));
+            else if (op == "spellinfo.effectIsEffect") out.emplace_back(e.isEffect);
+            else if (op == "spellinfo.effectIsEffectType")
+                out.emplace_back(e.isEffect && e.effectType == unitIntAt(args, 1));
+            else if (op == "spellinfo.effectIsTargetingArea") out.emplace_back(e.isTargetingArea);
+            else if (op == "spellinfo.effectIsUnitOwnedAuraEffect") out.emplace_back(e.isUnitOwnedAuraEffect);
+            else if (op == "spellinfo.getEffectAmplitude") out.emplace_back(e.amplitude);
+            else if (op == "spellinfo.getEffectApplyAuraName") out.emplace_back(e.auraType);
+            else if (op == "spellinfo.getEffectBasePoints") out.emplace_back(e.basePoints);
+            else if (op == "spellinfo.getEffectBonusMultiplier") out.emplace_back(e.bonusMultiplier);
+            else if (op == "spellinfo.getEffectCalcRadius") out.emplace_back(e.calcRadius);
+            else if (op == "spellinfo.getEffectCalcValue") out.emplace_back(e.calcValue);
+            else if (op == "spellinfo.getEffectChainTarget") out.emplace_back(e.chainTarget);
+            else if (op == "spellinfo.getEffectDamageMultiplier") out.emplace_back(e.damageMultiplier);
+            else if (op == "spellinfo.getEffectDieSides") out.emplace_back(e.dieSides);
+            else if (op == "spellinfo.getEffectHasRadius") out.emplace_back(e.hasRadius);
+            else if (op == "spellinfo.getEffectImplicitTargetType") out.emplace_back(e.implicitTargetType);
+            else if (op == "spellinfo.getEffectIndex") out.emplace_back(e.effectIndex);
+            else if (op == "spellinfo.getEffectItemType") out.emplace_back(e.itemType);
+            else if (op == "spellinfo.getEffectMechanic") out.emplace_back(e.mechanic);
+            else if (op == "spellinfo.getEffectMechanicMask") out.emplace_back(e.mechanicMask);
+            else if (op == "spellinfo.getEffectMiscValue") out.emplace_back(e.miscValue);
+            else if (op == "spellinfo.getEffectMiscValueB") out.emplace_back(e.miscValueB);
+            else if (op == "spellinfo.getEffectPointsPerComboPoint") out.emplace_back(e.pointsPerComboPoint);
+            else if (op == "spellinfo.getEffectProvidedTargetMask") out.emplace_back(e.providedTargetMask);
+            else if (op == "spellinfo.getEffectRealPointsPerLevel") out.emplace_back(e.realPointsPerLevel);
+            else if (op == "spellinfo.getEffectSpellClassMask")
+            {
+                uint32_t const mi = static_cast<uint32_t>(unitIntAt(args, 1));
+                if (mi > 2)
+                    throw std::out_of_range("spell class mask index " + std::to_string(mi) + " is not 0..2");
+                out.emplace_back(e.spellClassMask[mi]);
+            }
+            else if (op == "spellinfo.getEffectTargetACheckType") out.emplace_back(e.targetA.checkType);
+            else if (op == "spellinfo.getEffectTargetADirectionAngle") out.emplace_back(e.targetA.directionAngle);
+            else if (op == "spellinfo.getEffectTargetADirectionType") out.emplace_back(e.targetA.directionType);
+            else if (op == "spellinfo.getEffectTargetAIsArea") out.emplace_back(e.targetA.isArea);
+            else if (op == "spellinfo.getEffectTargetAObjectType") out.emplace_back(e.targetA.objectType);
+            else if (op == "spellinfo.getEffectTargetAReferenceType") out.emplace_back(e.targetA.referenceType);
+            else if (op == "spellinfo.getEffectTargetASelectionCategory") out.emplace_back(e.targetA.selectionCategory);
+            else if (op == "spellinfo.getEffectTargetATarget") out.emplace_back(e.targetA.target);
+            else if (op == "spellinfo.getEffectTargetBCheckType") out.emplace_back(e.targetB.checkType);
+            else if (op == "spellinfo.getEffectTargetBDirectionAngle") out.emplace_back(e.targetB.directionAngle);
+            else if (op == "spellinfo.getEffectTargetBDirectionType") out.emplace_back(e.targetB.directionType);
+            else if (op == "spellinfo.getEffectTargetBIsArea") out.emplace_back(e.targetB.isArea);
+            else if (op == "spellinfo.getEffectTargetBObjectType") out.emplace_back(e.targetB.objectType);
+            else if (op == "spellinfo.getEffectTargetBReferenceType") out.emplace_back(e.targetB.referenceType);
+            else if (op == "spellinfo.getEffectTargetBSelectionCategory") out.emplace_back(e.targetB.selectionCategory);
+            else if (op == "spellinfo.getEffectTargetBTarget") out.emplace_back(e.targetB.target);
+            else if (op == "spellinfo.getEffectTriggerSpell") out.emplace_back(e.triggerSpell);
+            else if (op == "spellinfo.getEffectType") out.emplace_back(e.effectType);
+            else if (op == "spellinfo.getEffectUsedTargetObjectType") out.emplace_back(e.usedTargetObjectType);
+            else if (op == "spellinfo.getEffectValueMultiplier") out.emplace_back(e.valueMultiplier);
+            else
+                return false;
+            return true;
+        }
         if (op == "spellinfo.getSpellFamilyFlags")
         {
             uint32_t const index = static_cast<uint32_t>(unitIntAt(args, 0));
@@ -1906,12 +2249,229 @@ bool FakeHost::spellStateCall(fl::HandleData const& self, std::string const& op,
             related = &info.pierces;
         else if (op == "spellinfo.canSpellProvideImmunityAgainstAura")
             related = &info.providesImmunity;
+        else if (op == "spellinfo.isAuraExclusiveBySpecificWith")
+            related = &info.exclusiveWith;
+        else if (op == "spellinfo.isAuraExclusiveBySpecificPerCasterWith")
+            related = &info.exclusivePerCasterWith;
         if (related)
         {
             out.emplace_back(related->count(static_cast<uint32_t>(unitIntAt(args, 0))) != 0);
             return true;
         }
         return false;
+    }
+    if (self.kind == fl::ObjKind::AuraEffect)
+    {
+        auto it = auraEffects.find(self.instanceId);
+        if (it == auraEffects.end())
+            return false;
+        FakeAuraEffect& ae = it->second;
+        if (op == "auraeffect.calculateAmount")
+            out.emplace_back(static_cast<int64_t>(ae.calculatedAmount));
+        else if (op == "auraeffect.calculatePeriodic")
+        {
+            ae.actions.push_back("calculatePeriodic");
+            auraEffectActions.push_back("calculatePeriodic");
+        }
+        else if (op == "auraeffect.canBeRecalculated")
+            out.emplace_back(ae.canBeRecalculated);
+        else if (op == "auraeffect.changeAmount")
+        {
+            ae.amount = static_cast<int32_t>(unitIntAt(args, 0));
+            ae.actions.push_back("changeAmount");
+            auraEffectActions.push_back("changeAmount");
+        }
+        else if (op == "auraeffect.getAmount")
+            out.emplace_back(static_cast<int64_t>(ae.amount));
+        else if (op == "auraeffect.getAmplitude")
+            out.emplace_back(static_cast<int64_t>(ae.amplitude));
+        else if (op == "auraeffect.getAuraType")
+            out.emplace_back(ae.auraType);
+        else if (op == "auraeffect.getBase")
+        {
+            if (ae.hasBase)
+            {
+                fl::HandleData h;
+                h.kind = fl::ObjKind::Aura;
+                h.instanceId = ae.baseAuraId;
+                h.mapId = ae.id;
+                out.emplace_back(h);
+            }
+        }
+        else if (op == "auraeffect.getBaseAmount")
+            out.emplace_back(static_cast<int64_t>(ae.baseAmount));
+        else if (op == "auraeffect.getCaster")
+        {
+            if (ae.hasCaster)
+                out.emplace_back(ae.caster);
+        }
+        else if (op == "auraeffect.getCasterGuid")
+            out.emplace_back(guidToString(ae.casterGuid));
+        else if (op == "auraeffect.getEffIndex")
+            out.emplace_back(static_cast<int64_t>(ae.effIndex));
+        else if (op == "auraeffect.getId")
+            out.emplace_back(static_cast<int64_t>(ae.id));
+        else if (op == "auraeffect.getPeriodicTimer")
+            out.emplace_back(static_cast<int64_t>(ae.periodicTimer));
+        else if (op == "auraeffect.getRemainingTicks")
+            out.emplace_back(static_cast<int64_t>(ae.remainingTicks));
+        else if (op == "auraeffect.getSpellInfo")
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::SpellInfo;
+            h.guid.lo = ae.id;
+            out.emplace_back(h);
+        }
+        else if (op == "auraeffect.getTargetList")
+        {
+            for (fl::HandleData const& th : ae.targetList)
+                out.emplace_back(th);
+        }
+        else if (op == "auraeffect.getTickNumber")
+            out.emplace_back(static_cast<int64_t>(ae.tickNumber));
+        else if (op == "auraeffect.getTotalTicks")
+            out.emplace_back(static_cast<int64_t>(ae.totalTicks));
+        else if (op == "auraeffect.recalculateAmount")
+        {
+            if (ae.canBeRecalculated)
+                ae.amount = ae.calculatedAmount;
+            ae.actions.push_back("recalculateAmount");
+            auraEffectActions.push_back("recalculateAmount");
+        }
+        else if (op == "auraeffect.setAmount")
+        {
+            ae.amount = static_cast<int32_t>(unitIntAt(args, 0));
+            ae.canBeRecalculated = false;
+        }
+        else if (op == "auraeffect.setCanBeRecalculated")
+            ae.canBeRecalculated = unitBoolAt(args, 0);
+        else if (op == "auraeffect.setPeriodicTimer")
+            ae.periodicTimer = static_cast<int32_t>(unitIntAt(args, 0));
+        else
+            return false;
+        return true;
+    }
+    if (self.kind == fl::ObjKind::ElunaProcInfo)
+    {
+        auto it = procInfos.find(self.instanceId);
+        if (it == procInfos.end())
+            return false;
+        FakeProcInfo& pi = it->second;
+        if (op == "procinfo.getActionTarget")
+        {
+            if (pi.hasActionTarget)
+                out.emplace_back(pi.actionTarget);
+        }
+        else if (op == "procinfo.getActor")
+        {
+            if (pi.hasActor)
+                out.emplace_back(pi.actor);
+        }
+        else if (op == "procinfo.getAttackType")
+            out.emplace_back(static_cast<int64_t>(pi.attackType));
+        else if (op == "procinfo.getBlock")
+            out.emplace_back(static_cast<int64_t>(pi.block));
+        else if (op == "procinfo.getDamage")
+            out.emplace_back(static_cast<int64_t>(pi.damage));
+        else if (op == "procinfo.getDamageAbsorb")
+            out.emplace_back(static_cast<int64_t>(pi.damageAbsorb));
+        else if (op == "procinfo.getDamageType")
+            out.emplace_back(static_cast<int64_t>(pi.damageType));
+        else if (op == "procinfo.getEffectiveHeal")
+            out.emplace_back(static_cast<int64_t>(pi.effectiveHeal));
+        else if (op == "procinfo.getHeal")
+            out.emplace_back(static_cast<int64_t>(pi.heal));
+        else if (op == "procinfo.getHealAbsorb")
+            out.emplace_back(static_cast<int64_t>(pi.healAbsorb));
+        else if (op == "procinfo.getHitMask")
+            out.emplace_back(static_cast<int64_t>(pi.hitMask));
+        else if (op == "procinfo.getMap")
+        {
+            if (pi.hasMap)
+                out.emplace_back(pi.map);
+        }
+        else if (op == "procinfo.getProcSpell")
+        {
+            if (pi.hasProcSpell)
+                out.emplace_back(pi.procSpell);
+        }
+        else if (op == "procinfo.getResist")
+            out.emplace_back(static_cast<int64_t>(pi.resist));
+        else if (op == "procinfo.getSchoolMask")
+            out.emplace_back(static_cast<int64_t>(pi.schoolMask));
+        else if (op == "procinfo.getSpellInfo")
+        {
+            if (pi.spellId)
+            {
+                fl::HandleData h;
+                h.kind = fl::ObjKind::SpellInfo;
+                h.guid.lo = pi.spellId;
+                out.emplace_back(h);
+            }
+        }
+        else if (op == "procinfo.getSpellPhaseMask")
+            out.emplace_back(static_cast<int64_t>(pi.spellPhaseMask));
+        else if (op == "procinfo.getSpellTypeMask")
+            out.emplace_back(static_cast<int64_t>(pi.spellTypeMask));
+        else if (op == "procinfo.getTypeMask")
+            out.emplace_back(static_cast<int64_t>(pi.typeMask));
+        else if (op == "procinfo.hasDamage")
+            out.emplace_back(pi.hasDamage);
+        else if (op == "procinfo.hasHeal")
+            out.emplace_back(pi.hasHeal);
+        else if (op == "procinfo.setAbsorbDamage")
+        {
+            if (pi.hasDamage)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.damage);
+                pi.damageAbsorb += amt;
+                pi.damage -= amt;
+            }
+        }
+        else if (op == "procinfo.setAbsorbHeal")
+        {
+            if (pi.hasHeal)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.heal);
+                pi.healAbsorb += amt;
+                pi.heal -= amt;
+                pi.effectiveHeal -= std::min(amt, pi.effectiveHeal);
+            }
+        }
+        else if (op == "procinfo.setBlockDamage")
+        {
+            if (pi.hasDamage)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.damage);
+                pi.block += amt;
+                pi.damage -= amt;
+            }
+        }
+        else if (op == "procinfo.setDamage")
+        {
+            if (pi.hasDamage)
+            {
+                int64_t const target = unitIntAt(args, 0);
+                pi.damage = target > 0 ? static_cast<uint32_t>(target) : 0u;
+            }
+        }
+        else if (op == "procinfo.setEffectiveHeal")
+        {
+            if (pi.hasHeal)
+                pi.effectiveHeal = static_cast<uint32_t>(unitIntAt(args, 0));
+        }
+        else if (op == "procinfo.setResistDamage")
+        {
+            if (pi.hasDamage)
+            {
+                uint32_t const amt = std::min(static_cast<uint32_t>(unitIntAt(args, 0)), pi.damage);
+                pi.resist += amt;
+                pi.damage -= amt;
+            }
+        }
+        else
+            return false;
+        return true;
     }
     return false;
 }
@@ -1951,7 +2511,51 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         "player.getDbLocaleIndex",    "player.getPlayerIP",          "player.getLatency",
         "player.getTotalPlayedTime",  "player.getLevelPlayedTime",   "player.logoutPlayer",
         "player.durabilityRepairAll", "unit.setPvP"};
-    if (!ops.count(op))
+    // E7 long tail, round 2: the documented reads.
+    static std::set<std::string> const readOps = {
+        "player.canBlock",              "player.canCompleteRepeatableQuest", "player.canFly",
+        "player.canParry",              "player.canShareQuest",             "player.canSpeak",
+        "player.canUninviteFromGroup",  "player.getChampioningFaction",     "player.getChatTag",
+        "player.getDbcLocale",          "player.getDifficulty",             "player.getDrunkValue",
+        "player.getGroupInvite",        "player.getGuildRank",              "player.getHealthBonusFromStamina",
+        "player.getInGameTime",         "player.getLifetimeKills",          "player.getMailCount",
+        "player.getMailItem",           "player.getManaBonusFromIntellect", "player.getNearbyGameObject",
+        "player.getNextRandomRaidMember", "player.getOriginalGroup",         "player.getOriginalSubGroup",
+        "player.getQuestLevel",         "player.getRecruiterId",            "player.getSelectedPlayer",
+        "player.getSelectedUnit",       "player.getShieldBlockValue",       "player.getSubGroup",
+        "player.getXPRestBonus",        "player.hasAtLoginFlag",            "player.hasPendingBind",
+        "player.hasTalent",             "player.hasTitle",                  "player.inArena",
+        "player.inBattlegroundQueue",   "player.isAcceptingWhispers",       "player.isARecruiter",
+        "player.isGMChat",              "player.isGMVisible",               "player.isHonorOrXPTarget",
+        "player.isGroupVisibleFor",     "player.isInSameGroupWith",         "player.isInSameRaidWith",
+        "player.isNeverVisible",        "player.isOutdoorPvPActive",        "player.isVisibleForPlayer",
+        "player.resetTalentsCost"};
+    // E7 long tail, round 2: the writes.
+    static std::set<std::string> const writeOps = {
+        "player.sendCinematicStart",          "player.sendMovieStart",           "player.sendUpdateWorldState",
+        "player.sendSpiritResurrect",         "player.setAcceptWhispers",        "player.setAtLoginFlag",
+        "player.setDrunkValue",               "player.setFactionForRace",        "player.setGameMaster",
+        "player.setGender",                   "player.setGMChat",                "player.setGMVisible",
+        "player.setPvPDeath",                 "player.spawnBones",               "player.killPlayer",
+        "player.resetTalents",                "player.durabilityLoss",           "player.durabilityLossAll",
+        "player.durabilityPointLossForEquipSlot", "player.durabilityPointsLoss", "player.durabilityPointsLossAll",
+        "player.durabilityRepair"};
+    // E7 long tail, round 3: remaining Player methods.
+    static std::set<std::string> const round3Ops = {
+        "player.canTitanGrip",     "player.getComboPoints",           "player.getComboTarget",
+        "player.getGossipTextId",  "player.hasRecruited",             "player.isRecruited",
+        "player.addComboPoints",   "player.clearComboPoints",         "player.addTalent",
+        "player.advanceAllSkills", "player.advanceSkill",             "player.advanceSkillsToMax", "player.bindToInstance",         "player.unbindInstance",
+        "player.unbindAllInstances", "player.gossipSendPOI",          "player.killedPlayerCredit",
+        "player.killGOCredit",     "player.leaveBattleground",        "player.mute",
+        "player.removedInsignia",  "player.removeFromBattlegroundRaid", "player.removeFromGroup",
+        "player.removePet",        "player.summonPet",                "player.sendAddonMessage",
+        "player.sendAuctionMenu",  "player.sendQuestTemplate",        "player.sendShowMailBox",
+        "player.sendTabardVendorActivate", "player.setKnownTitle",    "player.unsetKnownTitle",
+        "player.setMovement",      "player.setPlayerLock",            "player.setQuestStatus",
+        "player.startTaxi",        "player.groupCreate",              "player.groupInvite",
+        "player.sendGuildInvite",  "player.setGuildRank",             "player.runCommand"};
+    if (!ops.count(op) && !readOps.count(op) && !writeOps.count(op) && !round3Ops.count(op))
         return false;
 
     FakePlayer& p = playerState(self);
@@ -2257,6 +2861,402 @@ bool FakeHost::playerStateCall(fl::HandleData const& self, std::string const& op
         p.repairDiscount = doubleAt(args, 1, 1.0);
         p.repairGuildBank = boolAt(args, 2, false);
     }
+    // ---- E7 long tail, round 2: the documented reads ----
+    else if (op == "player.canBlock")
+        out.emplace_back(p.canBlock);
+    else if (op == "player.canCompleteRepeatableQuest")
+        out.emplace_back(p.canCompleteRepeatable);
+    else if (op == "player.canFly")
+        out.emplace_back(p.canFly);
+    else if (op == "player.canParry")
+        out.emplace_back(p.canParry);
+    else if (op == "player.canShareQuest")
+        out.emplace_back(p.canShare);
+    else if (op == "player.canSpeak")
+        out.emplace_back(p.canSpeak);
+    else if (op == "player.canUninviteFromGroup")
+        out.emplace_back(static_cast<int64_t>(p.partyResult));
+    else if (op == "player.getChatTag")
+        out.emplace_back(static_cast<int64_t>(flh::chatTagBits(p.afk, p.dnd, p.gmChat)));
+    else if (op == "player.getChampioningFaction")
+        out.emplace_back(static_cast<int64_t>(p.championing));
+    else if (op == "player.getDbcLocale")
+        out.emplace_back(static_cast<int64_t>(p.dbcLocale));
+    else if (op == "player.getDifficulty")
+        out.emplace_back(static_cast<int64_t>(p.difficulty));
+    else if (op == "player.getDrunkValue")
+        out.emplace_back(static_cast<int64_t>(p.drunk));
+    else if (op == "player.getGroupInvite")
+    {
+        if (p.groupInvite)
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::Group;
+            h.guid.lo = p.groupInvite;
+            out.emplace_back(h);
+        }
+    }
+    else if (op == "player.getGuildRank")
+        out.emplace_back(static_cast<int64_t>(p.guildRank));
+    else if (op == "player.getHealthBonusFromStamina")
+        out.emplace_back(p.healthBonus);
+    else if (op == "player.getInGameTime")
+        out.emplace_back(static_cast<int64_t>(p.inGameTime));
+    else if (op == "player.getLifetimeKills")
+        out.emplace_back(static_cast<int64_t>(p.lifetimeKills));
+    else if (op == "player.getMailCount")
+        out.emplace_back(static_cast<int64_t>(p.mailCount));
+    else if (op == "player.getMailItem")
+    {
+        fl::Guid g;
+        if (fl::parseGuidText(stringAt(args, 0), g) && p.mailedItems.count(g.lo))
+            if (FakeItem* it = findItemByLow(g.lo))
+                pushItem(*it);
+    }
+    else if (op == "player.getManaBonusFromIntellect")
+        out.emplace_back(p.manaBonus);
+    else if (op == "player.getNearbyGameObject")
+    {
+        if (p.nearbyGameObject)
+            out.emplace_back(gameObject(p.nearbyGameObject));
+    }
+    else if (op == "player.getNextRandomRaidMember")
+    {
+        if (p.nextRaidMember)
+            out.emplace_back(player(p.nextRaidMember));
+    }
+    else if (op == "player.getOriginalGroup")
+    {
+        if (p.originalGroup)
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::Group;
+            h.guid.lo = p.originalGroup;
+            out.emplace_back(h);
+        }
+    }
+    else if (op == "player.getOriginalSubGroup")
+        out.emplace_back(static_cast<int64_t>(p.originalSubGroup));
+    else if (op == "player.getQuestLevel")
+        out.emplace_back(static_cast<int64_t>(p.questLevel));
+    else if (op == "player.getRecruiterId")
+        out.emplace_back(static_cast<int64_t>(p.recruiterId));
+    else if (op == "player.getSelectedPlayer")
+    {
+        if (p.selectedPlayer)
+            out.emplace_back(player(p.selectedPlayer));
+    }
+    else if (op == "player.getSelectedUnit")
+    {
+        if (p.selectedUnitCreature)
+            out.emplace_back(creature(p.selectedUnitCreature));
+    }
+    else if (op == "player.getShieldBlockValue")
+        out.emplace_back(static_cast<int64_t>(p.shieldBlockValue));
+    else if (op == "player.getSubGroup")
+        out.emplace_back(static_cast<int64_t>(p.subGroup));
+    else if (op == "player.getXPRestBonus")
+        out.emplace_back(static_cast<int64_t>(p.xpRestBonus));
+    else if (op == "player.hasAtLoginFlag")
+        out.emplace_back((p.atLoginFlags & static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "player.hasPendingBind")
+        out.emplace_back(p.pendingBind);
+    else if (op == "player.hasTalent")
+        out.emplace_back(p.talents.count({static_cast<uint32_t>(intAt(args, 0)),
+                                          static_cast<uint8_t>(intAt(args, 1))}) != 0);
+    else if (op == "player.hasTitle")
+        out.emplace_back(p.titles.count(static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "player.inArena")
+        out.emplace_back(p.inArena);
+    else if (op == "player.inBattlegroundQueue")
+        out.emplace_back(p.inBgQueue);
+    else if (op == "player.isAcceptingWhispers")
+        out.emplace_back(p.acceptWhispers);
+    else if (op == "player.isARecruiter")
+        out.emplace_back(p.isRecruiter);
+    else if (op == "player.isGMChat")
+        out.emplace_back(p.gmChat);
+    else if (op == "player.isGMVisible")
+        out.emplace_back(p.gmVisible);
+    else if (op == "player.isHonorOrXPTarget")
+        out.emplace_back(p.honorXpTarget);
+    else if (op == "player.isGroupVisibleFor" || op == "player.isInSameGroupWith" || op == "player.isInSameRaidWith")
+    {
+        fl::HandleData other;
+        if (handleAt(args, 0, other))
+        {
+            auto const& mates = op == "player.isGroupVisibleFor" ? p.visibleFor
+                               : op == "player.isInSameGroupWith" ? p.groupMates
+                                                                  : p.raidMates;
+            out.emplace_back(mates.count(other.guid.lo) != 0);
+        }
+    }
+    else if (op == "player.isNeverVisible")
+        out.emplace_back(p.neverVisible);
+    else if (op == "player.isOutdoorPvPActive")
+        out.emplace_back(p.outdoorPvp);
+    else if (op == "player.isVisibleForPlayer")
+        out.emplace_back(p.seesPlayer);
+    else if (op == "player.resetTalentsCost")
+        out.emplace_back(static_cast<int64_t>(p.resetTalentsCost));
+    // ---- E7 long tail, round 2: the writes ----
+    else if (op == "player.sendCinematicStart" || op == "player.sendMovieStart" ||
+             op == "player.sendUpdateWorldState" || op == "player.sendSpiritResurrect")
+        p.actions.emplace_back(op, args);
+    else if (op == "player.setAcceptWhispers")
+        p.acceptWhispers = boolAt(args, 0, true);
+    else if (op == "player.setAtLoginFlag")
+        p.atLoginFlags |= static_cast<uint32_t>(intAt(args, 0));
+    else if (op == "player.setDrunkValue")
+        p.drunk = static_cast<uint8_t>(intAt(args, 0));
+    else if (op == "player.setFactionForRace")
+    {
+        uint32_t const race = static_cast<uint32_t>(intAt(args, 0));
+        if (race < 1 || race > 11)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        p.factionRace = static_cast<uint8_t>(race);
+    }
+    else if (op == "player.setGameMaster")
+        p.gameMaster = boolAt(args, 0, false);
+    else if (op == "player.setGender")
+        p.gender = static_cast<uint8_t>(intAt(args, 0));
+    else if (op == "player.setGMChat")
+        p.gmChat = boolAt(args, 0, false);
+    else if (op == "player.setGMVisible")
+        p.gmVisible = boolAt(args, 0, true);
+    else if (op == "player.setPvPDeath")
+        p.pvpDeath = boolAt(args, 0, false);
+    else if (op == "player.spawnBones")
+        p.bonesSpawned = true;
+    else if (op == "player.killPlayer")
+        p.killed = true;
+    else if (op == "player.resetTalents")
+    {
+        bool const noCost = boolAt(args, 0, false);
+        int64_t const cost = noCost ? 0 : static_cast<int64_t>(p.resetTalentsCost);
+        if (!noCost && p.money < cost)
+        {
+            out.emplace_back(false);
+            return true;
+        }
+        ++p.resetTalentsCalls;
+        p.resetTalentsNoCost = noCost;
+        if (p.resetTalentsResult && !noCost)
+            p.money -= cost;
+        out.emplace_back(p.resetTalentsResult);
+    }
+    else if (op == "player.durabilityLoss" || op == "player.durabilityPointsLoss")
+    {
+        FakeDurability call;
+        call.op = op;
+        fl::HandleData item;
+        if (handleAt(args, 0, item))
+            call.itemLow = item.guid.lo;
+        // The module resolves the item through the receiver's own inventory, so a handle of another player's item
+        // reaches nothing here either.
+        bool owned = false;
+        for (FakeItem const& it : p.items)
+            if (it.low == call.itemLow)
+            {
+                owned = true;
+                break;
+            }
+        if (!owned)
+            return true;
+        if (op == "player.durabilityLoss")
+            call.percent = doubleAt(args, 1);
+        else
+            call.points = intAt(args, 1);
+        p.durabilities.push_back(call);
+    }
+    else if (op == "player.durabilityLossAll" || op == "player.durabilityPointsLossAll")
+    {
+        FakeDurability call;
+        call.op = op;
+        if (op == "player.durabilityLossAll")
+            call.percent = doubleAt(args, 0);
+        else
+            call.points = intAt(args, 0);
+        call.inventory = boolAt(args, 1, true);
+        p.durabilities.push_back(call);
+    }
+    else if (op == "player.durabilityPointLossForEquipSlot")
+    {
+        FakeDurability call;
+        call.op = op;
+        call.slot = intAt(args, 0);
+        p.durabilities.push_back(call);
+    }
+    else if (op == "player.durabilityRepair")
+    {
+        FakeDurability call;
+        call.op = op;
+        call.pos = intAt(args, 0);
+        call.takeCost = boolAt(args, 1, true);
+        call.discount = doubleAt(args, 2, 1.0);
+        p.durabilities.push_back(call);
+    }
+    // ---- E7 long tail, round 3: remaining Player methods ----
+    else if (op == "player.canTitanGrip")
+        out.emplace_back(p.canTitanGrip);
+    else if (op == "player.getComboPoints")
+        out.emplace_back(static_cast<int64_t>(p.comboPoints));
+    else if (op == "player.getComboTarget")
+    {
+        if (p.comboTargetLow)
+            out.emplace_back(creature(p.comboTargetLow));
+    }
+    else if (op == "player.getGossipTextId")
+        out.emplace_back(static_cast<int64_t>(p.gossipTextId));
+    else if (op == "player.hasRecruited")
+    {
+        fl::HandleData recruit;
+        bool has = false;
+        if (handleAt(args, 0, recruit))
+            has = p.recruitedPlayers.count(recruit.guid.lo) != 0;
+        out.emplace_back(has);
+    }
+    else if (op == "player.isRecruited")
+        out.emplace_back(p.recruited);
+    else if (op == "player.addComboPoints")
+    {
+        fl::HandleData target;
+        if (handleAt(args, 0, target))
+        {
+            int64_t const count = intAt(args, 1);
+            if (count > 0 && p.comboTargetLow != target.guid.lo)
+            {
+                p.comboPoints = 0;
+                p.comboTargetLow = target.guid.lo;
+            }
+            if (count != 0 && (count > 0 || p.comboTargetLow == target.guid.lo))
+            {
+                int64_t const next = std::clamp<int64_t>(static_cast<int64_t>(p.comboPoints) + count, 0, 5);
+                p.comboPoints = static_cast<uint8_t>(next);
+                if (p.comboPoints == 0)
+                    p.comboTargetLow = 0;
+            }
+        }
+    }
+    else if (op == "player.clearComboPoints")
+    {
+        p.comboPoints = 0;
+        p.comboTargetLow = 0;
+    }
+    else if (op == "player.addTalent")
+    {
+        uint32_t const spellId = static_cast<uint32_t>(intAt(args, 0));
+        uint8_t const spec = static_cast<uint8_t>(intAt(args, 1));
+        if (p.addTalentResult && spec < 5)
+            p.talents.insert({spellId, spec});
+        out.emplace_back(p.addTalentResult && spec < 5);
+    }
+    else if (op == "player.advanceSkill")
+    {
+        FakeSkill& s = p.skills[static_cast<uint32_t>(intAt(args, 0))];
+        uint32_t const step = flh::skillAdvanceStep(s.cur, s.max, static_cast<uint32_t>(intAt(args, 1)));
+        if (s.known && s.max > 0 && step > 0)
+        {
+            // The core's UpdateSkillPro adds the step to a 16-bit value, then clamps (Player.cpp).
+            s.cur = static_cast<uint16_t>(s.cur + step);
+            if (s.cur > s.max)
+                s.cur = s.max;
+        }
+    }
+    else if (op == "player.advanceAllSkills")
+    {
+        uint32_t const requested = static_cast<uint32_t>(intAt(args, 0));
+        for (auto& [id, s] : p.skills)
+        {
+            uint32_t const step = flh::skillAdvanceStep(s.cur, s.max, requested);
+            if (s.known && s.max > 0 && step > 0)
+            {
+                s.cur = static_cast<uint16_t>(s.cur + step);
+                if (s.cur > s.max)
+                    s.cur = s.max;
+            }
+        }
+    }
+    else if (op == "player.advanceSkillsToMax")
+    {
+        for (uint32_t id : p.weaponSkills)
+        {
+            FakeSkill& s = p.skills[id];
+            if (s.known && s.max > s.cur)
+                s.cur = s.max;
+        }
+    }
+    else if (op == "player.bindToInstance")
+    {
+        if (flh::bindToInstanceAllowed(true, p.instanceHasData, p.instanceHasLock))
+            p.instanceBound = true;
+    }
+    else if (op == "player.unbindInstance")
+        p.instanceBinds.erase({static_cast<uint32_t>(intAt(args, 0)), static_cast<uint32_t>(intAt(args, 1, 0))});
+    else if (op == "player.unbindAllInstances")
+        p.instanceBinds.clear();
+    else if (op == "player.mute")
+        p.muteTime = static_cast<uint32_t>(intAt(args, 0));
+    else if (op == "player.removeFromBattlegroundRaid")
+        p.inBgRaid = false;
+    else if (op == "player.removeFromGroup")
+        p.inGroup = false;
+    else if (op == "player.removePet")
+    {
+        p.activePetEntry = 0;
+        p.removedPetMode = static_cast<int32_t>(intAt(args, 0, -1));
+        p.removedPetReagent = boolAt(args, 1, false);
+    }
+    else if (op == "player.summonPet")
+    {
+        p.activePetEntry = static_cast<uint32_t>(intAt(args, 0));
+        p.activePetType = static_cast<uint32_t>(intAt(args, 5));
+        p.actions.emplace_back(op, args);
+    }
+    else if (op == "player.setKnownTitle")
+        p.titles.insert(static_cast<uint32_t>(intAt(args, 0)));
+    else if (op == "player.unsetKnownTitle")
+        p.titles.erase(static_cast<uint32_t>(intAt(args, 0)));
+    else if (op == "player.setMovement")
+        p.movementType = static_cast<int32_t>(intAt(args, 0));
+    else if (op == "player.setPlayerLock")
+        p.playerLock = boolAt(args, 0, true);
+    else if (op == "player.setQuestStatus")
+    {
+        uint32_t const quest = static_cast<uint32_t>(intAt(args, 0));
+        if (flh::questStatusWriteAllowed(p.questLog.count(quest) != 0, intAt(args, 1), 7))
+            p.questStatus[quest] = static_cast<uint32_t>(intAt(args, 1));
+    }
+    else if (op == "player.startTaxi")
+        p.taxiPath = static_cast<uint32_t>(intAt(args, 0));
+    else if (op == "player.groupCreate")
+    {
+        if (p.createdGroupId)
+        {
+            fl::HandleData h;
+            h.kind = fl::ObjKind::Group;
+            h.guid.hi = 1;
+            h.guid.lo = p.createdGroupId;
+            out.emplace_back(h);
+        }
+    }
+    else if (op == "player.groupInvite")
+        out.emplace_back(p.groupInviteResult);
+    else if (op == "player.setGuildRank")
+    {
+        if (flh::guildRankWriteAllowed(static_cast<uint32_t>(intAt(args, 0))))
+            p.guildRank = static_cast<uint8_t>(intAt(args, 0));
+    }
+    else if (op == "player.runCommand")
+        p.playerCommands.push_back(stringAt(args, 0));
+    else if (op == "player.gossipSendPOI" || op == "player.killedPlayerCredit" || op == "player.killGOCredit" ||
+             op == "player.leaveBattleground" || op == "player.removedInsignia" || op == "player.sendAddonMessage" ||
+             op == "player.sendAuctionMenu" || op == "player.sendGuildInvite" || op == "player.sendQuestTemplate" ||
+             op == "player.sendShowMailBox" || op == "player.sendTabardVendorActivate")
+        p.actions.emplace_back(op, args);
     return true;
 }
 
@@ -2269,6 +3269,37 @@ bool FakeHost::guidInfo(fl::Guid const& g, uint32_t* entry, int* type)
     if (entry)
         *entry = (t == kTypeCreature || t == kTypeGameObject) ? static_cast<uint32_t>((g.hi >> 20) & 0xFFFFFF) : 0;
     return true;
+}
+
+fl::Guid FakeHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId)
+{
+    switch (kind)
+    {
+        case fl::ObjKind::Player: return makeGuid(kTypePlayer, low, 0);
+        case fl::ObjKind::Item: return makeGuid(kTypeItem, low, 0);
+        case fl::ObjKind::Creature: return makeGuid(kTypeCreature, low, entry, mapId);
+        case fl::ObjKind::GameObject: return makeGuid(kTypeGameObject, low, entry, mapId);
+        default: return fl::Guid{};
+    }
+}
+
+bool FakeHost::isInventoryPos(int kind, uint8_t bag, uint8_t slot)
+{
+    constexpr uint8_t kBag0 = 255;
+    switch (kind)
+    {
+        case 0:   // IsBagPos
+            return bag == kBag0 && ((slot >= 30 && slot < 34) || (slot >= 63 && slot < 72) || (slot >= 34 && slot < 35));
+        case 1:   // IsBankPos
+            return (bag == kBag0 && slot >= 63 && slot < 72) || (bag >= 63 && bag < 72);
+        case 2:   // IsEquipmentPos
+            return bag == kBag0 && (slot < 19 || (slot >= 19 && slot < 30) || (slot >= 30 && slot < 34) ||
+                                    (slot >= 34 && slot < 35));
+        case 3:   // IsInventoryPos
+            return (bag == kBag0 && (slot == 255 || (slot >= 35 && slot < 63) || (slot >= 84 && slot < 87))) ||
+                   (bag >= 30 && bag < 34) || (bag >= 34 && bag < 35);
+        default: return false;
+    }
 }
 
 bool FakeHost::playerOwner(fl::HandleData const& h, uint64_t& owner)
@@ -2323,6 +3354,430 @@ std::vector<fl::HandleData> FakeHost::playersInWorld(int team, bool onlyGm)
     (void)team;
     (void)onlyGm;
     return players;
+}
+
+namespace
+{
+constexpr double kFakePi = 3.14159265358979323846;
+
+double normAngle(double a)
+{
+    double r = std::fmod(a, 2.0 * kFakePi);
+    return r < 0.0 ? r + 2.0 * kFakePi : r;
+}
+
+fl::HandleData handleFromObjKey(std::tuple<int, uint64_t, uint64_t> const& key, flh::MapKey const& map)
+{
+    fl::HandleData h;
+    h.kind = static_cast<fl::ObjKind>(std::get<0>(key));
+    h.guid.hi = std::get<1>(key);
+    h.guid.lo = std::get<2>(key);
+    h.mapId = map.map;
+    h.instanceId = map.instance;
+    return h;
+}
+}  // namespace
+
+std::vector<fl::HandleData> FakeHost::objectsInRange(fl::HandleData const& self, int kind, float range, uint32_t entry,
+                                                     int hostile, int dead)
+{
+    range = flh::clampSearchRange(range);
+    std::vector<std::pair<double, fl::HandleData>> found;
+    auto selfIt = _objects.find(keyOf(self));
+    if (selfIt == _objects.end())
+        return {};
+    fl::ObjectInfo const& me = selfIt->second.info;
+    flh::MapKey const myMap = selfIt->second.current;
+    double const myReach = woState(self).combatReach;
+    for (auto const& [k, obj] : _objects)
+    {
+        if (k == keyOf(self) || obj.current != myMap)
+            continue;
+        auto const objKind = static_cast<fl::ObjKind>(std::get<0>(k));
+        if (kind == 0 && objKind != fl::ObjKind::Player)
+            continue;
+        if (kind == 1 && objKind != fl::ObjKind::Creature)
+            continue;
+        if (kind == 2 && objKind != fl::ObjKind::GameObject)
+            continue;
+        if (entry && obj.info.entry != entry)
+            continue;
+        fl::HandleData const h = handleFromObjKey(k, obj.current);
+        FakeWorldObject const& fwo = woState(h);
+        if (hostile == 1 && !fwo.hostileToAll)
+            continue;
+        if (hostile == 2 && !fwo.friendlyToAll)
+            continue;
+        if (objKind == fl::ObjKind::Player || objKind == fl::ObjKind::Creature)
+        {
+            if (dead == 1 && !obj.info.alive)
+                continue;
+            if (dead == 2 && obj.info.alive)
+                continue;
+        }
+        double const dx = obj.info.x - me.x;
+        double const dy = obj.info.y - me.y;
+        double const dz = obj.info.z - me.z;
+        double const d = std::max(0.0, std::sqrt(dx * dx + dy * dy + dz * dz) - myReach - fwo.combatReach);
+        if (d <= static_cast<double>(range))
+            found.emplace_back(d, h);
+    }
+    std::sort(found.begin(), found.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+    std::vector<fl::HandleData> out;
+    out.reserve(found.size());
+    for (auto const& item : found)
+        out.push_back(item.second);
+    return out;
+}
+
+bool FakeHost::worldObjectStateCall(fl::HandleData const& self, std::string const& op,
+                                    std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out)
+{
+    static std::set<std::string> const ops = {
+        "worldobject.getAngle",        "worldobject.getDistance2d",    "worldobject.getExactDistance",
+        "worldobject.getExactDistance2d", "worldobject.getRelativePoint", "worldobject.isInFront",
+        "worldobject.isInBack",        "worldobject.isInMap",          "worldobject.isInRange",
+        "worldobject.isInRange2d",     "worldobject.isInRange3d",      "worldobject.isWithinDist",
+        "worldobject.isWithinDist2d",  "worldobject.isWithinDist3d",   "worldobject.isWithinLoS",
+        "worldobject.getNearObjects",  "worldobject.getNearObject",    "worldobject.playDirectSound",
+        "worldobject.playDistanceSound", "worldobject.playMusic",      "worldobject.say",
+        "worldobject.yell",            "worldobject.whisper",          "unit.say",
+        "unit.yell",                   "unit.whisper"};
+    if (!ops.count(op))
+        return false;
+
+    auto selfIt = _objects.find(keyOf(self));
+    if (selfIt == _objects.end())
+        return true;
+    fl::ObjectInfo const& me = selfIt->second.info;
+    flh::MapKey const myMap = selfIt->second.current;
+    FakeWorldObject& fwo = woState(self);
+
+    auto resolveOther = [&](size_t idx, fl::ObjectInfo& info, flh::MapKey& map, double& reach) -> bool
+    {
+        fl::HandleData h;
+        if (!handleAt(args, idx, h))
+            return false;
+        auto it = _objects.find(keyOf(h));
+        if (it == _objects.end())
+            return false;
+        info = it->second.info;
+        map = it->second.current;
+        reach = woState(h).combatReach;
+        return true;
+    };
+
+    if (op == "worldobject.getAngle")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        double const tx = resolveOther(0, o, m, r) ? o.x : doubleAt(args, 0);
+        double const ty = resolveOther(0, o, m, r) ? o.y : doubleAt(args, 1);
+        out.emplace_back(normAngle(std::atan2(ty - me.y, tx - me.x)));
+    }
+    else if (op == "worldobject.getDistance2d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const d = std::hypot(tx - me.x, ty - me.y) - fwo.combatReach - (hasOther ? r : 0.0);
+        out.emplace_back(std::max(0.0, d));
+    }
+    else if (op == "worldobject.getExactDistance")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const tz = hasOther ? o.z : doubleAt(args, 2);
+        double const dx = tx - me.x, dy = ty - me.y, dz = tz - me.z;
+        out.emplace_back(std::sqrt(dx * dx + dy * dy + dz * dz));
+    }
+    else if (op == "worldobject.getExactDistance2d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        out.emplace_back(std::hypot(tx - me.x, ty - me.y));
+    }
+    else if (op == "worldobject.getRelativePoint")
+    {
+        double const dist = doubleAt(args, 0);
+        double const angle = me.o + doubleAt(args, 1);
+        out.emplace_back(me.x + (fwo.combatReach + dist) * std::cos(angle));
+        out.emplace_back(me.y + (fwo.combatReach + dist) * std::sin(angle));
+        out.emplace_back(static_cast<double>(me.z));
+    }
+    else if (op == "worldobject.isInFront" || op == "worldobject.isInBack")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        double const arc = doubleAt(args, 1, kFakePi);
+        auto inArc = [&](double a)
+        {
+            double const d2 = std::hypot(o.x - me.x, o.y - me.y);
+            if (d2 < 2.0)
+                return true;
+            double diff = std::fabs(normAngle(std::atan2(o.y - me.y, o.x - me.x) - me.o));
+            if (diff > kFakePi)
+                diff = 2.0 * kFakePi - diff;
+            return diff <= a * 0.5;
+        };
+        out.emplace_back(op == "worldobject.isInFront" ? inArc(arc) : !inArc(2.0 * kFakePi - arc));
+    }
+    else if (op == "worldobject.isInMap")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        out.emplace_back(myMap == m);
+    }
+    else if (op == "worldobject.isInRange")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        double const minR = doubleAt(args, 1), maxR = doubleAt(args, 2);
+        bool const is3d = boolAt(args, 3, true);
+        double const dx = o.x - me.x, dy = o.y - me.y, dz = is3d ? (o.z - me.z) : 0.0;
+        double const dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+        double const sf = fwo.combatReach + r;
+        bool const ok = (minR <= 0.0 || dist >= minR + sf) && dist < maxR + sf;
+        out.emplace_back(ok);
+    }
+    else if (op == "worldobject.isInRange2d")
+    {
+        double const dist = std::hypot(doubleAt(args, 0) - me.x, doubleAt(args, 1) - me.y);
+        double const minR = doubleAt(args, 2), maxR = doubleAt(args, 3);
+        bool const ok = (minR <= 0.0 || dist >= minR + fwo.combatReach) && dist < maxR + fwo.combatReach;
+        out.emplace_back(ok);
+    }
+    else if (op == "worldobject.isInRange3d")
+    {
+        double const dx = doubleAt(args, 0) - me.x, dy = doubleAt(args, 1) - me.y, dz = doubleAt(args, 2) - me.z;
+        double const dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+        double const minR = doubleAt(args, 3), maxR = doubleAt(args, 4);
+        bool const ok = (minR <= 0.0 || dist >= minR + fwo.combatReach) && dist < maxR + fwo.combatReach;
+        out.emplace_back(ok);
+    }
+    else if (op == "worldobject.isWithinDist")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        double const maxDist = doubleAt(args, 1) + fwo.combatReach + r;
+        bool const is3d = boolAt(args, 2, true);
+        double const dx = o.x - me.x, dy = o.y - me.y, dz = is3d ? (o.z - me.z) : 0.0;
+        out.emplace_back((dx * dx + dy * dy + dz * dz) < maxDist * maxDist);
+    }
+    else if (op == "worldobject.isWithinDist2d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const maxDist = (hasOther ? doubleAt(args, 1) : doubleAt(args, 2)) + fwo.combatReach;
+        double const dx = tx - me.x, dy = ty - me.y;
+        out.emplace_back((dx * dx + dy * dy) < maxDist * maxDist);
+    }
+    else if (op == "worldobject.isWithinDist3d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const tz = hasOther ? o.z : doubleAt(args, 2);
+        double const maxDist = (hasOther ? doubleAt(args, 1) : doubleAt(args, 3)) + fwo.combatReach;
+        double const dx = tx - me.x, dy = ty - me.y, dz = tz - me.z;
+        out.emplace_back((dx * dx + dy * dy + dz * dz) < maxDist * maxDist);
+    }
+    else if (op == "worldobject.isWithinLoS")
+    {
+        out.emplace_back(fwo.losOk);
+    }
+    else if (op == "worldobject.getNearObjects" || op == "worldobject.getNearObject")
+    {
+        double const range = static_cast<double>(flh::clampSearchRange(doubleAt(args, 0, 533.33333)));
+        uint32_t const typeMask = static_cast<uint32_t>(intAt(args, 1, 0));
+        uint32_t const entry = static_cast<uint32_t>(intAt(args, 2, 0));
+        int const hostile = static_cast<int>(intAt(args, 3, 0));
+        int const dead = static_cast<int>(intAt(args, 4, 1));
+        std::vector<std::pair<double, fl::HandleData>> found;
+        for (auto const& [k, obj] : _objects)
+        {
+            if (k == keyOf(self) || obj.current != myMap)
+                continue;
+            auto const objKind = static_cast<fl::ObjKind>(std::get<0>(k));
+            if (typeMask)
+            {
+                bool match = false;
+                if ((typeMask & (1u << 3)) && (objKind == fl::ObjKind::Creature || objKind == fl::ObjKind::Player))
+                    match = true;
+                if ((typeMask & (1u << 4)) && objKind == fl::ObjKind::Player)
+                    match = true;
+                if ((typeMask & (1u << 5)) && objKind == fl::ObjKind::GameObject)
+                    match = true;
+                if ((typeMask & (1u << 7)) && objKind == fl::ObjKind::Corpse)
+                    match = true;
+                if (!match)
+                    continue;
+            }
+            if (entry && obj.info.entry != entry)
+                continue;
+            fl::HandleData const h = handleFromObjKey(k, obj.current);
+            FakeWorldObject const& otherFwo = woState(h);
+            if (hostile == 1 && !otherFwo.hostileToAll)
+                continue;
+            if (hostile == 2 && !otherFwo.friendlyToAll)
+                continue;
+            if (objKind == fl::ObjKind::Player || objKind == fl::ObjKind::Creature)
+            {
+                if (dead == 1 && !obj.info.alive)
+                    continue;
+                if (dead == 2 && obj.info.alive)
+                    continue;
+            }
+            double const dx = obj.info.x - me.x, dy = obj.info.y - me.y, dz = obj.info.z - me.z;
+            double const d = std::max(0.0, std::sqrt(dx * dx + dy * dy + dz * dz) - fwo.combatReach - otherFwo.combatReach);
+            if (d <= range)
+                found.emplace_back(d, h);
+        }
+        std::sort(found.begin(), found.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        if (op == "worldobject.getNearObject")
+        {
+            if (!found.empty())
+                out.emplace_back(found.front().second);
+        }
+        else
+        {
+            for (auto const& item : found)
+                out.emplace_back(item.second);
+        }
+    }
+    else if (op == "worldobject.playDirectSound" || op == "worldobject.playDistanceSound" ||
+             op == "worldobject.playMusic")
+    {
+        fl::HandleData target;
+        uint64_t const targetLow = handleAt(args, 1, target) ? target.guid.lo : 0;
+        fwo.sounds.push_back(FakeWorldObject::SoundCall{op, static_cast<uint32_t>(intAt(args, 0)), targetLow});
+    }
+    else if (op == "worldobject.say" || op == "worldobject.yell" || op == "unit.say" || op == "unit.yell")
+    {
+        fwo.chats.push_back(
+            FakeWorldObject::WoChat{op, stringAt(args, 0), static_cast<uint32_t>(intAt(args, 1)), 0, false});
+    }
+    else if (op == "worldobject.whisper" || op == "unit.whisper")
+    {
+        fl::HandleData receiver;
+        uint64_t const targetLow = handleAt(args, 2, receiver) ? receiver.guid.lo : 0;
+        fwo.chats.push_back(FakeWorldObject::WoChat{op, stringAt(args, 0), static_cast<uint32_t>(intAt(args, 1)),
+                                                    targetLow, boolAt(args, 3, false)});
+    }
+    return true;
+}
+
+bool FakeHost::gameObjectStateCall(fl::HandleData const& self, std::string const& op,
+                                   std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out)
+{
+    static std::set<std::string> const ops = {
+        "gameobject.getDisplayId",     "gameobject.getLootRecipient", "gameobject.getLootRecipientGroup",
+        "gameobject.hasQuest",         "gameobject.isActive",      "gameobject.isDestructible",
+        "gameobject.isTransport",      "gameobject.removeFromWorld", "gameobject.setRespawnTime",
+        "gameobject.setSpawnedByDefault"};
+    if (!ops.count(op))
+        return false;
+
+    FakeGameObject& g = goState(self);
+    if (op == "gameobject.getDisplayId")
+        out.emplace_back(static_cast<int64_t>(g.displayId));
+    else if (op == "gameobject.getLootRecipient")
+    {
+        if (g.lootRecipient)
+            out.emplace_back(*g.lootRecipient);
+    }
+    else if (op == "gameobject.getLootRecipientGroup")
+    {
+        if (g.lootRecipientGroup)
+            out.emplace_back(*g.lootRecipientGroup);
+    }
+    else if (op == "gameobject.hasQuest")
+        out.emplace_back(g.quests.count(static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "gameobject.isActive")
+        out.emplace_back(g.active);
+    else if (op == "gameobject.isDestructible")
+        out.emplace_back(g.destructible);
+    else if (op == "gameobject.isTransport")
+        out.emplace_back(g.transport);
+    else if (op == "gameobject.removeFromWorld")
+    {
+        g.actions.emplace_back(op, args);
+        remove(self);
+    }
+    else if (op == "gameobject.setRespawnTime")
+        g.respawnTime = static_cast<int32_t>(intAt(args, 0, 0));
+    else if (op == "gameobject.setSpawnedByDefault")
+        g.spawnedByDefault = boolAt(args, 0, true);
+    return true;
+}
+
+bool FakeHost::questStateCall(fl::HandleData const& self, std::string const& op,
+                              std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out)
+{
+    auto it = questStates.find(static_cast<uint32_t>(self.guid.lo));
+    if (it == questStates.end())
+        return false;
+    FakeQuest const& q = it->second;
+    if (op == "quest.getFlags")
+        out.emplace_back(static_cast<int64_t>(q.flags));
+    else if (op == "quest.getId")
+        out.emplace_back(static_cast<int64_t>(q.id));
+    else if (op == "quest.getLevel")
+        out.emplace_back(static_cast<int64_t>(q.level));
+    else if (op == "quest.getMaxLevel")
+        out.emplace_back(static_cast<int64_t>(q.maxLevel));
+    else if (op == "quest.getMinLevel")
+        out.emplace_back(static_cast<int64_t>(q.minLevel));
+    else if (op == "quest.getNextQuestId")
+        out.emplace_back(static_cast<int64_t>(q.nextQuestId));
+    else if (op == "quest.getNextQuestInChain")
+        out.emplace_back(static_cast<int64_t>(q.nextQuestInChain));
+    else if (op == "quest.getPrevQuestId")
+        out.emplace_back(static_cast<int64_t>(q.prevQuestId));
+    else if (op == "quest.getTitle")
+        out.emplace_back(q.title);
+    else if (op == "quest.getType")
+        out.emplace_back(static_cast<int64_t>(q.type));
+    else if (op == "quest.hasFlag")
+        out.emplace_back((q.flags & static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "quest.isDaily")
+        out.emplace_back(q.daily);
+    else if (op == "quest.isRepeatable")
+        out.emplace_back(q.repeatable);
+    else
+        return false;
+    return true;
 }
 
 bool FakeHost::performSpawn(int type, uint32_t entry, uint32_t mapId, uint32_t instanceId, float, float, float, float,

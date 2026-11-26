@@ -16,16 +16,6 @@ namespace
 {
 using fl::EventValue;
 
-// A finite number that fits a float: the core takes speeds, angles, heights and ranges as floats, and a NaN, an
-// infinity or an out-of-float value reaching its movement and cell math is undefined behaviour there.
-double argFinite(lua_State* L, int idx, char const* what)
-{
-    lua_Number const v = luaL_checknumber(L, idx);
-    if (!std::isfinite(v) || std::fabs(v) > static_cast<lua_Number>(FLT_MAX))
-        luaL_error(L, "%s must be a finite number", what);
-    return v;
-}
-
 // The core's UnitState bits that are defined (Unit.h UNIT_STATE_ALL_STATE_SUPPORTED): 0x2000, 0x80000 and 0x40000000 and up are
 // not states, so AddUnitState/ClearUnitState refuse them instead of writing meaningless bits into the unit.
 constexpr uint32_t kUnitStateSupported = 0x3FF7DFFFu;
@@ -592,6 +582,147 @@ int uSetSanctuary(lua_State* L)
 int uDeMorph(lua_State* L) { return actionOp(L, kUnit, "unit.deMorph", "DeMorph"); }
 int uRestoreDisplayId(lua_State* L) { return actionOp(L, kUnit, "unit.restoreDisplayId", "RestoreDisplayId"); }
 int uRestoreFaction(lua_State* L) { return actionOp(L, kUnit, "unit.restoreFaction", "RestoreFaction"); }
+
+// remaining Unit coverage
+int uAddFlatStatModifier(lua_State* L)
+{
+    uint32_t const statType = argUInt(L, 2, "statType");
+    if (statType >= 44)   // Unit::UnitMods: UNIT_MOD_END is 44
+        luaL_error(L, "statType must be an integer 0..43");
+    uint32_t const modType = argUInt(L, 3, "modType");
+    if (modType > 1)   // BASE_VALUE = 0, TOTAL_VALUE = 1
+        luaL_error(L, "modType must be 0 or 1");
+    double const value = argFinite(L, 4, "value");
+    return actionOp(L, kUnit, "unit.addFlatStatModifier", "AddFlatStatModifier",
+                    {EventValue(static_cast<int64_t>(statType)), EventValue(static_cast<int64_t>(modType)),
+                     EventValue(value), EventValue(optBool(L, 5, true))});
+}
+int uAddPctStatModifier(lua_State* L)
+{
+    uint32_t const statType = argUInt(L, 2, "statType");
+    if (statType >= 44)
+        luaL_error(L, "statType must be an integer 0..43");
+    uint32_t const modType = argUInt(L, 3, "modType");
+    if (modType > 1)   // BASE_PCT = 0, TOTAL_PCT = 1
+        luaL_error(L, "modType must be 0 or 1");
+    double const value = argFinite(L, 4, "value");
+    return actionOp(L, kUnit, "unit.addPctStatModifier", "AddPctStatModifier",
+                    {EventValue(static_cast<int64_t>(statType)), EventValue(static_cast<int64_t>(modType)),
+                     EventValue(value)});
+}
+int uCanModifyStats(lua_State* L) { return readOp(L, kUnit, "unit.canModifyStats", "CanModifyStats"); }
+int uCastSpellAoF(lua_State* L)
+{
+    double const x = argFinite(L, 2, "x");
+    double const y = argFinite(L, 3, "y");
+    double const z = argFinite(L, 4, "z");
+    uint32_t const spell = argUInt(L, 5, "spell");
+    return actionOp(L, kUnit, "unit.castSpellAoF", "CastSpellAoF",
+                    {EventValue(x), EventValue(y), EventValue(z), EventValue(static_cast<int64_t>(spell)),
+                     EventValue(optBool(L, 6, true))});
+}
+int uCountPctFromCurHealth(lua_State* L)
+{
+    double const pct = lua_isnoneornil(L, 2) ? 0.0 : argFinite(L, 2, "pct");
+    return readOp(L, kUnit, "unit.countPctFromCurHealth", "CountPctFromCurHealth", {EventValue(pct)});
+}
+int uCountPctFromMaxHealth(lua_State* L)
+{
+    double const pct = lua_isnoneornil(L, 2) ? 0.0 : argFinite(L, 2, "pct");
+    return readOp(L, kUnit, "unit.countPctFromMaxHealth", "CountPctFromMaxHealth", {EventValue(pct)});
+}
+int uDisableMelee(lua_State* L)
+{
+    fl::HandleData const& h = self(L, kUnit);
+    std::vector<EventValue> out;
+    gameCall(L, h, "unit.disableMelee", {EventValue(optBool(L, 2, true))}, out, "DisableMelee");
+    requireHostOk(L, out, "DisableMelee", "only available on a creature");
+    return 0;
+}
+int uGetCharmGUID(lua_State* L) { return readOp(L, kUnit, "unit.getCharmGuid", "GetCharmGUID"); }
+int uGetControllerGUIDS(lua_State* L) { return readOp(L, kUnit, "unit.getControllerGuids", "GetControllerGUIDS"); }
+int uGetCritterGUID(lua_State* L) { return readOp(L, kUnit, "unit.getCritterGuid", "GetCritterGUID"); }
+int uGetStandState(lua_State* L) { return readOp(L, kUnit, "unit.getStandState", "GetStandState"); }
+int uIsArmorer(lua_State* L) { return readOp(L, kUnit, "unit.isArmorer", "IsArmorer"); }
+int uIsAuctioneer(lua_State* L) { return readOp(L, kUnit, "unit.isAuctioneer", "IsAuctioneer"); }
+int uIsBattleMaster(lua_State* L) { return readOp(L, kUnit, "unit.isBattleMaster", "IsBattleMaster"); }
+int uIsDying(lua_State* L) { return readOp(L, kUnit, "unit.isDying", "IsDying"); }
+int uIsGuildMaster(lua_State* L) { return readOp(L, kUnit, "unit.isGuildMaster", "IsGuildMaster"); }
+int uIsInAccessiblePlaceFor(lua_State* L)
+{
+    fl::HandleData const& obj = objArg(L, 2, kWorldObject, "obj");
+    double const radius = lua_isnoneornil(L, 3) ? 0.0 : argFinite(L, 3, "radius");
+    return readOp(L, kUnit, "unit.isInAccessiblePlaceFor", "IsInAccessiblePlaceFor",
+                  {EventValue(obj), EventValue(radius)});
+}
+int uIsSpiritGuide(lua_State* L) { return readOp(L, kUnit, "unit.isSpiritGuide", "IsSpiritGuide"); }
+int uIsSpiritService(lua_State* L) { return readOp(L, kUnit, "unit.isSpiritService", "IsSpiritService"); }
+int uIsTabardDesigner(lua_State* L) { return readOp(L, kUnit, "unit.isTabardDesigner", "IsTabardDesigner"); }
+int uIsTaxi(lua_State* L) { return readOp(L, kUnit, "unit.isTaxi", "IsTaxi"); }
+int uRemoveBindSightAuras(lua_State* L) { return actionOp(L, kUnit, "unit.removeBindSightAuras", "RemoveBindSightAuras"); }
+int uRemoveCharmAuras(lua_State* L) { return actionOp(L, kUnit, "unit.removeCharmAuras", "RemoveCharmAuras"); }
+int uSendUnitEmote(lua_State* L)
+{
+    std::string const msg = argStr(L, 2, "msg");
+    if (msg.size() > 255)
+        luaL_error(L, "msg is longer than 255 bytes");
+    std::vector<EventValue> args{EventValue(msg)};
+    if (lua_isnoneornil(L, 3))
+        args.emplace_back();
+    else
+        args.emplace_back(objArg(L, 3, kUnit, "receiver"));
+    args.emplace_back(optBool(L, 4, false));
+    return actionOp(L, kUnit, "unit.sendUnitEmote", "SendUnitEmote", args);
+}
+int uSetCanFly(lua_State* L)
+{
+    return actionOp(L, kUnit, "unit.setCanFly", "SetCanFly", {EventValue(optBool(L, 2, true))});
+}
+int uSetCreatorGUID(lua_State* L)
+{
+    fl::Guid guid;
+    argGuid(L, 2, guid);
+    return actionOp(L, kUnit, "unit.setCreatorGuid", "SetCreatorGUID", {EventValue(fl::guidText(guid))});
+}
+int uSetCritterGUID(lua_State* L)
+{
+    fl::Guid guid;
+    argGuid(L, 2, guid);
+    return actionOp(L, kUnit, "unit.setCritterGuid", "SetCritterGUID", {EventValue(fl::guidText(guid))});
+}
+int uSetFFA(lua_State* L)
+{
+    return actionOp(L, kUnit, "unit.setFFA", "SetFFA", {EventValue(optBool(L, 2, true))});
+}
+int uSetImmuneTo(lua_State* L)
+{
+    int32_t const immunity = argInt(L, 2, "immunity");
+    if (immunity < 0 || immunity >= 37)   // Mechanics: MECHANIC_NONE .. MAX_MECHANIC - 1
+        luaL_error(L, "immunity must be an integer 0..36");
+    return actionOp(L, kUnit, "unit.setImmuneTo", "SetImmuneTo",
+                    {EventValue(static_cast<int64_t>(immunity)), EventValue(optBool(L, 3, true))});
+}
+int uSetName(lua_State* L)
+{
+    fl::HandleData const& h = self(L, kUnit);
+    std::string const name = argStr(L, 2, "name");
+    if (name.size() > 64)
+        luaL_error(L, "name is longer than 64 bytes");
+    std::vector<EventValue> out;
+    gameCall(L, h, "unit.setName", {EventValue(name)}, out, "SetName");
+    requireHostOk(L, out, "SetName", "only available on a creature (not a pet)");
+    return 0;
+}
+int uSetPetGUID(lua_State* L)
+{
+    fl::Guid guid;
+    argGuid(L, 2, guid);
+    return actionOp(L, kUnit, "unit.setPetGuid", "SetPetGUID", {EventValue(fl::guidText(guid))});
+}
+int uSetVisible(lua_State* L)
+{
+    return actionOp(L, kUnit, "unit.setVisible", "SetVisible", {EventValue(optBool(L, 2, true))});
+}
 }  // namespace
 
 void registerUnitMethods(lua_State* L)
@@ -669,6 +800,38 @@ void registerUnitMethods(lua_State* L)
         {"SetWaterWalk", fl::safe<uSetWaterWalk>},        {"SetSanctuary", fl::safe<uSetSanctuary>},
         {"DeMorph", fl::safe<uDeMorph>},                  {"RestoreDisplayId", fl::safe<uRestoreDisplayId>},
         {"RestoreFaction", fl::safe<uRestoreFaction>},
+        {"AddFlatStatModifier", fl::safe<uAddFlatStatModifier>},
+        {"AddPctStatModifier", fl::safe<uAddPctStatModifier>},
+        {"CanModifyStats", fl::safe<uCanModifyStats>},
+        {"CastSpellAoF", fl::safe<uCastSpellAoF>},
+        {"CountPctFromCurHealth", fl::safe<uCountPctFromCurHealth>},
+        {"CountPctFromMaxHealth", fl::safe<uCountPctFromMaxHealth>},
+        {"DisableMelee", fl::safe<uDisableMelee>},
+        {"GetCharmGUID", fl::safe<uGetCharmGUID>},
+        {"GetControllerGUIDS", fl::safe<uGetControllerGUIDS>},
+        {"GetCritterGUID", fl::safe<uGetCritterGUID>},
+        {"GetStandState", fl::safe<uGetStandState>},
+        {"IsArmorer", fl::safe<uIsArmorer>},
+        {"IsAuctioneer", fl::safe<uIsAuctioneer>},
+        {"IsBattleMaster", fl::safe<uIsBattleMaster>},
+        {"IsDying", fl::safe<uIsDying>},
+        {"IsGuildMaster", fl::safe<uIsGuildMaster>},
+        {"IsInAccessiblePlaceFor", fl::safe<uIsInAccessiblePlaceFor>},
+        {"IsSpiritGuide", fl::safe<uIsSpiritGuide>},
+        {"IsSpiritService", fl::safe<uIsSpiritService>},
+        {"IsTabardDesigner", fl::safe<uIsTabardDesigner>},
+        {"IsTaxi", fl::safe<uIsTaxi>},
+        {"RemoveBindSightAuras", fl::safe<uRemoveBindSightAuras>},
+        {"RemoveCharmAuras", fl::safe<uRemoveCharmAuras>},
+        {"SendUnitEmote", fl::safe<uSendUnitEmote>},
+        {"SetCanFly", fl::safe<uSetCanFly>},
+        {"SetCreatorGUID", fl::safe<uSetCreatorGUID>},
+        {"SetCritterGUID", fl::safe<uSetCritterGUID>},
+        {"SetFFA", fl::safe<uSetFFA>},
+        {"SetImmuneTo", fl::safe<uSetImmuneTo>},
+        {"SetName", fl::safe<uSetName>},
+        {"SetPetGUID", fl::safe<uSetPetGUID>},
+        {"SetVisible", fl::safe<uSetVisible>},
         {nullptr, nullptr}};
     addMethods(L, "Unit", regs);
 }

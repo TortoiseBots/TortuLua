@@ -2,55 +2,57 @@
 
 What an Eluna-style script can call in TortuLua, and every documented Eluna name it cannot. The engine side is read from the registration code itself (`src/engine/elu/*.cpp`, `src/engine/EluAlias.cpp`), the documented side from `docs/coverage/eluna-documented-api.json` (Eluna's published documentation plus the maintainers' API specification, sections 2-4 and 7). Regenerate with `tools/coverage/gen_coverage.py --write`; `tools/coverage/gen_coverage.py --check` fails when the engine registers a name this file does not list.
 
-Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook (`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one (C5-C11) has no path on this core.
+Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook (`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one (C5-C14) has no path on this core.
 
-Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the documented error (`not available on Classic 1.60`, `needs core hook Cn`); **missing** = documented and not in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).
+Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); **missing** = documented and not in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).
 
 ## Summary
 
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
-| Global | 110 | 94 | 4 | 12 | 85% | 89% |
-| Object | 30 | 14 | 0 | 16 | 47% | 47% |
-| WorldObject | 51 | 23 | 0 | 28 | 45% | 45% |
-| Unit | 167 | 132 | 3 | 32 | 79% | 81% |
-| Player | 263 | 129 | 13 | 121 | 49% | 54% |
+| Global | 110 | 106 | 4 | 0 | 96% | 100% |
+| Object | 30 | 13 | 17 | 0 | 43% | 100% |
+| WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
+| Unit | 167 | 164 | 3 | 0 | 98% | 100% |
+| Player | 263 | 241 | 22 | 0 | 92% | 100% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
-| GameObject | 20 | 9 | 0 | 11 | 45% | 45% |
-| Item | 66 | 56 | 4 | 6 | 85% | 91% |
-| Group | 27 | 6 | 0 | 21 | 22% | 22% |
-| Guild | 16 | 4 | 1 | 11 | 25% | 31% |
-| Quest | 13 | 4 | 0 | 9 | 31% | 31% |
+| GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
+| Item | 66 | 58 | 8 | 0 | 88% | 100% |
+| Group | 27 | 27 | 0 | 0 | 100% | 100% |
+| Guild | 16 | 14 | 2 | 0 | 88% | 100% |
+| Quest | 13 | 13 | 0 | 0 | 100% | 100% |
 | Spell | 40 | 40 | 0 | 0 | 100% | 100% |
 | Aura | 14 | 14 | 0 | 0 | 100% | 100% |
-| Map | 19 | 17 | 0 | 2 | 89% | 89% |
+| Map | 19 | 17 | 2 | 0 | 89% | 100% |
 | ElunaQuery | 17 | 17 | 0 | 0 | 100% | 100% |
-| WorldPacket | 23 | 9 | 0 | 14 | 39% | 39% |
+| WorldPacket | 23 | 23 | 0 | 0 | 100% | 100% |
 | Corpse | 5 | 5 | 0 | 0 | 100% | 100% |
 | BattleGround | 18 | 18 | 0 | 0 | 100% | 100% |
 | Vehicle | 6 | 0 | 6 | 0 | 0% | 100% |
-| AuraEffect | 23 | 0 | 0 | 23 | 0% | 0% |
-| ElunaProcInfo | 28 | 0 | 0 | 28 | 0% | 0% |
-| SpellInfo | 190 | 106 | 0 | 84 | 56% | 56% |
+| AuraEffect | 23 | 23 | 0 | 0 | 100% | 100% |
+| ElunaProcInfo | 28 | 27 | 1 | 0 | 96% | 100% |
+| SpellInfo | 190 | 186 | 4 | 0 | 98% | 100% |
 | events: server | 34 | 31 | 3 | 0 | 91% | 100% |
 | events: player | 51 | 27 | 24 | 0 | 53% | 100% |
 | events: creature | 28 | 27 | 1 | 0 | 96% | 100% |
 | events: gameobject | 13 | 10 | 3 | 0 | 77% | 100% |
-| events: item | 8 | 4 | 1 | 3 | 50% | 62% |
+| events: item | 8 | 4 | 4 | 0 | 50% | 100% |
 | events: player gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: creature gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: gameobject gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: item gossip | 2 | 2 | 0 | 0 | 100% | 100% |
-| events: group | 7 | 5 | 1 | 1 | 71% | 86% |
+| events: group | 7 | 5 | 2 | 0 | 71% | 100% |
 | events: guild | 11 | 9 | 2 | 0 | 82% | 100% |
 | events: map | 7 | 3 | 4 | 0 | 43% | 100% |
 | events: instance | 7 | 3 | 4 | 0 | 43% | 100% |
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
-| events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **917** | **74** | **452** | **64%** | **69%** |
+| events: spell | 23 | 0 | 23 | 0 | 0% | 100% |
+| **all** | **1443** | **1294** | **142** | **7** | **90%** | **100%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
+
+Class notes: `AuraEffect` — implemented, but unreachable from scripts until core spell hooks exist; `ElunaProcInfo` — implemented, but unreachable from scripts until core spell hooks exist.
 
 Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and are not part of the eluna surface (appendix A).
 
@@ -85,10 +87,10 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `ClearPlayerGossipEvents` | implemented |  |
 | `ClearServerEvents` | implemented |  |
 | `ClearUniqueCreatureEvents` | implemented |  |
-| `CreateLongLong` | **missing** |  |
+| `CreateLongLong` | implemented | returns a native Lua 5.4 signed 64-bit integer |
 | `CreateLuaEvent` | implemented |  |
 | `CreatePacket` | implemented |  |
-| `CreateULongLong` | **missing** |  |
+| `CreateULongLong` | implemented | returns a native Lua 5.4 64-bit integer |
 | `GetActiveGameEvents` | implemented |  |
 | `GetAreaName` | implemented |  |
 | `GetCoreExpansion` | implemented | answers 0 (Classic 1.60) |
@@ -101,32 +103,32 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetGameTime` | implemented |  |
 | `GetGuildByLeaderGUID` | implemented |  |
 | `GetGuildByName` | implemented |  |
-| `GetItemGUID` | **missing** |  |
+| `GetItemGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID) |
 | `GetItemLink` | implemented |  |
 | `GetLuaEngine` | implemented | answers ForeverLua |
 | `GetMapById` | implemented |  |
-| `GetObjectGUID` | **missing** |  |
+| `GetObjectGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0) |
 | `GetOwnerHalaa` | **stub** | stub: not available (Classic 1.60) |
 | `GetPlayerByGUID` | implemented |  |
 | `GetPlayerByName` | implemented |  |
 | `GetPlayerCount` | implemented |  |
-| `GetPlayerGUID` | **missing** |  |
+| `GetPlayerGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID) |
 | `GetPlayersInWorld` | implemented |  |
 | `GetPlayersOnMap` | implemented |  |
 | `GetQuest` | implemented |  |
-| `GetRealmID` | **missing** |  |
+| `GetRealmID` | implemented |  |
 | `GetSpellInfo` | implemented |  |
 | `GetStateInstanceId` | implemented |  |
 | `GetStateMap` | implemented |  |
 | `GetStateMapId` | implemented |  |
 | `GetTimeDiff` | implemented |  |
-| `GetUnitGUID` | **missing** |  |
-| `IsBagPos` | **missing** |  |
-| `IsBankPos` | **missing** |  |
+| `GetUnitGUID` | implemented | returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0) |
+| `IsBagPos` | implemented |  |
+| `IsBankPos` | implemented |  |
 | `IsCompatibilityMode` | implemented |  |
-| `IsEquipmentPos` | **missing** |  |
+| `IsEquipmentPos` | implemented |  |
 | `IsGameEventActive` | implemented |  |
-| `IsInventoryPos` | **missing** |  |
+| `IsInventoryPos` | implemented |  |
 | `Kick` | implemented |  |
 | `PerformIngameSpawn` | implemented | save writes the spawn to the creature/gameobject table (eluna mode trusts its scripts) |
 | `PrintDebug` | implemented |  |
@@ -147,7 +149,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `RegisterPlayerEvent` | implemented |  |
 | `RegisterPlayerGossipEvent` | implemented |  |
 | `RegisterServerEvent` | implemented |  |
-| `RegisterSpellEvent` | **missing** |  |
+| `RegisterSpellEvent` | implemented | accepts spell event registrations as honest stubs (all 23 events need core hook C14) |
 | `RegisterUniqueCreatureEvent` | implemented |  |
 | `RegisterVehicleEvent` | **stub** | stub: not available (Classic 1.60) |
 | `ReloadEluna` | implemented |  |
@@ -185,7 +187,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetBotsOfMaster` | our extension (B1): the bots a player masters or commands |
 | `GetBotsOfOwner` | our extension (B1): the bots of a player's Battle.net account |
 | `IsBotApiAvailable` | our extension (B1): the bot API is built into this server |
-| `RegisterBotEvent` | our extension (B1): the nine bot events, world state only |
+| `RegisterBotEvent` | our extension (B1): the ten bot events, world state only |
 | `RegisterCommand` | our extension (E3): a GM command slot, README 'Writing scripts' |
 | `print` | Lua sandbox builtin (Api.cpp registerCommon, both modes) |
 | `require` | Lua sandbox module loader (Api.cpp registerCommon, both modes) |
@@ -194,49 +196,49 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 | Documented method | Status | Note |
 |---|---|---|
-| `GetByteValue` | **missing** |  |
+| `GetByteValue` | **stub** | stub: not available (this core) |
 | `GetEntry` | implemented |  |
-| `GetFloatValue` | **missing** |  |
+| `GetFloatValue` | **stub** | stub: not available (this core) |
 | `GetGUID` | implemented | returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the type, entry and map live in the high half |
 | `GetGUIDLow` | implemented |  |
-| `GetInt32Value` | **missing** |  |
+| `GetInt32Value` | **stub** | stub: not available (this core) |
 | `GetScale` | implemented |  |
 | `GetTypeId` | implemented |  |
-| `GetUInt16Value` | **missing** |  |
-| `GetUInt32Value` | implemented |  |
-| `GetUInt64Value` | **missing** |  |
-| `HasFlag` | implemented |  |
+| `GetUInt16Value` | **stub** | stub: not available (this core) |
+| `GetUInt32Value` | **stub** | stub: not available (this core) |
+| `GetUInt64Value` | **stub** | stub: not available (this core) |
+| `HasFlag` | **stub** | stub: not available (this core) |
 | `IsInWorld` | implemented |  |
 | `IsPlayer` | implemented |  |
-| `RemoveFlag` | **missing** |  |
-| `SetByteValue` | **missing** |  |
-| `SetFlag` | **missing** |  |
-| `SetFloatValue` | **missing** |  |
-| `SetInt16Value` | **missing** |  |
-| `SetInt32Value` | **missing** |  |
+| `RemoveFlag` | **stub** | stub: not available (this core) |
+| `SetByteValue` | **stub** | stub: not available (this core) |
+| `SetFlag` | **stub** | stub: not available (this core) |
+| `SetFloatValue` | **stub** | stub: not available (this core) |
+| `SetInt16Value` | **stub** | stub: not available (this core) |
+| `SetInt32Value` | **stub** | stub: not available (this core) |
 | `SetScale` | implemented |  |
-| `SetUInt16Value` | **missing** |  |
-| `SetUInt32Value` | **missing** |  |
-| `SetUInt64Value` | **missing** |  |
-| `ToCorpse` | **missing** |  |
+| `SetUInt16Value` | **stub** | stub: not available (this core) |
+| `SetUInt32Value` | **stub** | stub: not available (this core) |
+| `SetUInt64Value` | **stub** | stub: not available (this core) |
+| `ToCorpse` | implemented |  |
 | `ToCreature` | implemented |  |
 | `ToGameObject` | implemented |  |
 | `ToPlayer` | implemented |  |
 | `ToUnit` | implemented |  |
-| `UpdateUInt32Value` | **missing** |  |
+| `UpdateUInt32Value` | **stub** | stub: not available (this core) |
 ### Class `WorldObject` (inherits `Object`)
 
 | Documented method | Status | Note |
 |---|---|---|
-| `Data` | **missing** |  |
-| `GetAngle` | **missing** |  |
+| `Data` | implemented |  |
+| `GetAngle` | implemented |  |
 | `GetAreaId` | implemented |  |
 | `GetCreaturesInRange` | implemented |  |
 | `GetDistance` | implemented |  |
-| `GetDistance2d` | **missing** |  |
-| `GetExactDistance` | **missing** |  |
-| `GetExactDistance2d` | **missing** |  |
-| `GetGameObjectsInRange` | **missing** |  |
+| `GetDistance2d` | implemented |  |
+| `GetExactDistance` | implemented |  |
+| `GetExactDistance2d` | implemented |  |
+| `GetGameObjectsInRange` | implemented |  |
 | `GetInstanceId` | implemented |  |
 | `GetLocation` | implemented |  |
 | `GetMap` | implemented |  |
@@ -245,38 +247,38 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetNearestCreature` | implemented |  |
 | `GetNearestGameObject` | implemented |  |
 | `GetNearestPlayer` | implemented |  |
-| `GetNearObject` | **missing** |  |
-| `GetNearObjects` | **missing** |  |
+| `GetNearObject` | implemented |  |
+| `GetNearObjects` | implemented |  |
 | `GetO` | implemented |  |
-| `GetPhaseMask` | **missing** |  |
+| `GetPhaseMask` | **stub** | stub: not available (this core) |
 | `GetPlayersInRange` | implemented |  |
-| `GetRelativePoint` | **missing** |  |
+| `GetRelativePoint` | implemented |  |
 | `GetX` | implemented |  |
 | `GetY` | implemented |  |
 | `GetZ` | implemented |  |
 | `GetZoneId` | implemented |  |
-| `IsInBack` | **missing** |  |
-| `IsInFront` | **missing** |  |
-| `IsInMap` | **missing** |  |
-| `IsInRange` | **missing** |  |
-| `IsInRange2d` | **missing** |  |
-| `IsInRange3d` | **missing** |  |
-| `IsWithinDist` | **missing** |  |
-| `IsWithinDist2d` | **missing** |  |
-| `IsWithinDist3d` | **missing** |  |
+| `IsInBack` | implemented |  |
+| `IsInFront` | implemented |  |
+| `IsInMap` | implemented |  |
+| `IsInRange` | implemented |  |
+| `IsInRange2d` | implemented |  |
+| `IsInRange3d` | implemented |  |
+| `IsWithinDist` | implemented |  |
+| `IsWithinDist2d` | implemented |  |
+| `IsWithinDist3d` | implemented |  |
 | `IsWithinDistInMap` | implemented |  |
-| `IsWithinLoS` | **missing** |  |
-| `PlayDirectSound` | **missing** |  |
-| `PlayDistanceSound` | **missing** |  |
-| `PlayMusic` | **missing** |  |
+| `IsWithinLoS` | implemented |  |
+| `PlayDirectSound` | implemented |  |
+| `PlayDistanceSound` | implemented |  |
+| `PlayMusic` | implemented |  |
 | `RegisterEvent` | implemented |  |
 | `RemoveEventById` | implemented |  |
 | `RemoveEvents` | implemented |  |
-| `SendPacket` | **missing** | the engine registers it on `Player` only |
-| `SendUnitSay` | **missing** | the engine registers it on `Unit` only |
-| `SendUnitWhisper` | **missing** | the engine registers it on `Unit` only |
-| `SendUnitYell` | **missing** | the engine registers it on `Unit` only |
-| `SetPhaseMask` | **missing** |  |
+| `SendPacket` | implemented |  |
+| `SendUnitSay` | implemented |  |
+| `SendUnitWhisper` | implemented |  |
+| `SendUnitYell` | implemented |  |
+| `SetPhaseMask` | **stub** | stub: not available (this core) |
 | `SpawnCreature` | implemented |  |
 | `SummonGameObject` | implemented |  |
 ### Class `Unit` (inherits `WorldObject`)
@@ -284,38 +286,38 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | Documented method | Status | Note |
 |---|---|---|
 | `AddAura` | implemented |  |
-| `AddFlatStatModifier` | **missing** |  |
-| `AddPctStatModifier` | **missing** |  |
+| `AddFlatStatModifier` | implemented |  |
+| `AddPctStatModifier` | implemented |  |
 | `AddUnitState` | implemented |  |
 | `Attack` | implemented |  |
 | `AttackStop` | implemented |  |
-| `CanModifyStats` | **missing** |  |
+| `CanModifyStats` | implemented |  |
 | `CastCustomSpell` | implemented |  |
 | `CastSpell` | implemented |  |
-| `CastSpellAoF` | **missing** |  |
+| `CastSpellAoF` | implemented |  |
 | `ClearInCombat` | implemented |  |
 | `ClearUnitState` | implemented |  |
-| `CountPctFromCurHealth` | **missing** |  |
-| `CountPctFromMaxHealth` | **missing** |  |
+| `CountPctFromCurHealth` | implemented |  |
+| `CountPctFromMaxHealth` | implemented |  |
 | `DealDamage` | implemented |  |
 | `DealHeal` | implemented |  |
 | `DeMorph` | implemented |  |
-| `DisableMelee` | **missing** |  |
+| `DisableMelee` | implemented |  |
 | `Dismount` | implemented |  |
 | `Emote` | implemented |  |
 | `EmoteState` | implemented |  |
 | `GetAura` | implemented |  |
 | `GetBaseSpellPower` | implemented |  |
 | `GetCharmerGUID` | implemented |  |
-| `GetCharmGUID` | **missing** |  |
+| `GetCharmGUID` | implemented |  |
 | `GetClass` | implemented |  |
 | `GetClassAsString` | implemented |  |
 | `GetClassMask` | implemented |  |
 | `GetControllerGUID` | implemented |  |
-| `GetControllerGUIDS` | **missing** |  |
+| `GetControllerGUIDS` | implemented |  |
 | `GetCreatorGUID` | implemented |  |
 | `GetCreatureType` | implemented |  |
-| `GetCritterGUID` | **missing** |  |
+| `GetCritterGUID` | implemented |  |
 | `GetCurrentSpell` | implemented |  |
 | `GetDisplayId` | implemented |  |
 | `GetFaction` | implemented |  |
@@ -340,7 +342,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetRaceAsString` | implemented |  |
 | `GetRaceMask` | implemented |  |
 | `GetSpeed` | implemented |  |
-| `GetStandState` | **missing** |  |
+| `GetStandState` | implemented |  |
 | `GetStat` | implemented |  |
 | `GetUnfriendlyUnitsInRange` | implemented |  |
 | `GetVehicle` | **stub** | stub: not available (Classic 1.60) |
@@ -352,22 +354,22 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HealthBelowPct` | implemented |  |
 | `InterruptSpell` | implemented |  |
 | `IsAlive` | implemented |  |
-| `IsArmorer` | **missing** |  |
+| `IsArmorer` | implemented |  |
 | `IsAttackingPlayer` | implemented |  |
-| `IsAuctioneer` | **missing** |  |
+| `IsAuctioneer` | implemented |  |
 | `IsBanker` | implemented |  |
-| `IsBattleMaster` | **missing** |  |
+| `IsBattleMaster` | implemented |  |
 | `IsCasting` | implemented |  |
 | `IsCharmed` | implemented |  |
 | `IsDead` | implemented |  |
-| `IsDying` | **missing** |  |
+| `IsDying` | implemented |  |
 | `IsFlying` | implemented |  |
 | `IsFriendlyTo` | implemented |  |
 | `IsFullHealth` | implemented |  |
 | `IsGossip` | implemented |  |
-| `IsGuildMaster` | **missing** |  |
+| `IsGuildMaster` | implemented |  |
 | `IsHostileTo` | implemented |  |
-| `IsInAccessiblePlaceFor` | **missing** |  |
+| `IsInAccessiblePlaceFor` | implemented |  |
 | `IsInCombat` | implemented |  |
 | `IsInnkeeper` | implemented |  |
 | `IsInWater` | implemented |  |
@@ -378,13 +380,13 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsQuestGiver` | implemented |  |
 | `IsRooted` | implemented |  |
 | `IsServiceProvider` | implemented |  |
-| `IsSpiritGuide` | **missing** |  |
+| `IsSpiritGuide` | implemented |  |
 | `IsSpiritHealer` | implemented |  |
-| `IsSpiritService` | **missing** |  |
+| `IsSpiritService` | implemented |  |
 | `IsStandState` | implemented |  |
 | `IsStopped` | implemented |  |
-| `IsTabardDesigner` | **missing** |  |
-| `IsTaxi` | **missing** |  |
+| `IsTabardDesigner` | implemented |  |
+| `IsTaxi` | implemented |  |
 | `IsTrainer` | implemented |  |
 | `IsUnderWater` | implemented |  |
 | `IsVendor` | implemented |  |
@@ -409,35 +411,35 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `RemoveAllAuras` | implemented |  |
 | `RemoveArenaAuras` | implemented |  |
 | `RemoveAura` | implemented |  |
-| `RemoveBindSightAuras` | **missing** |  |
-| `RemoveCharmAuras` | **missing** |  |
+| `RemoveBindSightAuras` | implemented |  |
+| `RemoveCharmAuras` | implemented |  |
 | `RestoreDisplayId` | implemented |  |
 | `RestoreFaction` | implemented |  |
 | `SendChatMessageToPlayer` | implemented |  |
-| `SendUnitEmote` | **missing** |  |
+| `SendUnitEmote` | implemented |  |
 | `SendUnitSay` | implemented |  |
 | `SendUnitWhisper` | implemented |  |
 | `SendUnitYell` | implemented |  |
-| `SetCanFly` | **missing** |  |
+| `SetCanFly` | implemented |  |
 | `SetConfused` | implemented |  |
-| `SetCreatorGUID` | **missing** |  |
-| `SetCritterGUID` | **missing** |  |
+| `SetCreatorGUID` | implemented |  |
+| `SetCritterGUID` | implemented |  |
 | `SetDisplayId` | implemented |  |
 | `SetFacing` | implemented |  |
 | `SetFacingToObject` | implemented |  |
 | `SetFaction` | implemented |  |
 | `SetFeared` | implemented |  |
-| `SetFFA` | **missing** | the engine registers it on `Player` only |
+| `SetFFA` | implemented |  |
 | `SetHealth` | implemented |  |
-| `SetImmuneTo` | **missing** |  |
+| `SetImmuneTo` | implemented |  |
 | `SetInCombatWith` | implemented |  |
 | `SetLevel` | implemented |  |
 | `SetMaxHealth` | implemented |  |
 | `SetMaxPower` | implemented |  |
-| `SetName` | **missing** |  |
+| `SetName` | implemented | non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes |
 | `SetNativeDisplayId` | implemented |  |
 | `SetOwnerGUID` | implemented |  |
-| `SetPetGUID` | **missing** |  |
+| `SetPetGUID` | implemented |  |
 | `SetPower` | implemented |  |
 | `SetPowerType` | implemented |  |
 | `SetPvP` | implemented |  |
@@ -447,43 +449,43 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetSpeed` | implemented |  |
 | `SetStandState` | implemented |  |
 | `SetStunned` | implemented |  |
-| `SetVisible` | **missing** |  |
+| `SetVisible` | implemented |  |
 | `SetWaterWalk` | implemented |  |
 | `StopSpellCast` | implemented |  |
 ### Class `Player` (inherits `Unit`)
 
 | Documented method | Status | Note |
 |---|---|---|
-| `AddComboPoints` | **missing** |  |
+| `AddComboPoints` | implemented |  |
 | `AddItem` | implemented |  |
-| `AddLifetimeKills` | **missing** |  |
+| `AddLifetimeKills` | **stub** | stub: not available (this core) |
 | `AddQuest` | implemented |  |
-| `AddTalent` | **missing** |  |
-| `AdvanceAllSkills` | **missing** |  |
-| `AdvanceSkill` | **missing** |  |
-| `AdvanceSkillsToMax` | **missing** |  |
+| `AddTalent` | implemented |  |
+| `AdvanceAllSkills` | implemented |  |
+| `AdvanceSkill` | implemented |  |
+| `AdvanceSkillsToMax` | implemented |  |
 | `AreaExploredOrEventHappens` | implemented |  |
-| `BindToInstance` | **missing** |  |
-| `CanBlock` | **missing** |  |
+| `BindToInstance` | implemented |  |
+| `CanBlock` | implemented |  |
 | `CanCompleteQuest` | implemented |  |
-| `CanCompleteRepeatableQuest` | **missing** |  |
+| `CanCompleteRepeatableQuest` | implemented |  |
 | `CanEquipItem` | implemented |  |
-| `CanFly` | **missing** |  |
-| `CanParry` | **missing** |  |
+| `CanFly` | implemented |  |
+| `CanParry` | implemented |  |
 | `CanRewardQuest` | implemented |  |
-| `CanShareQuest` | **missing** |  |
-| `CanSpeak` | **missing** |  |
-| `CanTitanGrip` | **missing** |  |
-| `CanUninviteFromGroup` | **missing** |  |
+| `CanShareQuest` | implemented |  |
+| `CanSpeak` | implemented |  |
+| `CanTitanGrip` | implemented |  |
+| `CanUninviteFromGroup` | implemented |  |
 | `CanUseItem` | implemented |  |
-| `ClearComboPoints` | **missing** |  |
+| `ClearComboPoints` | implemented |  |
 | `CompleteQuest` | implemented |  |
-| `DurabilityLoss` | **missing** |  |
-| `DurabilityLossAll` | **missing** |  |
-| `DurabilityPointLossForEquipSlot` | **missing** |  |
-| `DurabilityPointsLoss` | **missing** |  |
-| `DurabilityPointsLossAll` | **missing** |  |
-| `DurabilityRepair` | **missing** |  |
+| `DurabilityLoss` | implemented |  |
+| `DurabilityLossAll` | implemented |  |
+| `DurabilityPointLossForEquipSlot` | implemented |  |
+| `DurabilityPointsLoss` | implemented |  |
+| `DurabilityPointsLossAll` | implemented |  |
+| `DurabilityRepair` | implemented |  |
 | `DurabilityRepairAll` | implemented |  |
 | `EquipItem` | implemented |  |
 | `FailQuest` | implemented |  |
@@ -494,31 +496,31 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetBaseSkillValue` | implemented |  |
 | `GetBattlegroundId` | implemented |  |
 | `GetBattlegroundTypeId` | implemented |  |
-| `GetChampioningFaction` | **missing** |  |
-| `GetChatTag` | **missing** |  |
+| `GetChampioningFaction` | implemented |  |
+| `GetChatTag` | implemented |  |
 | `GetClass` | implemented | declared on `Unit` |
 | `GetCoinage` | implemented |  |
-| `GetComboPoints` | **missing** |  |
-| `GetComboTarget` | **missing** |  |
+| `GetComboPoints` | implemented |  |
+| `GetComboTarget` | implemented |  |
 | `GetCorpse` | implemented |  |
-| `GetDbcLocale` | **missing** |  |
+| `GetDbcLocale` | implemented |  |
 | `GetDbLocaleIndex` | implemented |  |
-| `GetDifficulty` | **missing** |  |
-| `GetDrunkValue` | **missing** |  |
+| `GetDifficulty` | implemented |  |
+| `GetDrunkValue` | implemented |  |
 | `GetEquippedItemBySlot` | implemented |  |
-| `GetFreeTalentPoints` | **missing** |  |
+| `GetFreeTalentPoints` | **stub** | stub: not available (this core) |
 | `GetGender` | implemented | declared on `Unit` |
 | `GetGMRank` | implemented |  |
-| `GetGossipTextId` | **missing** |  |
+| `GetGossipTextId` | implemented |  |
 | `GetGroup` | implemented |  |
-| `GetGroupInvite` | **missing** |  |
+| `GetGroupInvite` | implemented |  |
 | `GetGuild` | implemented |  |
 | `GetGuildId` | implemented |  |
 | `GetGuildName` | implemented |  |
-| `GetGuildRank` | **missing** |  |
-| `GetHealthBonusFromStamina` | **missing** |  |
+| `GetGuildRank` | implemented |  |
+| `GetHealthBonusFromStamina` | implemented |  |
 | `GetHonorPoints` | implemented |  |
-| `GetInGameTime` | **missing** |  |
+| `GetInGameTime` | implemented |  |
 | `GetItemByEntry` | implemented |  |
 | `GetItemByGUID` | implemented |  |
 | `GetItemByPos` | implemented |  |
@@ -526,195 +528,195 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetLatency` | implemented |  |
 | `GetLevelPlayedTime` | implemented |  |
 | `GetLFGRole` | **stub** | stub: not available (Classic 1.60) |
-| `GetLifetimeKills` | **missing** |  |
-| `GetMailCount` | **missing** |  |
-| `GetMailItem` | **missing** |  |
-| `GetManaBonusFromIntellect` | **missing** |  |
+| `GetLifetimeKills` | implemented |  |
+| `GetMailCount` | implemented |  |
+| `GetMailItem` | implemented |  |
+| `GetManaBonusFromIntellect` | implemented |  |
 | `GetMaxSkillValue` | implemented |  |
-| `GetNearbyGameObject` | **missing** |  |
-| `GetNextRandomRaidMember` | **missing** |  |
-| `GetOriginalGroup` | **missing** |  |
-| `GetOriginalSubGroup` | **missing** |  |
-| `GetPhaseMaskForSpawn` | **missing** |  |
+| `GetNearbyGameObject` | implemented |  |
+| `GetNextRandomRaidMember` | implemented |  |
+| `GetOriginalGroup` | implemented |  |
+| `GetOriginalSubGroup` | implemented |  |
+| `GetPhaseMaskForSpawn` | **stub** | stub: not available (this core) |
 | `GetPlayerIP` | implemented |  |
 | `GetPureMaxSkillValue` | implemented |  |
 | `GetPureSkillValue` | implemented |  |
-| `GetQuestLevel` | **missing** |  |
+| `GetQuestLevel` | implemented |  |
 | `GetQuestRewardStatus` | implemented |  |
 | `GetQuestStatus` | implemented |  |
 | `GetRace` | implemented | declared on `Unit` |
-| `GetRecruiterId` | **missing** |  |
+| `GetRecruiterId` | implemented |  |
 | `GetReputation` | implemented |  |
 | `GetReputationRank` | implemented |  |
 | `GetReqKillOrCastCurrentCount` | implemented |  |
 | `GetRestBonus` | implemented |  |
-| `GetSelectedPlayer` | **missing** |  |
-| `GetSelectedUnit` | **missing** |  |
+| `GetSelectedPlayer` | implemented |  |
+| `GetSelectedUnit` | implemented |  |
 | `GetSelection` | implemented |  |
-| `GetShieldBlockValue` | **missing** |  |
+| `GetShieldBlockValue` | implemented |  |
 | `GetSkillPermBonusValue` | implemented |  |
 | `GetSkillTempBonusValue` | implemented |  |
 | `GetSkillValue` | implemented |  |
 | `GetSpecsCount` | **stub** | stub: not available (Classic 1.60) |
 | `GetSpellCooldownDelay` | implemented |  |
-| `GetSubGroup` | **missing** |  |
+| `GetSubGroup` | implemented |  |
 | `GetTeam` | implemented |  |
 | `GetTotalPlayedTime` | implemented |  |
 | `GetXP` | implemented |  |
 | `GetXPForNextLevel` | implemented |  |
-| `GetXPRestBonus` | **missing** |  |
+| `GetXPRestBonus` | implemented |  |
 | `GiveXP` | implemented |  |
 | `GossipAddQuests` | implemented |  |
 | `GossipClearMenu` | implemented |  |
 | `GossipComplete` | implemented |  |
 | `GossipMenuAddItem` | implemented |  |
 | `GossipSendMenu` | implemented |  |
-| `GossipSendPOI` | **missing** |  |
-| `GroupCreate` | **missing** |  |
+| `GossipSendPOI` | implemented |  |
+| `GroupCreate` | implemented |  |
 | `GroupEventHappens` | implemented |  |
-| `GroupInvite` | **missing** |  |
+| `GroupInvite` | implemented |  |
 | `HasAchieved` | **stub** | stub: not available (Classic 1.60) |
-| `HasAtLoginFlag` | **missing** |  |
+| `HasAtLoginFlag` | implemented |  |
 | `HasItem` | implemented |  |
-| `HasPendingBind` | **missing** |  |
+| `HasPendingBind` | implemented |  |
 | `HasQuest` | implemented |  |
 | `HasQuestForGO` | implemented |  |
 | `HasQuestForItem` | implemented |  |
 | `HasReceivedQuestReward` | implemented |  |
-| `HasRecruited` | **missing** |  |
+| `HasRecruited` | implemented |  |
 | `HasSkill` | implemented |  |
 | `HasSpell` | implemented |  |
 | `HasSpellCooldown` | implemented |  |
-| `HasTalent` | **missing** |  |
-| `HasTitle` | **missing** |  |
-| `InArena` | **missing** |  |
+| `HasTalent` | implemented |  |
+| `HasTitle` | implemented |  |
+| `InArena` | implemented |  |
 | `InBattleground` | implemented |  |
-| `InBattlegroundQueue` | **missing** |  |
+| `InBattlegroundQueue` | implemented |  |
 | `IncompleteQuest` | implemented |  |
 | `InRandomLfgDungeon` | **stub** | stub: not available (Classic 1.60) |
-| `IsAcceptingWhispers` | **missing** |  |
+| `IsAcceptingWhispers` | implemented |  |
 | `IsAFK` | implemented |  |
 | `IsAlliance` | implemented |  |
-| `IsARecruiter` | **missing** |  |
+| `IsARecruiter` | implemented |  |
 | `IsDND` | implemented |  |
 | `IsFalling` | implemented |  |
 | `IsFlying` | implemented |  |
 | `IsGM` | implemented |  |
-| `IsGMChat` | **missing** |  |
-| `IsGMVisible` | **missing** |  |
-| `IsGroupVisibleFor` | **missing** |  |
-| `IsHonorOrXPTarget` | **missing** |  |
+| `IsGMChat` | implemented |  |
+| `IsGMVisible` | implemented |  |
+| `IsGroupVisibleFor` | implemented |  |
+| `IsHonorOrXPTarget` | implemented |  |
 | `IsHorde` | implemented |  |
 | `IsImmuneToDamage` | implemented |  |
 | `IsImmuneToEnvironmentalDamage` | implemented |  |
 | `IsInArenaTeam` | **stub** | stub: not available (Classic 1.60) |
 | `IsInGroup` | implemented |  |
 | `IsInGuild` | implemented |  |
-| `IsInSameGroupWith` | **missing** |  |
-| `IsInSameRaidWith` | **missing** |  |
+| `IsInSameGroupWith` | implemented |  |
+| `IsInSameRaidWith` | implemented |  |
 | `IsInWater` | implemented |  |
 | `IsMoving` | implemented |  |
-| `IsNeverVisible` | **missing** |  |
-| `IsOutdoorPvPActive` | **missing** |  |
-| `IsRecruited` | **missing** |  |
+| `IsNeverVisible` | implemented |  |
+| `IsOutdoorPvPActive` | implemented |  |
+| `IsRecruited` | implemented |  |
 | `IsRested` | implemented |  |
 | `IsTaxiCheater` | implemented |  |
 | `IsUsingLfg` | **stub** | stub: not available (Classic 1.60) |
-| `IsVisibleForPlayer` | **missing** |  |
+| `IsVisibleForPlayer` | implemented |  |
 | `KickPlayer` | implemented |  |
 | `KilledMonsterCredit` | implemented |  |
-| `KilledPlayerCredit` | **missing** |  |
-| `KillGOCredit` | **missing** |  |
-| `KillPlayer` | **missing** |  |
+| `KilledPlayerCredit` | implemented |  |
+| `KillGOCredit` | implemented |  |
+| `KillPlayer` | implemented |  |
 | `LearnSpell` | implemented |  |
-| `LearnTalent` | **missing** |  |
-| `LeaveBattleground` | **missing** |  |
+| `LearnTalent` | **stub** | stub: not available (this core) |
+| `LeaveBattleground` | implemented |  |
 | `LogoutPlayer` | implemented |  |
 | `ModifyArenaPoints` | **stub** | stub: not available (Classic 1.60) |
 | `ModifyHonorPoints` | implemented |  |
 | `ModifyMoney` | implemented |  |
-| `Mute` | **missing** |  |
+| `Mute` | implemented |  |
 | `RemoveActiveQuest` | implemented |  |
 | `RemoveArenaSpellCooldowns` | **stub** | stub: not available (Classic 1.60) |
-| `RemovedInsignia` | **missing** |  |
-| `RemoveFromBattlegroundRaid` | **missing** |  |
-| `RemoveFromGroup` | **missing** |  |
+| `RemovedInsignia` | implemented |  |
+| `RemoveFromBattlegroundRaid` | implemented |  |
+| `RemoveFromGroup` | implemented |  |
 | `RemoveItem` | implemented |  |
-| `RemoveLifetimeKills` | **missing** |  |
-| `RemovePet` | **missing** |  |
+| `RemoveLifetimeKills` | **stub** | stub: not available (this core) |
+| `RemovePet` | implemented |  |
 | `RemoveQuest` | implemented |  |
 | `RemoveRewardedQuest` | implemented |  |
 | `RemoveSpell` | implemented |  |
 | `ResetAchievements` | **stub** | stub: not available (Classic 1.60) |
 | `ResetAllCooldowns` | implemented |  |
-| `ResetPetTalents` | **missing** |  |
+| `ResetPetTalents` | **stub** | stub: not available (this core) |
 | `ResetSpellCooldown` | implemented |  |
-| `ResetTalents` | **missing** |  |
-| `ResetTalentsCost` | **missing** |  |
+| `ResetTalents` | implemented |  |
+| `ResetTalentsCost` | implemented |  |
 | `ResetTypeCooldowns` | implemented |  |
 | `ResurrectPlayer` | implemented |  |
 | `RewardQuest` | implemented |  |
-| `RunCommand` | **missing** |  |
+| `RunCommand` | implemented |  |
 | `SaveToDB` | implemented |  |
 | `Say` | implemented |  |
-| `SendAddonMessage` | **missing** |  |
-| `SendAreaTriggerMessage` | **missing** |  |
-| `SendAuctionMenu` | **missing** |  |
+| `SendAddonMessage` | implemented |  |
+| `SendAreaTriggerMessage` | **stub** | stub: not available (this core) |
+| `SendAuctionMenu` | implemented |  |
 | `SendBroadcastMessage` | implemented |  |
-| `SendCinematicStart` | **missing** |  |
-| `SendGuildInvite` | **missing** |  |
+| `SendCinematicStart` | implemented |  |
+| `SendGuildInvite` | implemented |  |
 | `SendListInventory` | implemented |  |
-| `SendMovieStart` | **missing** |  |
+| `SendMovieStart` | implemented |  |
 | `SendNotification` | implemented |  |
 | `SendPacket` | implemented |  |
-| `SendQuestTemplate` | **missing** |  |
+| `SendQuestTemplate` | implemented |  |
 | `SendShowBank` | implemented |  |
-| `SendShowMailBox` | **missing** |  |
-| `SendSpiritResurrect` | **missing** |  |
-| `SendTabardVendorActivate` | **missing** |  |
+| `SendShowMailBox` | implemented |  |
+| `SendSpiritResurrect` | implemented |  |
+| `SendTabardVendorActivate` | implemented |  |
 | `SendTaxiMenu` | implemented |  |
 | `SendTrainerList` | implemented |  |
-| `SendUpdateWorldState` | **missing** |  |
-| `SetAcceptWhispers` | **missing** |  |
+| `SendUpdateWorldState` | implemented |  |
+| `SetAcceptWhispers` | implemented |  |
 | `SetAchievement` | **stub** | stub: not available (Classic 1.60) |
 | `SetArenaPoints` | **stub** | stub: not available (Classic 1.60) |
-| `SetAtLoginFlag` | **missing** |  |
+| `SetAtLoginFlag` | implemented |  |
 | `SetBindPoint` | implemented |  |
 | `SetCoinage` | implemented |  |
-| `SetDrunkValue` | **missing** |  |
-| `SetFactionForRace` | **missing** |  |
-| `SetFFA` | implemented |  |
-| `SetFreeTalentPoints` | **missing** |  |
-| `SetGameMaster` | **missing** |  |
-| `SetGender` | **missing** |  |
-| `SetGMChat` | **missing** |  |
-| `SetGMVisible` | **missing** |  |
-| `SetGuildRank` | **missing** |  |
+| `SetDrunkValue` | implemented |  |
+| `SetFactionForRace` | implemented | refuses a race id the core's race store does not know with an error and leaves team and faction unchanged |
+| `SetFFA` | implemented | declared on `Unit` |
+| `SetFreeTalentPoints` | **stub** | stub: not available (this core) |
+| `SetGameMaster` | implemented |  |
+| `SetGender` | implemented |  |
+| `SetGMChat` | implemented |  |
+| `SetGMVisible` | implemented |  |
+| `SetGuildRank` | implemented |  |
 | `SetHonorPoints` | implemented |  |
-| `SetKnownTitle` | **missing** |  |
+| `SetKnownTitle` | implemented |  |
 | `SetLevel` | implemented | declared on `Unit` |
-| `SetLifetimeKills` | **missing** |  |
-| `SetMovement` | **missing** |  |
-| `SetPlayerLock` | **missing** |  |
-| `SetPvPDeath` | **missing** |  |
-| `SetQuestStatus` | **missing** |  |
+| `SetLifetimeKills` | **stub** | stub: not available (this core) |
+| `SetMovement` | implemented |  |
+| `SetPlayerLock` | implemented |  |
+| `SetPvPDeath` | implemented |  |
+| `SetQuestStatus` | implemented |  |
 | `SetReputation` | implemented |  |
 | `SetRestBonus` | implemented |  |
 | `SetSheath` | implemented | declared on `Unit` |
 | `SetSkill` | implemented |  |
 | `SetTaxiCheat` | implemented |  |
-| `SpawnBones` | **missing** |  |
-| `StartTaxi` | **missing** |  |
-| `SummonPet` | **missing** |  |
+| `SpawnBones` | implemented |  |
+| `StartTaxi` | implemented |  |
+| `SummonPet` | implemented |  |
 | `SummonPlayer` | implemented |  |
 | `TalkedToCreature` | implemented |  |
 | `Teleport` | implemented |  |
 | `TextEmote` | implemented |  |
 | `ToggleAFK` | implemented |  |
 | `ToggleDND` | implemented |  |
-| `UnbindAllInstances` | **missing** |  |
-| `UnbindInstance` | **missing** |  |
-| `UnsetKnownTitle` | **missing** |  |
+| `UnbindAllInstances` | implemented |  |
+| `UnbindInstance` | implemented |  |
+| `UnsetKnownTitle` | implemented |  |
 | `Whisper` | implemented |  |
 | `Yell` | implemented |  |
 ### Class `Creature` (inherits `Unit`)
@@ -821,23 +823,23 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 |---|---|---|
 | `Despawn` | implemented |  |
 | `GetDBTableGUIDLow` | implemented |  |
-| `GetDisplayId` | **missing** |  |
+| `GetDisplayId` | implemented |  |
 | `GetGoState` | implemented |  |
-| `GetLootRecipient` | **missing** |  |
-| `GetLootRecipientGroup` | **missing** |  |
+| `GetLootRecipient` | implemented |  |
+| `GetLootRecipientGroup` | implemented |  |
 | `GetLootState` | implemented |  |
-| `HasQuest` | **missing** |  |
-| `IsActive` | **missing** |  |
-| `IsDestructible` | **missing** |  |
+| `HasQuest` | implemented |  |
+| `IsActive` | implemented |  |
+| `IsDestructible` | implemented |  |
 | `IsSpawned` | implemented |  |
-| `IsTransport` | **missing** |  |
-| `RemoveFromWorld` | **missing** |  |
+| `IsTransport` | implemented |  |
+| `RemoveFromWorld` | implemented |  |
 | `Respawn` | implemented |  |
-| `SaveToDB` | **missing** |  |
+| `SaveToDB` | **stub** | stub: not available (this server) |
 | `SetGoState` | implemented |  |
 | `SetLootState` | implemented |  |
-| `SetRespawnTime` | **missing** |  |
-| `SetSpawnedByDefault` | **missing** |  |
+| `SetRespawnTime` | implemented |  |
+| `SetSpawnedByDefault` | implemented |  |
 | `UseDoorOrButton` | implemented |  |
 ### Class `Item` (inherits `Object`)
 
@@ -859,7 +861,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetDurability` | implemented |  |
 | `GetEnchantmentId` | implemented |  |
 | `GetEntry` | implemented |  |
-| `GetExtraFlags` | **missing** |  |
+| `GetExtraFlags` | implemented |  |
 | `GetFlags` | implemented |  |
 | `GetFlags2` | implemented |  |
 | `GetInventoryType` | implemented |  |
@@ -873,12 +875,12 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetOwner` | implemented |  |
 | `GetOwnerGUID` | implemented |  |
 | `GetQuality` | implemented |  |
-| `GetRandomProperty` | **missing** |  |
-| `GetRandomSuffix` | **missing** |  |
+| `GetRandomProperty` | **stub** | stub: not available (this core) |
+| `GetRandomSuffix` | **stub** | stub: not available (this core) |
 | `GetRequiredLevel` | implemented |  |
 | `GetSellPrice` | implemented |  |
 | `GetSlot` | implemented |  |
-| `GetSpeed` | **missing** |  |
+| `GetSpeed` | implemented |  |
 | `GetSpellId` | implemented |  |
 | `GetSpellTrigger` | implemented |  |
 | `GetStatInfo` | implemented |  |
@@ -907,76 +909,76 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetCount` | implemented |  |
 | `SetEnchantment` | implemented |  |
 | `SetOwner` | **stub** | stub: not available (this server) |
-| `SetRandomProperty` | **missing** |  |
-| `SetRandomSuffix` | **missing** |  |
+| `SetRandomProperty` | **stub** | stub: not available (this core) |
+| `SetRandomSuffix` | **stub** | stub: not available (this core) |
 ### Class `Group`
 
 | Documented method | Status | Note |
 |---|---|---|
 | `AddMember` | implemented |  |
-| `ConvertToLFG` | **missing** |  |
-| `ConvertToRaid` | **missing** |  |
-| `Disband` | **missing** |  |
-| `GetGUID` | **missing** |  |
+| `ConvertToLFG` | implemented |  |
+| `ConvertToRaid` | implemented |  |
+| `Disband` | implemented |  |
+| `GetGUID` | implemented |  |
 | `GetLeaderGUID` | implemented |  |
-| `GetMemberFlags` | **missing** |  |
-| `GetMemberGroup` | **missing** |  |
-| `GetMemberGUID` | **missing** |  |
+| `GetMemberFlags` | implemented |  |
+| `GetMemberGroup` | implemented |  |
+| `GetMemberGUID` | implemented |  |
 | `GetMembers` | implemented |  |
-| `GetMembersCount` | **missing** |  |
-| `HasFreeSlotSubGroup` | **missing** |  |
-| `IsAssistant` | **missing** |  |
-| `IsBFGroup` | **missing** |  |
-| `IsBGGroup` | **missing** |  |
-| `IsFull` | **missing** |  |
-| `IsLeader` | **missing** |  |
-| `IsLFGGroup` | **missing** |  |
-| `IsMember` | **missing** |  |
+| `GetMembersCount` | implemented |  |
+| `HasFreeSlotSubGroup` | implemented |  |
+| `IsAssistant` | implemented |  |
+| `IsBFGroup` | implemented |  |
+| `IsBGGroup` | implemented |  |
+| `IsFull` | implemented |  |
+| `IsLeader` | implemented |  |
+| `IsLFGGroup` | implemented |  |
+| `IsMember` | implemented |  |
 | `IsRaidGroup` | implemented |  |
 | `RemoveMember` | implemented |  |
-| `SameSubGroup` | **missing** |  |
+| `SameSubGroup` | implemented |  |
 | `SendPacket` | implemented |  |
-| `SetLeader` | **missing** |  |
-| `SetMemberFlag` | **missing** |  |
-| `SetMembersGroup` | **missing** |  |
-| `SetTargetIcon` | **missing** |  |
+| `SetLeader` | implemented |  |
+| `SetMemberFlag` | implemented |  |
+| `SetMembersGroup` | implemented |  |
+| `SetTargetIcon` | implemented |  |
 ### Class `Guild`
 
 | Documented method | Status | Note |
 |---|---|---|
-| `AddMember` | **missing** |  |
-| `DeleteMember` | **missing** |  |
-| `Disband` | **missing** |  |
-| `GetId` | **missing** |  |
-| `GetInfo` | **missing** |  |
-| `GetLeader` | **missing** |  |
+| `AddMember` | implemented | an explicit rankId is validated by the core: the member is added at the lowest rank, then moved to rankId only if the guild has that rank; if it has not, the member stays at the lowest rank and a warning is logged (the call is queued, so it cannot return the refusal) |
+| `DeleteMember` | implemented |  |
+| `Disband` | implemented |  |
+| `GetId` | implemented |  |
+| `GetInfo` | implemented |  |
+| `GetLeader` | implemented |  |
 | `GetLeaderGUID` | implemented |  |
-| `GetMemberCount` | **missing** |  |
+| `GetMemberCount` | implemented |  |
 | `GetMembers` | implemented |  |
-| `GetMOTD` | **missing** |  |
+| `GetMOTD` | implemented |  |
 | `GetName` | implemented |  |
 | `SendPacket` | implemented |  |
-| `SendPacketToRanked` | **missing** |  |
+| `SendPacketToRanked` | implemented |  |
 | `SetBankTabText` | **stub** | stub: not available (Classic 1.60) |
-| `SetLeader` | **missing** |  |
-| `SetMemberRank` | **missing** |  |
+| `SetLeader` | **stub** | stub: not available (this server) |
+| `SetMemberRank` | implemented |  |
 ### Class `Quest`
 
 | Documented method | Status | Note |
 |---|---|---|
-| `GetFlags` | **missing** |  |
+| `GetFlags` | implemented |  |
 | `GetId` | implemented |  |
 | `GetLevel` | implemented |  |
-| `GetMaxLevel` | **missing** |  |
-| `GetMinLevel` | **missing** |  |
-| `GetNextQuestId` | **missing** |  |
-| `GetNextQuestInChain` | **missing** |  |
-| `GetPrevQuestId` | **missing** |  |
+| `GetMaxLevel` | implemented |  |
+| `GetMinLevel` | implemented |  |
+| `GetNextQuestId` | implemented |  |
+| `GetNextQuestInChain` | implemented |  |
+| `GetPrevQuestId` | implemented |  |
 | `GetTitle` | implemented |  |
-| `GetType` | **missing** |  |
-| `HasFlag` | **missing** |  |
+| `GetType` | implemented |  |
+| `HasFlag` | implemented |  |
 | `IsDaily` | implemented |  |
-| `IsRepeatable` | **missing** |  |
+| `IsRepeatable` | implemented |  |
 ### Class `Spell`
 
 | Documented method | Status | Note |
@@ -1047,7 +1049,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetAreaId` | implemented |  |
 | `GetDifficulty` | implemented |  |
 | `GetHeight` | implemented |  |
-| `GetInstanceData` | **missing** |  |
+| `GetInstanceData` | **stub** | stub: not available (this core) |
 | `GetInstanceId` | implemented |  |
 | `GetMapId` | implemented |  |
 | `GetName` | implemented |  |
@@ -1060,7 +1062,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `IsEmpty` | implemented |  |
 | `IsHeroic` | implemented |  |
 | `IsRaid` | implemented |  |
-| `SaveInstanceData` | **missing** |  |
+| `SaveInstanceData` | **stub** | stub: not available (this core) |
 | `SetWeather` | implemented |  |
 ### Class `ElunaQuery`
 
@@ -1089,27 +1091,27 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 |---|---|---|
 | `GetOpcode` | implemented | only what CreatePacket made or a packet event passes; the events get a read-only copy |
 | `GetSize` | implemented |  |
-| `ReadByte` | **missing** |  |
+| `ReadByte` | implemented |  |
 | `ReadDouble` | implemented |  |
 | `ReadFloat` | implemented |  |
-| `ReadGUID` | **missing** |  |
-| `ReadLong` | **missing** |  |
-| `ReadShort` | **missing** |  |
+| `ReadGUID` | implemented |  |
+| `ReadLong` | implemented |  |
+| `ReadShort` | implemented |  |
 | `ReadString` | implemented |  |
-| `ReadUByte` | **missing** |  |
-| `ReadULong` | **missing** |  |
-| `ReadUShort` | **missing** |  |
+| `ReadUByte` | implemented |  |
+| `ReadULong` | implemented |  |
+| `ReadUShort` | implemented |  |
 | `SetOpcode` | implemented |  |
-| `WriteByte` | **missing** |  |
+| `WriteByte` | implemented |  |
 | `WriteDouble` | implemented |  |
 | `WriteFloat` | implemented |  |
-| `WriteGUID` | **missing** |  |
-| `WriteLong` | **missing** |  |
-| `WriteShort` | **missing** |  |
+| `WriteGUID` | implemented |  |
+| `WriteLong` | implemented |  |
+| `WriteShort` | implemented |  |
 | `WriteString` | implemented |  |
-| `WriteUByte` | **missing** |  |
-| `WriteULong` | **missing** |  |
-| `WriteUShort` | **missing** |  |
+| `WriteUByte` | implemented |  |
+| `WriteULong` | implemented |  |
+| `WriteUShort` | implemented |  |
 ### Class `Corpse` (inherits `WorldObject`)
 
 | Documented method | Status | Note |
@@ -1158,63 +1160,67 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 ### Class `AuraEffect`
 
-| Documented method | Status | Note |
-|---|---|---|
-| `CalculateAmount` | **missing** |  |
-| `CalculatePeriodic` | **missing** |  |
-| `CanBeRecalculated` | **missing** |  |
-| `ChangeAmount` | **missing** |  |
-| `GetAmount` | **missing** |  |
-| `GetAmplitude` | **missing** |  |
-| `GetAuraType` | **missing** |  |
-| `GetBase` | **missing** |  |
-| `GetBaseAmount` | **missing** |  |
-| `GetCaster` | **missing** |  |
-| `GetCasterGUID` | **missing** |  |
-| `GetEffIndex` | **missing** |  |
-| `GetId` | **missing** |  |
-| `GetPeriodicTimer` | **missing** |  |
-| `GetRemainingTicks` | **missing** |  |
-| `GetSpellInfo` | **missing** |  |
-| `GetTargetList` | **missing** |  |
-| `GetTickNumber` | **missing** |  |
-| `GetTotalTicks` | **missing** |  |
-| `RecalculateAmount` | **missing** |  |
-| `SetAmount` | **missing** |  |
-| `SetCanBeRecalculated` | **missing** |  |
-| `SetPeriodicTimer` | **missing** |  |
-### Class `ElunaProcInfo`
+Note: implemented, but unreachable from scripts until core spell hooks exist.
 
 | Documented method | Status | Note |
 |---|---|---|
-| `GetActionTarget` | **missing** |  |
-| `GetActor` | **missing** |  |
-| `GetAttackType` | **missing** |  |
-| `GetBlock` | **missing** |  |
-| `GetDamage` | **missing** |  |
-| `GetDamageAbsorb` | **missing** |  |
-| `GetDamageType` | **missing** |  |
-| `GetEffectiveHeal` | **missing** |  |
-| `GetHeal` | **missing** |  |
-| `GetHealAbsorb` | **missing** |  |
-| `GetHitMask` | **missing** |  |
-| `GetMap` | **missing** |  |
-| `GetProcSpell` | **missing** |  |
-| `GetResist` | **missing** |  |
-| `GetSchoolMask` | **missing** |  |
-| `GetSpellInfo` | **missing** |  |
-| `GetSpellPhaseMask` | **missing** |  |
-| `GetSpellTypeMask` | **missing** |  |
-| `GetTypeMask` | **missing** |  |
-| `HasDamage` | **missing** |  |
-| `HasHeal` | **missing** |  |
-| `SetAbsorbDamage` | **missing** |  |
-| `SetAbsorbHeal` | **missing** |  |
-| `SetBlockDamage` | **missing** |  |
-| `SetDamage` | **missing** |  |
-| `SetEffectiveHeal` | **missing** |  |
-| `SetHeal` | **missing** |  |
-| `SetResistDamage` | **missing** |  |
+| `CalculateAmount` | implemented |  |
+| `CalculatePeriodic` | implemented |  |
+| `CanBeRecalculated` | implemented |  |
+| `ChangeAmount` | implemented |  |
+| `GetAmount` | implemented |  |
+| `GetAmplitude` | implemented |  |
+| `GetAuraType` | implemented |  |
+| `GetBase` | implemented |  |
+| `GetBaseAmount` | implemented |  |
+| `GetCaster` | implemented |  |
+| `GetCasterGUID` | implemented |  |
+| `GetEffIndex` | implemented |  |
+| `GetId` | implemented |  |
+| `GetPeriodicTimer` | implemented |  |
+| `GetRemainingTicks` | implemented |  |
+| `GetSpellInfo` | implemented |  |
+| `GetTargetList` | implemented |  |
+| `GetTickNumber` | implemented |  |
+| `GetTotalTicks` | implemented |  |
+| `RecalculateAmount` | implemented |  |
+| `SetAmount` | implemented |  |
+| `SetCanBeRecalculated` | implemented |  |
+| `SetPeriodicTimer` | implemented |  |
+### Class `ElunaProcInfo`
+
+Note: implemented, but unreachable from scripts until core spell hooks exist.
+
+| Documented method | Status | Note |
+|---|---|---|
+| `GetActionTarget` | implemented |  |
+| `GetActor` | implemented |  |
+| `GetAttackType` | implemented |  |
+| `GetBlock` | implemented |  |
+| `GetDamage` | implemented |  |
+| `GetDamageAbsorb` | implemented |  |
+| `GetDamageType` | implemented |  |
+| `GetEffectiveHeal` | implemented |  |
+| `GetHeal` | implemented |  |
+| `GetHealAbsorb` | implemented |  |
+| `GetHitMask` | implemented |  |
+| `GetMap` | implemented |  |
+| `GetProcSpell` | implemented |  |
+| `GetResist` | implemented |  |
+| `GetSchoolMask` | implemented |  |
+| `GetSpellInfo` | implemented |  |
+| `GetSpellPhaseMask` | implemented |  |
+| `GetSpellTypeMask` | implemented |  |
+| `GetTypeMask` | implemented |  |
+| `HasDamage` | implemented |  |
+| `HasHeal` | implemented |  |
+| `SetAbsorbDamage` | implemented |  |
+| `SetAbsorbHeal` | implemented |  |
+| `SetBlockDamage` | implemented |  |
+| `SetDamage` | implemented |  |
+| `SetEffectiveHeal` | implemented |  |
+| `SetHeal` | **stub** | stub: not available (this core) |
+| `SetResistDamage` | implemented |  |
 ### Class `SpellInfo`
 
 | Documented method | Status | Note |
@@ -1224,18 +1230,18 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `CanDispelAura` | implemented |  |
 | `CanPierceImmuneAura` | implemented |  |
 | `CanSpellProvideImmunityAgainstAura` | implemented |  |
-| `CheckTarget` | **missing** |  |
-| `CheckTargetCreatureType` | **missing** |  |
-| `EffectIsAreaAuraEffect` | **missing** |  |
-| `EffectIsAura` | **missing** |  |
-| `EffectIsAuraType` | **missing** |  |
-| `EffectIsEffect` | **missing** |  |
-| `EffectIsEffectType` | **missing** |  |
-| `EffectIsTargetingArea` | **missing** |  |
-| `EffectIsUnitOwnedAuraEffect` | **missing** |  |
+| `CheckTarget` | implemented |  |
+| `CheckTargetCreatureType` | implemented |  |
+| `EffectIsAreaAuraEffect` | implemented |  |
+| `EffectIsAura` | implemented |  |
+| `EffectIsAuraType` | implemented |  |
+| `EffectIsEffect` | implemented |  |
+| `EffectIsEffectType` | implemented |  |
+| `EffectIsTargetingArea` | implemented |  |
+| `EffectIsUnitOwnedAuraEffect` | implemented |  |
 | `GetActiveIconID` | implemented |  |
-| `GetAllEffectsMechanicMask` | **missing** |  |
-| `GetAllowedMechanicMask` | **missing** |  |
+| `GetAllEffectsMechanicMask` | implemented |  |
+| `GetAllowedMechanicMask` | implemented |  |
 | `GetAreaGroupId` | implemented |  |
 | `GetAttackType` | implemented |  |
 | `GetAttributes` | implemented |  |
@@ -1256,79 +1262,79 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetCategory` | implemented |  |
 | `GetCategoryRecoveryTime` | implemented |  |
 | `GetChannelInterruptFlags` | implemented |  |
-| `GetDiminishingReturnsGroupForSpell` | **missing** |  |
-| `GetDiminishingReturnsGroupType` | **missing** |  |
-| `GetDiminishingReturnsLimitDuration` | **missing** |  |
-| `GetDiminishingReturnsMaxLevel` | **missing** |  |
+| `GetDiminishingReturnsGroupForSpell` | implemented |  |
+| `GetDiminishingReturnsGroupType` | implemented |  |
+| `GetDiminishingReturnsLimitDuration` | implemented |  |
+| `GetDiminishingReturnsMaxLevel` | implemented |  |
 | `GetDispel` | implemented |  |
 | `GetDmgClass` | implemented |  |
 | `GetDuration` | implemented |  |
-| `GetEffectAmplitude` | **missing** |  |
-| `GetEffectApplyAuraName` | **missing** |  |
-| `GetEffectBasePoints` | **missing** |  |
-| `GetEffectBonusMultiplier` | **missing** |  |
-| `GetEffectCalcRadius` | **missing** |  |
-| `GetEffectCalcValue` | **missing** |  |
-| `GetEffectChainTarget` | **missing** |  |
-| `GetEffectDamageMultiplier` | **missing** |  |
-| `GetEffectDieSides` | **missing** |  |
-| `GetEffectHasRadius` | **missing** |  |
-| `GetEffectImplicitTargetType` | **missing** |  |
-| `GetEffectIndex` | **missing** |  |
-| `GetEffectItemType` | **missing** |  |
-| `GetEffectMechanic` | **missing** |  |
-| `GetEffectMechanicMask` | **missing** |  |
-| `GetEffectMiscValue` | **missing** |  |
-| `GetEffectMiscValueB` | **missing** |  |
-| `GetEffectPointsPerComboPoint` | **missing** |  |
-| `GetEffectProvidedTargetMask` | **missing** |  |
-| `GetEffectRealPointsPerLevel` | **missing** |  |
-| `GetEffectSpellClassMask` | **missing** |  |
-| `GetEffectTargetACheckType` | **missing** |  |
-| `GetEffectTargetADirectionAngle` | **missing** |  |
-| `GetEffectTargetADirectionType` | **missing** |  |
-| `GetEffectTargetAIsArea` | **missing** |  |
-| `GetEffectTargetAObjectType` | **missing** |  |
-| `GetEffectTargetAReferenceType` | **missing** |  |
-| `GetEffectTargetASelectionCategory` | **missing** |  |
-| `GetEffectTargetATarget` | **missing** |  |
-| `GetEffectTargetBCheckType` | **missing** |  |
-| `GetEffectTargetBDirectionAngle` | **missing** |  |
-| `GetEffectTargetBDirectionType` | **missing** |  |
-| `GetEffectTargetBIsArea` | **missing** |  |
-| `GetEffectTargetBObjectType` | **missing** |  |
-| `GetEffectTargetBReferenceType` | **missing** |  |
-| `GetEffectTargetBSelectionCategory` | **missing** |  |
-| `GetEffectTargetBTarget` | **missing** |  |
-| `GetEffectTriggerSpell` | **missing** |  |
-| `GetEffectType` | **missing** |  |
-| `GetEffectUsedTargetObjectType` | **missing** |  |
-| `GetEffectValueMultiplier` | **missing** |  |
+| `GetEffectAmplitude` | implemented |  |
+| `GetEffectApplyAuraName` | implemented |  |
+| `GetEffectBasePoints` | implemented |  |
+| `GetEffectBonusMultiplier` | implemented |  |
+| `GetEffectCalcRadius` | implemented |  |
+| `GetEffectCalcValue` | implemented |  |
+| `GetEffectChainTarget` | implemented |  |
+| `GetEffectDamageMultiplier` | implemented |  |
+| `GetEffectDieSides` | implemented | returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others) |
+| `GetEffectHasRadius` | implemented |  |
+| `GetEffectImplicitTargetType` | implemented |  |
+| `GetEffectIndex` | implemented |  |
+| `GetEffectItemType` | implemented |  |
+| `GetEffectMechanic` | implemented |  |
+| `GetEffectMechanicMask` | implemented |  |
+| `GetEffectMiscValue` | implemented |  |
+| `GetEffectMiscValueB` | implemented |  |
+| `GetEffectPointsPerComboPoint` | implemented |  |
+| `GetEffectProvidedTargetMask` | implemented |  |
+| `GetEffectRealPointsPerLevel` | implemented |  |
+| `GetEffectSpellClassMask` | implemented |  |
+| `GetEffectTargetACheckType` | implemented |  |
+| `GetEffectTargetADirectionAngle` | implemented |  |
+| `GetEffectTargetADirectionType` | implemented |  |
+| `GetEffectTargetAIsArea` | implemented |  |
+| `GetEffectTargetAObjectType` | implemented |  |
+| `GetEffectTargetAReferenceType` | implemented |  |
+| `GetEffectTargetASelectionCategory` | implemented |  |
+| `GetEffectTargetATarget` | implemented |  |
+| `GetEffectTargetBCheckType` | implemented |  |
+| `GetEffectTargetBDirectionAngle` | implemented |  |
+| `GetEffectTargetBDirectionType` | implemented |  |
+| `GetEffectTargetBIsArea` | implemented |  |
+| `GetEffectTargetBObjectType` | implemented |  |
+| `GetEffectTargetBReferenceType` | implemented |  |
+| `GetEffectTargetBSelectionCategory` | implemented |  |
+| `GetEffectTargetBTarget` | implemented |  |
+| `GetEffectTriggerSpell` | implemented |  |
+| `GetEffectType` | implemented |  |
+| `GetEffectUsedTargetObjectType` | implemented |  |
+| `GetEffectValueMultiplier` | implemented |  |
 | `GetEquippedItemClass` | implemented |  |
 | `GetEquippedItemInventoryTypeMask` | implemented |  |
 | `GetEquippedItemSubClassMask` | implemented |  |
-| `GetExcludeCasterAuraSpell` | **missing** |  |
-| `GetExcludeTargetAuraSpell` | **missing** |  |
+| `GetExcludeCasterAuraSpell` | implemented |  |
+| `GetExcludeTargetAuraSpell` | implemented |  |
 | `GetExplicitTargetMask` | implemented |  |
 | `GetFacingCasterFlags` | implemented |  |
 | `GetId` | implemented |  |
 | `GetInterruptFlags` | implemented |  |
 | `GetManaCost` | implemented |  |
-| `GetManaCostPercentage` | **missing** |  |
+| `GetManaCostPercentage` | implemented |  |
 | `GetManaCostPerlevel` | implemented |  |
 | `GetManaPerSecond` | implemented |  |
-| `GetManaPerSecondPerLevel` | **missing** |  |
+| `GetManaPerSecondPerLevel` | **stub** | stub: not available (this core) |
 | `GetMaxAffectedTargets` | implemented |  |
 | `GetMaxDuration` | implemented |  |
 | `GetMaxLevel` | implemented |  |
 | `GetMaxRange` | implemented |  |
 | `GetMaxTargetLevel` | implemented |  |
-| `GetMaxTicks` | **missing** |  |
+| `GetMaxTicks` | implemented |  |
 | `GetMechanic` | implemented |  |
 | `GetMinRange` | implemented |  |
 | `GetPowerType` | implemented |  |
 | `GetPreventionType` | implemented |  |
-| `GetPriority` | **missing** |  |
+| `GetPriority` | **stub** | stub: not available (this core) |
 | `GetProcChance` | implemented |  |
 | `GetProcCharges` | implemented |  |
 | `GetProcFlags` | implemented |  |
@@ -1337,16 +1343,16 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetReagentCount` | implemented |  |
 | `GetRecoveryTime` | implemented |  |
 | `GetRequiresSpellFocus` | implemented |  |
-| `GetRuneCostID` | **missing** |  |
+| `GetRuneCostID` | **stub** | stub: not available (this core) |
 | `GetSchoolMask` | implemented |  |
 | `GetSpeed` | implemented |  |
 | `GetSpellFamilyFlags` | implemented |  |
 | `GetSpellFamilyName` | implemented |  |
 | `GetSpellIconID` | implemented |  |
 | `GetSpellLevel` | implemented |  |
-| `GetSpellMechanicMaskByEffectMask` | **missing** |  |
+| `GetSpellMechanicMaskByEffectMask` | implemented |  |
 | `GetSpellSpecific` | implemented |  |
-| `GetSpellVisual` | **missing** |  |
+| `GetSpellVisual` | implemented |  |
 | `GetStackAmount` | implemented |  |
 | `GetStances` | implemented |  |
 | `GetStancesNot` | implemented |  |
@@ -1364,51 +1370,51 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `HasEffect` | implemented |  |
 | `HasInitialAggro` | implemented |  |
 | `HasOnlyDamageEffects` | implemented |  |
-| `IsAbilityLearnedWithProfession` | **missing** |  |
-| `IsAbilityOfSkillType` | **missing** |  |
-| `IsAffected` | **missing** |  |
-| `IsAffectedBySpellMod` | **missing** |  |
+| `IsAbilityLearnedWithProfession` | implemented |  |
+| `IsAbilityOfSkillType` | implemented |  |
+| `IsAffected` | implemented |  |
+| `IsAffectedBySpellMod` | **stub** | stub: not available (this core) |
 | `IsAffectedBySpellMods` | implemented |  |
 | `IsAffectingArea` | implemented |  |
 | `IsAllowingDeadTarget` | implemented |  |
-| `IsAuraExclusiveBySpecificPerCasterWith` | **missing** |  |
-| `IsAuraExclusiveBySpecificWith` | **missing** |  |
+| `IsAuraExclusiveBySpecificPerCasterWith` | implemented |  |
+| `IsAuraExclusiveBySpecificWith` | implemented |  |
 | `IsAutocastable` | implemented |  |
 | `IsAutoRepeatRangedSpell` | implemented |  |
-| `IsBreakingStealth` | **missing** |  |
+| `IsBreakingStealth` | implemented |  |
 | `IsChanneled` | implemented |  |
 | `IsCooldownStartedOnEvent` | implemented |  |
 | `IsDeathPersistent` | implemented |  |
 | `IsDifferentRankOf` | implemented |  |
-| `IsExplicitDiscovery` | **missing** |  |
+| `IsExplicitDiscovery` | implemented |  |
 | `IsGroupBuff` | implemented |  |
 | `IsHighRankOf` | implemented |  |
-| `IsItemFitToSpellRequirements` | **missing** |  |
-| `IsLootCrafting` | **missing** |  |
+| `IsItemFitToSpellRequirements` | implemented |  |
+| `IsLootCrafting` | implemented |  |
 | `IsMoveAllowedChannel` | implemented |  |
 | `IsMultiSlotAura` | implemented |  |
 | `IsNextMeleeSwingSpell` | implemented |  |
 | `IsPassive` | implemented |  |
-| `IsPassiveStackableWithRanks` | **missing** |  |
+| `IsPassiveStackableWithRanks` | implemented |  |
 | `IsPositive` | implemented |  |
 | `IsPositiveEffect` | implemented |  |
-| `IsPrimaryProfession` | **missing** |  |
-| `IsPrimaryProfessionFirstRank` | **missing** |  |
-| `IsProfession` | **missing** |  |
-| `IsProfessionOrRiding` | **missing** |  |
+| `IsPrimaryProfession` | implemented |  |
+| `IsPrimaryProfessionFirstRank` | implemented |  |
+| `IsProfession` | implemented |  |
+| `IsProfessionOrRiding` | implemented |  |
 | `IsRangedWeaponSpell` | implemented |  |
 | `IsRanked` | implemented |  |
 | `IsRankOf` | implemented |  |
 | `IsRequiringDeadTarget` | implemented |  |
-| `IsSelfCast` | **missing** |  |
+| `IsSelfCast` | implemented |  |
 | `IsSingleTarget` | implemented |  |
-| `IsStackableOnOneSlotWithDifferentCasters` | **missing** |  |
+| `IsStackableOnOneSlotWithDifferentCasters` | implemented |  |
 | `IsStackableWithRanks` | implemented |  |
 | `IsTargetingArea` | implemented |  |
-| `NeedsComboPoints` | **missing** |  |
+| `NeedsComboPoints` | implemented |  |
 | `NeedsExplicitUnitTarget` | implemented |  |
 | `NeedsToBeTriggeredByCaster` | implemented |  |
-| `SpellCancelsAuraEffect` | **missing** |  |
+| `SpellCancelsAuraEffect` | implemented |  |
 ### Events: server
 
 | id | Documented name | Registered name | Status | Requires | Note |
@@ -1560,9 +1566,9 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | 3 | QUEST_ACCEPT | QUEST_ACCEPT | implemented |  | fires for items whose ScriptName is forever_lua_item |
 | 4 | EXPIRE | EXPIRE | implemented |  | fires for items whose ScriptName is forever_lua_item |
 | 5 | REMOVE | REMOVE | implemented |  | fires for items whose ScriptName is forever_lua_item |
-| — | on_add | — | **missing** | | documented, no id in the spec |
-| — | on_equip | — | **missing** | | documented, no id in the spec |
-| — | on_unequip | — | **missing** | | documented, no id in the spec |
+| 6 | — | ADD | **stub** | C13 | stub: needs core hook C13; documented by name; the spec's id table has no id for it |
+| 7 | — | EQUIP | **stub** | C13 | stub: needs core hook C13; documented by name; the spec's id table has no id for it |
+| 8 | — | UNEQUIP | **stub** | C13 | stub: needs core hook C13; documented by name; the spec's id table has no id for it |
 ### Events: player gossip
 
 | id | Documented name | Registered name | Status | Requires | Note |
@@ -1597,7 +1603,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | 4 | LEADER_CHANGE | LEADER_CHANGE | implemented |  |  |
 | 5 | DISBAND | DISBAND | implemented |  |  |
 | 6 | CREATE | CREATE | **stub** | C10 | stub: needs core hook C10 |
-| — | on_member_accept | — | **missing** | | documented, no id in the spec |
+| 7 | — | MEMBER_ACCEPT | **stub** | C10 | stub: needs core hook C10; documented by name; the spec's id table has no id for it |
 ### Events: guild
 
 | id | Documented name | Registered name | Status | Requires | Note |
@@ -1653,29 +1659,29 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 | id | Documented name | Registered name | Status | Requires | Note |
 |---|---|---|---|---|---|
-| — | on_cast | — | **missing** | | documented, no id in the spec |
-| — | on_aura_application | — | **missing** | | documented, no id in the spec |
-| — | on_dispel | — | **missing** | | documented, no id in the spec |
-| — | on_periodic_tick | — | **missing** | | documented, no id in the spec |
-| — | on_periodic_update | — | **missing** | | documented, no id in the spec |
-| — | on_aura_calc_amount | — | **missing** | | documented, no id in the spec |
-| — | on_calc_periodic | — | **missing** | | documented, no id in the spec |
-| — | on_check_proc | — | **missing** | | documented, no id in the spec |
-| — | on_proc | — | **missing** | | documented, no id in the spec |
-| — | on_check_cast | — | **missing** | | documented, no id in the spec |
-| — | on_before_cast | — | **missing** | | documented, no id in the spec |
-| — | on_after_cast | — | **missing** | | documented, no id in the spec |
-| — | on_object_area_target | — | **missing** | | documented, no id in the spec |
-| — | on_object_target | — | **missing** | | documented, no id in the spec |
-| — | on_dest_target | — | **missing** | | documented, no id in the spec |
-| — | on_effect_launch | — | **missing** | | documented, no id in the spec |
-| — | on_effect_launch_target | — | **missing** | | documented, no id in the spec |
-| — | on_effect_calc_absorb | — | **missing** | | documented, no id in the spec |
-| — | on_effect_hit | — | **missing** | | documented, no id in the spec |
-| — | on_before_hit | — | **missing** | | documented, no id in the spec |
-| — | on_effect_hit_target | — | **missing** | | documented, no id in the spec |
-| — | on_hit | — | **missing** | | documented, no id in the spec |
-| — | on_after_hit | — | **missing** | | documented, no id in the spec |
+| 1 | — | CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 2 | — | AURA_APPLICATION | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 3 | — | DISPEL | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 4 | — | PERIODIC_TICK | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 5 | — | PERIODIC_UPDATE | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 6 | — | AURA_CALC_AMOUNT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 7 | — | CALC_PERIODIC | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 8 | — | CHECK_PROC | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 9 | — | PROC | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 10 | — | CHECK_CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 11 | — | BEFORE_CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 12 | — | AFTER_CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 13 | — | OBJECT_AREA_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 14 | — | OBJECT_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 15 | — | DEST_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 16 | — | EFFECT_LAUNCH | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 17 | — | EFFECT_LAUNCH_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 18 | — | EFFECT_CALC_ABSORB | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 19 | — | EFFECT_HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 20 | — | BEFORE_HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 21 | — | EFFECT_HIT_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 22 | — | HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 23 | — | AFTER_HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
 ### Events: bot (engine only: no documented counterpart)
 
 | id | Registered name |
@@ -1689,6 +1695,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | 7 | WIPE |
 | 8 | RUN_STEP |
 | 9 | RUN_STOPPED |
+| 10 | RUN_LOST |
 
 
 ## Appendix A: test-mode surface (not available in eluna mode)
@@ -1708,7 +1715,7 @@ These are installed only with `Mode = test` (`registerApi`, and the `Data` alias
 
 ## Appendix B: documented names with no id in the spec's event tables
 
-The documentation pages list event names without numeric ids; the maintainers' API specification, section 3 carries the ids. Where the documentation lists more names than the spec's table (item, group) or the spec has no table at all (spell), those names cannot be joined by id and are counted as missing.
+The documentation pages list event names without numeric ids; the maintainers' API specification, section 3 carries the ids. Where the documentation lists more names than the spec's table (item, group) or the spec has no table at all (spell), the engine assigns ids and matches those names by words against its event tables (counted as missing only if the engine does not register them).
 
 * `group`: `on_member_accept`
 * `item`: `on_add`, `on_equip`, `on_unequip`
@@ -1717,6 +1724,6 @@ The documentation pages list event names without numeric ids; the maintainers' A
 ## Appendix C: how the report is built
 
 * Globals: `set(L, "Name", fl::safe<fn>)` in `registerGlobals`/`registerGameGlobals`, the `ForeverData` table of `registerForeverData`, and `print`/`require` of `registerCommon`.
-* Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the `Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and the section 7 stubs of `addStubMethod`; inheritance from the `createClass` calls.
+* Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the `Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and the section 7 stubs of `addStubMethod` and the core stubs of `addCoreStubMethod`; inheritance from the `createClass` calls.
 * Events: the `SpecRow` tables of `EluAlias.cpp`, joined to the families by `eluEventSpec`; the hook note comes from `hookGapFor` and the Classic-era note from `classicStubFor` (`EluCommon.cpp`), evaluated for a core without the C1-C4 hooks.
-* Stub detection: the registered C++ function (or the single function it only forwards to) raises `not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`.
+* Stub detection: the registered C++ function (or the single function it only forwards to) raises `not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name registered with `addCoreStubMethod` or raising `not available on this core` is a core stub.

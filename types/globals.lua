@@ -127,6 +127,11 @@ function ClearServerEvents() end
 ---@return any
 function ClearUniqueCreatureEvents(arg1, instance_id, event_type) end
 
+---returns a native Lua 5.4 signed 64-bit integer
+---@param arg1 any
+---@return any
+function CreateLongLong(arg1) end
+
 ---@param arg1 any
 ---@param arg2 any
 ---@param arg3 any
@@ -137,6 +142,11 @@ function CreateLuaEvent(arg1, arg2, arg3) end
 ---@param arg2 any
 ---@return any
 function CreatePacket(opcode, arg2) end
+
+---returns a native Lua 5.4 64-bit integer
+---@param arg1 any
+---@return any
+function CreateULongLong(arg1) end
 
 ---@return any
 function GetActiveGameEvents() end
@@ -180,6 +190,11 @@ function GetGuildByLeaderGUID(arg1) end
 ---@return any
 function GetGuildByName(name) end
 
+---returns the 32-digit hex guid (same form as Object:GetGUID)
+---@param lowguid any
+---@return any
+function GetItemGUID(lowguid) end
+
 ---@param entry any
 ---@return any
 function GetItemLink(entry) end
@@ -192,6 +207,13 @@ function GetLuaEngine() end
 ---@param arg2 any
 ---@return any
 function GetMapById(mapId, arg2) end
+
+---returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)
+---@param lowguid any
+---@param entry any
+---@param mapId any
+---@return any
+function GetObjectGUID(lowguid, entry, mapId) end
 
 ---@deprecated not available (Classic 1.60)
 ---@return any
@@ -208,6 +230,11 @@ function GetPlayerByName(name) end
 ---@return any
 function GetPlayerCount() end
 
+---returns the 32-digit hex guid (same form as Object:GetGUID)
+---@param lowguid any
+---@return any
+function GetPlayerGUID(lowguid) end
+
 ---@param arg1 any
 ---@param arg2 any
 ---@return any
@@ -221,6 +248,9 @@ function GetPlayersOnMap(arg1, arg2) end
 ---@param questId any
 ---@return any
 function GetQuest(questId) end
+
+---@return any
+function GetRealmID() end
 
 ---@param spellId any
 ---@return any
@@ -239,12 +269,39 @@ function GetStateMapId() end
 ---@return any
 function GetTimeDiff(arg1) end
 
+---returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)
+---@param lowguid any
+---@param entry any
+---@param mapId any
+---@return any
+function GetUnitGUID(lowguid, entry, mapId) end
+
+---@param bag any
+---@param slot any
+---@return any
+function IsBagPos(bag, slot) end
+
+---@param arg1 any
+---@return any
+function IsBankPos(arg1) end
+
 ---@return any
 function IsCompatibilityMode() end
+
+---@param arg1 any
+---@param arg2 any
+---@return any
+function IsEquipmentPos(arg1, arg2) end
 
 ---@param eventId any
 ---@return any
 function IsGameEventActive(eventId) end
+
+---@param arg1 any
+---@param arg2 any
+---@param arg3 any
+---@return any
+function IsInventoryPos(arg1, arg2, arg3) end
 
 ---@param player any
 ---@return any
@@ -370,6 +427,14 @@ function RegisterPlayerGossipEvent(entry, event, arg3, arg4) end
 ---@param arg3 any
 ---@return any
 function RegisterServerEvent(event, arg2, arg3) end
+
+---accepts spell event registrations as honest stubs (all 23 events need core hook C14)
+---@param entry any
+---@param event any
+---@param arg3 any
+---@param arg4 any
+---@return any
+function RegisterSpellEvent(entry, event, arg3, arg4) end
 
 ---@param arg1 any
 ---@param instance_id any
@@ -530,7 +595,7 @@ function IsBotApiAvailable() end
 ---@return any
 function print(...) end
 
----our extension (B1): the nine bot events, world state only
+---our extension (B1): the ten bot events, world state only
 ---@param event any
 ---@param arg2 any
 ---@param arg3 any

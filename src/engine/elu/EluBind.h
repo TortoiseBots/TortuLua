@@ -39,6 +39,8 @@ constexpr unsigned kQuest = kindBit(fl::ObjKind::Quest);
 constexpr unsigned kSpell = kindBit(fl::ObjKind::Spell);
 constexpr unsigned kAura = kindBit(fl::ObjKind::Aura);
 constexpr unsigned kSpellInfo = kindBit(fl::ObjKind::SpellInfo);
+constexpr unsigned kAuraEffect = kindBit(fl::ObjKind::AuraEffect);
+constexpr unsigned kProcInfo = kindBit(fl::ObjKind::ElunaProcInfo);
 constexpr unsigned kPacket = kindBit(fl::ObjKind::Packet);
 constexpr unsigned kCorpse = kindBit(fl::ObjKind::Corpse);
 constexpr unsigned kBattleGround = kindBit(fl::ObjKind::BattleGround);
@@ -63,6 +65,10 @@ fl::HandleData const& objArg(lua_State* L, int idx, unsigned kinds, char const* 
 // whole guarantee, the host answers the rest.
 fl::HandleData const& kindArg(lua_State* L, int idx, unsigned kinds, char const* what);
 
+// Raised when the calling thread may not read world-owned social state (a Group or Guild method) now: the world
+// thread with the maps idle. A map-thread handler gets this error instead of a racy read.
+void requireWorldRead(lua_State* L, char const* display);
+
 // Host::gameCall, raising "<display>: not available" when the core does not provide the op.
 void gameCall(lua_State* L, fl::HandleData const& object, char const* op, std::vector<EventValue> const& args,
               std::vector<EventValue>& out, char const* display);
@@ -78,11 +84,13 @@ uint32_t argU16(lua_State* L, int idx, char const* what);
 int32_t argInt(lua_State* L, int idx, char const* what);
 int64_t argI64(lua_State* L, int idx, char const* what);
 float argFloat(lua_State* L, int idx, char const* what);
+double argFinite(lua_State* L, int idx, char const* what);
 std::string argStr(lua_State* L, int idx, char const* what);
 bool optBool(lua_State* L, int idx, bool def);
 // A required boolean (a documented argument with no default).
 bool argBool(lua_State* L, int idx, char const* what);
 int32_t optInt(lua_State* L, int idx, int32_t def, char const* what);
+float optFloat(lua_State* L, int idx, float def, char const* what);
 // A guid argument: the 32-hex string of Object:GetGUID(), or an integer (the low 64 bits, high half 0: `*legacyLow`).
 bool argGuid(lua_State* L, int idx, fl::Guid& out, bool* legacyLow = nullptr);
 uint64_t optUInt(lua_State* L, int idx, uint64_t def);
@@ -115,6 +123,8 @@ void addMethods(lua_State* L, char const* className, luaL_Reg const* regs);
 // E5: sends the WorldPacket argument at `idx` to `target` (Player, Group or Guild).
 void sendPacketArg(lua_State* L, fl::HandleData const& target, int idx, char const* display, bool ignorePlayersInBg = false,
                    uint64_t ignore = 0);
+// The same to one guild rank (Guild:SendPacketToRanked).
+void sendPacketToRankArg(lua_State* L, fl::HandleData const& target, int idx, uint32_t rank, char const* display);
 
 // Pushes the docs cancel closure of a freshly registered event handler (the id travels in its upvalue).
 int pushHandlerId(lua_State* L, uint64_t id);
@@ -143,6 +153,8 @@ void registerSpellMethods(lua_State* L);
 void registerAuraMethods(lua_State* L);
 // Long tail: the SpellInfo class (a documented spell entry; GetSpellInfo and Aura/Spell:GetSpellInfo make one).
 void registerSpellInfoMethods(lua_State* L);
+void registerAuraEffectMethods(lua_State* L);
+void registerProcInfoMethods(lua_State* L);
 // E5: the corpse, battleground, packet and vehicle classes and the methods of systems Classic 1.60 lacks.
 void registerCorpseMethods(lua_State* L);
 void registerBattleGroundMethods(lua_State* L);
@@ -170,6 +182,9 @@ int classicStubMethod(lua_State* L);
 // The same error for a method whose registration is a named function (the name is not an upvalue then).
 int classicStubMethodFor(lua_State* L, char const* name);
 void addStubMethod(lua_State* L, char const* className, char const* name);
+// A documented call the pinned core has no API for: raises "<Method>: not available on this core".
+int coreStubMethod(lua_State* L);
+void addCoreStubMethod(lua_State* L, char const* className, char const* name);
 // Installs the E3 tables (ForeverData in eluna mode, Data in test mode) and RegisterCommand/WorldDBQueryAsync & co.
 void registerGameGlobals(lua_State* L);
 }  // namespace flu

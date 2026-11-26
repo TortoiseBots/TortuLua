@@ -63,8 +63,9 @@ public:
     // the entry of a creature/game object) so two kinds can share a low counter; creatures and game objects live in the
     // store of ONE map and are found only through it; players are found by guid in a global table and may change map;
     // access follows the same flh::AccessRules the module uses.
-    static constexpr uint64_t kTypePlayer = 4, kTypeItem = 3, kTypeCreature = 9, kTypeGameObject = 11, kTypePet = 10;
-    static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0);
+    static constexpr uint64_t kTypePlayer = 4, kTypeItem = 3, kTypeCreature = 9, kTypeGameObject = 11, kTypePet = 10,
+                              kTypeCorpse = 14;
+    static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0, uint16_t mapId = 0);
     static fl::HandleData creature(uint64_t id, uint32_t map = 0, uint32_t instance = 0, uint32_t entry = 0);
     // A hunter/warlock pet: a creature handle whose guid is a Pet guid. The core keeps it in the map's Pet store, so only
     // the lookup rule of src/host/CreatureLookup.h (GetCreature, then GetPet for a Pet guid) finds it.
@@ -72,6 +73,7 @@ public:
     bool petFallback = true;   // false: the pre-fix lookup (Map::GetCreature only) that never found a pet
     static fl::HandleData player(uint64_t id, uint32_t map = 0, uint32_t instance = 0);
     static fl::HandleData gameObject(uint64_t id, uint32_t map = 0, uint32_t instance = 0, uint32_t entry = 0);
+    static fl::HandleData corpse(uint64_t id, uint32_t map = 0, uint32_t instance = 0);
     static fl::HandleData item(uint64_t id);
     void add(fl::HandleData const& h, fl::ObjectInfo const& info);
     void remove(fl::HandleData const& h);
@@ -193,6 +195,39 @@ public:
         uint32_t sheath = 0;
         bool waterWalk = false, sanctuary = false;
         int deMorphs = 0, restoreDisplayId = 0, restoreFaction = 0;
+        bool canModifyStats = true, dying = false, ffa = false, canFly = false, meleeDisabled = false;
+        bool armorer = false, auctioneer = false, battleMaster = false, guildMaster = false;
+        bool spiritGuide = false, spiritService = false, tabardDesigner = false, taxi = false;
+        bool accessiblePlace = true;
+        uint64_t accessibleObjLow = 0;
+        double accessibleRadius = 0;
+        std::string name;
+        std::string charmGuid, controllerGuids, critterGuid;
+        int removeBindSightAuras = 0, removeCharmAuras = 0;
+        std::set<uint32_t> immuneMechanics;
+        struct StatMod
+        {
+            uint32_t mod = 0;
+            uint32_t type = 0;
+            double value = 0;
+            bool apply = true;
+            bool isPct = false;
+        };
+        std::vector<StatMod> statMods;
+        struct AoFCast
+        {
+            double x = 0, y = 0, z = 0;
+            uint32_t spell = 0;
+            bool triggered = true;
+        };
+        std::vector<AoFCast> aofCasts;
+        struct EmoteMsg
+        {
+            std::string msg;
+            uint64_t receiverLow = 0;
+            bool bossEmote = false;
+        };
+        std::vector<EmoteMsg> unitEmotes;
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };
@@ -305,6 +340,7 @@ public:
         std::map<uint32_t, uint32_t> enchantments;   // slot -> enchant id
         std::set<uint32_t> knownEnchants;
         uint32_t bagSize = 0;
+        uint32_t extraFlags = 0, speed = 0;
         std::set<uint32_t> quests;
         bool boundToPlayerAnswer = false;
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
@@ -313,6 +349,70 @@ public:
     FakeItemState& itemState(fl::HandleData const& h) { return itemStates[{h.guid.hi, h.guid.lo}]; }
     bool itemStateCall(fl::HandleData const& self, std::string const& op, std::vector<fl::EventValue> const& args,
                        std::vector<fl::EventValue>& out);
+
+    // ---- Object / WorldObject / GameObject coverage ----
+    struct FakeWorldObject
+    {
+        double combatReach = 0.0;
+        bool losOk = true;
+        bool hostileToAll = false;
+        bool friendlyToAll = false;
+        struct SoundCall
+        {
+            std::string op;
+            uint32_t id = 0;
+            uint64_t targetPlayerLow = 0;
+        };
+        std::vector<SoundCall> sounds;
+        struct WoChat
+        {
+            std::string op, msg;
+            uint32_t lang = 0;
+            uint64_t targetLow = 0;
+            bool boss = false;
+        };
+        std::vector<WoChat> chats;
+    };
+    std::map<std::pair<uint64_t, uint64_t>, FakeWorldObject> woStates;
+    FakeWorldObject& woState(fl::HandleData const& h) { return woStates[{h.guid.hi, h.guid.lo}]; }
+    bool worldObjectStateCall(fl::HandleData const& self, std::string const& op,
+                              std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out);
+
+    struct FakeGameObject
+    {
+        uint32_t goState = 1, lootState = 1, displayId = 0;
+        bool spawned = true, active = false, destructible = false, transport = false, spawnedByDefault = true;
+        int32_t respawnTime = 0;
+        uint32_t dbLow = 0;
+        std::set<uint32_t> quests;
+        std::optional<fl::HandleData> lootRecipient, lootRecipientGroup;
+        std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
+    };
+    std::map<std::pair<uint64_t, uint64_t>, FakeGameObject> goStates;
+    FakeGameObject& goState(fl::HandleData const& h) { return goStates[{h.guid.hi, h.guid.lo}]; }
+    bool gameObjectStateCall(fl::HandleData const& self, std::string const& op,
+                             std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out);
+
+    struct FakeQuest
+    {
+        uint32_t id = 0;
+        int32_t level = 0;
+        int32_t minLevel = 0;
+        uint32_t maxLevel = 0;
+        uint32_t type = 0;
+        uint32_t flags = 0;
+        int32_t prevQuestId = 0;
+        uint32_t nextQuestId = 0;
+        uint32_t nextQuestInChain = 0;
+        std::string title;
+        bool daily = false;
+        bool repeatable = false;
+    };
+    std::map<uint32_t, FakeQuest> questStates;
+    bool questStateCall(fl::HandleData const& self, std::string const& op, std::vector<fl::EventValue> const& args,
+                        std::vector<fl::EventValue>& out);
+    std::vector<fl::HandleData> objectsInRange(fl::HandleData const& self, int kind, float range, uint32_t entry,
+                                               int hostile, int dead) override;
     std::map<std::string, fl::DbRows> rawResults;   // sql -> rows (rawQuery)
     bool rawFail = false;
     std::vector<std::string> rawQueries;
@@ -331,6 +431,10 @@ public:
     std::optional<fl::HandleData> spawnResult;
     std::vector<std::string> worldMessages;
     int reloadsRequested = 0;
+    uint32_t fakeRealmId = 1;
+    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0) override;
+    uint32_t realmId() override { return fakeRealmId; }
+    bool isInventoryPos(int kind, uint8_t bag, uint8_t slot) override;
     fl::Access checkAccess(fl::HandleData const& h) override;
     bool currentMap(fl::HandleData const& h, uint32_t& mapId, uint32_t& instanceId) override;
     bool objectInWorld(fl::HandleData const& h) override;
@@ -352,7 +456,7 @@ public:
     std::string areaName(uint32_t id) override { return id == 12 ? "Elwynn Forest" : std::string(); }
     std::string coreVersion() override { return "test-1.0"; }
     bool mapExists(uint32_t mapId, uint32_t) override { return mapId == 0 || mapId == 1; }
-    bool questExists(uint32_t id) override { return id == 100; }
+    bool questExists(uint32_t id) override { return id == 100 || questStates.count(id) != 0; }
     bool rawQuery(std::string const&, std::string const& sql, size_t, size_t, fl::DbRows& out,
                   std::string& error) override;
     bool rawExecute(std::string const&, std::string const& sql) override;
@@ -410,6 +514,19 @@ public:
         uint32_t entry = 0;
         uint32_t bag = 0, slot = 0;
     };
+    // One durability call of E7 round 2, with the arguments the binding sent.
+    struct FakeDurability
+    {
+        std::string op;
+        uint64_t itemLow = 0;
+        double percent = 0;
+        int64_t points = 0;
+        int64_t slot = 0;
+        bool inventory = true;
+        int64_t pos = 0;
+        bool takeCost = true;
+        double discount = 1.0;
+    };
     struct FakePlayer
     {
         int64_t money = 0;
@@ -447,6 +564,62 @@ public:
         bool repaired = false, repairTakeCost = false, repairGuildBank = false;
         double repairDiscount = 0;
         bool pvp = false;
+        // E7 long tail, round 2: the documented reads.
+        bool canBlock = false, canCompleteRepeatable = false, canFly = false, canParry = false, canShare = false;
+        bool canSpeak = true;
+        uint8_t partyResult = 0;
+        uint32_t championing = 0;
+        int dbcLocale = 0, difficulty = 0;
+        uint8_t drunk = 0, guildRank = 0, subGroup = 0, originalSubGroup = 0;
+        double healthBonus = 0, manaBonus = 0;
+        uint32_t inGameTime = 0, mailCount = 0, recruiterId = 0, atLoginFlags = 0, shieldBlockValue = 0;
+        uint32_t xpRestBonus = 0;                        // GetXPRestBonus(answer for any xp)
+        int32_t questLevel = 0;
+        bool pendingBind = false, inArena = false, inBgQueue = false, acceptWhispers = false, isRecruiter = false;
+        bool gmChat = false, gmVisible = true, neverVisible = false, outdoorPvp = false;
+        uint32_t resetTalentsCost = 0;
+        uint32_t lifetimeKills = 0;
+        std::set<uint64_t> mailedItems;                  // GetMailItem: the low guid of a mailbox item
+        bool honorXpTarget = false, seesPlayer = false;  // IsHonorOrXPTarget / IsVisibleForPlayer
+        uint64_t groupInvite = 0, originalGroup = 0;     // a group handle's low guid, 0 = none
+        uint64_t nearbyGameObject = 0, nextRaidMember = 0, selectedPlayer = 0, selectedUnitCreature = 0;
+        std::set<std::pair<uint32_t, uint8_t>> talents;  // HasTalent(spellId, spec)
+        std::set<uint32_t> titles;                       // HasTitle(bitIndex)
+        std::set<uint64_t> groupMates, raidMates, visibleFor;  // IsInSameGroupWith / IsInSameRaidWith / IsGroupVisibleFor
+        // E7 long tail, round 2: the writes.
+        bool gameMaster = false, pvpDeath = false, bonesSpawned = false, killed = false;
+        uint8_t gender = 0, factionRace = 0;
+        bool resetTalentsNoCost = false, resetTalentsResult = true;
+        int resetTalentsCalls = 0;
+        std::vector<FakeDurability> durabilities;
+        // E7 long tail, round 3: remaining Player methods.
+        bool canTitanGrip = false;
+        uint8_t comboPoints = 0;
+        uint64_t comboTargetLow = 0;
+        uint32_t gossipTextId = 0;
+        std::set<uint64_t> recruitedPlayers;
+        bool recruited = false;
+        bool addTalentResult = true;
+        std::set<uint32_t> weaponSkills;
+        bool instanceBound = false;
+        // The map is an instance map; the core's lock creation needs its instance script and lock (flh::bindToInstanceAllowed).
+        bool instanceHasData = true, instanceHasLock = true;
+        std::set<std::pair<uint32_t, uint32_t>> instanceBinds;
+        uint32_t muteTime = 0;
+        bool playerLock = false;
+        int32_t movementType = 0;
+        std::map<uint32_t, uint32_t> questStatus;
+        // The quests in the quest log: a status is written only for one of these (flh::questStatusWriteAllowed).
+        std::set<uint32_t> questLog;
+        uint32_t taxiPath = 0;
+        uint64_t createdGroupId = 0;
+        bool groupInviteResult = true;
+        bool inBgRaid = false;
+        uint32_t activePetEntry = 0;
+        uint32_t activePetType = 0;
+        int32_t removedPetMode = -99;
+        bool removedPetReagent = false;
+        std::vector<std::string> playerCommands;
         // The action ops with nothing to read back: the op and its arguments, in order.
         std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
     };
@@ -559,10 +732,88 @@ public:
         bool canBeUsedInCombat = false, cooldownStartedOnEvent = false, ranked = false, singleTarget = false;
         bool multiSlotAura = false, groupBuff = false, moveAllowedChannel = false, nextMeleeSwingSpell = false;
         bool rangedWeaponSpell = false, autoRepeatRangedSpell = false, affectedBySpellMods = false;
+
+        // Extended SpellInfo fields and per-effect table.
+        int64_t allEffectsMechanicMask = 0, allowedMechanicMask = 0;
+        int64_t excludeCasterAuraSpell = 0, excludeTargetAuraSpell = 0;
+        int64_t manaCostPercentage = 0, maxTicks = 0;
+        int64_t spellVisual[2] = {};
+        int64_t diminishingGroup = 0, diminishingGroupType = 0, diminishingLimitDuration = 0, diminishingMaxLevel = 0;
+        bool abilityLearnedWithProfession = false, breakingStealth = false, explicitDiscovery = false;
+        bool lootCrafting = false, passiveStackableWithRanks = false, primaryProfession = false;
+        bool primaryProfessionFirstRank = false, profession = false, professionOrRiding = false;
+        bool stackableOnOneSlotWithDifferentCasters = false, needsComboPoints = false;
+        std::set<uint32_t> skillTypes;
+        uint32_t affectedFamilyName = 0;
+        uint32_t affectedFlags[3] = {};
+        std::set<uint32_t> exclusiveWith, exclusivePerCasterWith;
+        std::set<uint64_t> fitItems, checkTargetCreatureTypes, cancelsAuraEffects;
+        int64_t checkTargetResult = 0;
+        struct FakeTargetInfo
+        {
+            int64_t checkType = 0, directionType = 0, objectType = 0, referenceType = 0, selectionCategory = 0, target = 0;
+            double directionAngle = 0.0;
+            bool isArea = false;
+        };
+        struct FakeEffect
+        {
+            bool isEffect = false, isAura = false, isAreaAuraEffect = false, isTargetingArea = false;
+            bool isUnitOwnedAuraEffect = false, hasRadius = false;
+            int64_t auraType = 0, effectType = 0, amplitude = 0, basePoints = 0, calcValue = 0, chainTarget = 0;
+            int64_t dieSides = 0;
+            int64_t implicitTargetType = 0, effectIndex = 0, itemType = 0, mechanic = 0, mechanicMask = 0;
+            int64_t miscValue = 0, miscValueB = 0, providedTargetMask = 0, triggerSpell = 0, usedTargetObjectType = 0;
+            int64_t spellClassMask[3] = {};
+            double bonusMultiplier = 0.0, calcRadius = 0.0, damageMultiplier = 0.0, pointsPerComboPoint = 0.0;
+            double realPointsPerLevel = 0.0, valueMultiplier = 0.0;
+            FakeTargetInfo targetA, targetB;
+        };
+        std::vector<FakeEffect> effectSlots;
     };
     std::map<uint32_t, FakeSpellInfo> spellInfos;         // by spell id
     FakeSpellInfo& spellInfo(uint32_t id) { FakeSpellInfo& s = spellInfos[id]; s.id = id; return s; }
     bool spellExists(uint32_t id) override { return spellInfos.count(id) != 0; }
+
+    struct FakeAuraEffect
+    {
+        uint32_t id = 0;
+        uint32_t effIndex = 0;
+        int64_t auraType = 0;
+        int32_t amount = 0, baseAmount = 0, periodicTimer = 0;
+        uint32_t amplitude = 0, tickNumber = 0, totalTicks = 0, remainingTicks = 0;
+        bool canBeRecalculated = true;
+        bool hasCaster = false;
+        fl::HandleData caster;
+        fl::Guid casterGuid;
+        bool hasBase = false;
+        uint32_t baseAuraId = 0;
+        std::vector<fl::HandleData> targetList;
+        int32_t calculatedAmount = 0;
+        std::vector<std::string> actions;
+    };
+    std::map<uint32_t, FakeAuraEffect> auraEffects;
+    std::vector<std::string> auraEffectActions;
+
+    struct FakeProcInfo
+    {
+        bool hasActor = false;
+        fl::HandleData actor;
+        bool hasActionTarget = false;
+        fl::HandleData actionTarget;
+        bool hasMap = false;
+        fl::HandleData map;
+        bool hasProcSpell = false;
+        fl::HandleData procSpell;
+        uint32_t spellId = 0;
+        bool hasDamage = false, hasHeal = false;
+        uint32_t attackType = 0, block = 0, damage = 0, damageAbsorb = 0, damageType = 0;
+        uint32_t effectiveHeal = 0, heal = 0, healAbsorb = 0, hitMask = 0, resist = 0;
+        uint32_t schoolMask = 0, spellPhaseMask = 0, spellTypeMask = 0, typeMask = 0;
+        std::vector<std::string> actions;
+    };
+    std::map<uint32_t, FakeProcInfo> procInfos;
+    std::vector<std::string> procInfoActions;
+
     bool spellStateCall(fl::HandleData const& self, std::string const& op, std::vector<fl::EventValue> const& args,
                         std::vector<fl::EventValue>& out);
 
@@ -638,12 +889,20 @@ public:
         std::vector<uint8_t> data;
         bool ignorePlayersInBg = false;
         uint64_t ignore = 0;
+        uint32_t rank = 0;   // SendPacketToRanked only
+        uint32_t toRank = 0; // 1 = the ranked form was used
     };
     std::vector<SentPacket> packets;
     bool sendPacket(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
                     bool ignorePlayersInBg, uint64_t ignore) override
     {
-        packets.push_back(SentPacket{target, opcode, data, ignorePlayersInBg, ignore});
+        packets.push_back(SentPacket{target, opcode, data, ignorePlayersInBg, ignore, 0, 0});
+        return true;
+    }
+    bool sendPacketToRanked(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
+                            uint32_t rank) override
+    {
+        packets.push_back(SentPacket{target, opcode, data, false, 0, rank, 1});
         return true;
     }
     void commandsChanged() override { ++commandsChangedCalls; }
@@ -654,6 +913,8 @@ public:
         // The real host's store of the running call (src/host/EluWorld.cpp): a handle kept past its call finds nothing.
         spells.clear();
         auras.clear();
+        auraEffects.clear();
+        procInfos.clear();
     }
 
     // ---- GM bridge ----

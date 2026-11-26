@@ -9,11 +9,15 @@
 #include "CellImpl.h"
 #include "CharacterCache.h"
 #include "DataSql.h"
+#include "GuildWrite.h"
+#include "NearSearch.h"
+#include "PlayerWrites.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
 #include "ChatPackets.h"
 #include "ChatCommand.h"
+#include "ChatTextBuilder.h"
 #include "Corpse.h"
 #include "Creature.h"
 #include "Pet.h"
@@ -24,12 +28,15 @@
 #include "GameEventMgr.h"
 #include "GameObject.h"
 #include "GameAccess.h"
+#include "GameTime.h"
 #include "GossipDef.h"
 #include "Group.h"
 #include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "GroupMgr.h"
 #include "Guild.h"
 #include "GuildMgr.h"
+#include "InstanceLockMgr.h"
 #include "Item.h"
 #include "ItemTemplate.h"
 #include "LootItemType.h"
@@ -37,6 +44,8 @@
 #include "Mail.h"
 #include "Map.h"
 #include "MotionMaster.h"
+#include "NPCPackets.h"
+#include "PartyPackets.h"
 #include "Waypoints/WaypointManager.h"
 #include "ObjectMgr.h"
 #include "ObjectAccessor.h"
@@ -44,9 +53,11 @@
 #include "Player.h"
 #include "DB2Structure.h"
 #include "QuestDef.h"
+#include "RealmList.h"
 #include "RestMgr.h"
 #include "SharedDefines.h"
 #include "Spell.h"
+#include "SpellAuraEffects.h"
 #include "SpellAuras.h"
 #include "SpellHistory.h"
 #include "SpellInfo.h"
@@ -188,15 +199,23 @@ LocaleConstant localeArgAt(std::vector<EventValue> const& a, size_t i)
 // A guid given as the 32-digit Object:GetGUID() text: the 128-bit value, empty when absent. A legacy integer (high half 0,
 // low half set) means a guid of the one kind the argument takes: an item, or a player.
 // A zero-high guid is a typeless (HighGuid::Null) value that no core object ever carries, so it would match nothing.
-enum class LegacyGuid { Player, Item };
+enum class LegacyGuid { Player, Item, Creature, Pet };
 ObjectGuid guidArgAt(std::vector<EventValue> const& a, size_t i, LegacyGuid legacy)
 {
     fl::Guid g;
     if (i < a.size() && fl::parseGuidText(sArg(a, i), g))
     {
         if (g.hi == 0 && g.lo != 0)
-            return legacy == LegacyGuid::Item ? ObjectGuid::Create<HighGuid::Item>(static_cast<ObjectGuid::LowType>(g.lo))
-                                              : ObjectGuid::Create<HighGuid::Player>(static_cast<ObjectGuid::LowType>(g.lo));
+        {
+            auto const low = static_cast<ObjectGuid::LowType>(g.lo);
+            switch (legacy)
+            {
+                case LegacyGuid::Item: return ObjectGuid::Create<HighGuid::Item>(low);
+                case LegacyGuid::Creature: return ObjectGuid::Create<HighGuid::Creature>(0, 0, low);
+                case LegacyGuid::Pet: return ObjectGuid::Create<HighGuid::Pet>(0, 0, low);
+                case LegacyGuid::Player: return ObjectGuid::Create<HighGuid::Player>(low);
+            }
+        }
         return toGuid(g);
     }
     return ObjectGuid::Empty;
@@ -211,6 +230,30 @@ int typeOfGuid(fl::Guid const& g)
 
 void pushHandle(std::vector<EventValue>& out, fl::HandleData const& h) { out.emplace_back(EventValue(h)); }
 
+void lootRecipientFromTapList(WorldObject const* obj, GuidUnorderedSet const& tapList, bool wantGroup,
+                              std::vector<EventValue>& out)
+{
+    Player* recipient = nullptr;
+    for (ObjectGuid const& guid : tapList)
+        if (Player* player = ObjectAccessor::GetPlayer(*obj, guid))
+            if (player->IsInWorld() && (!recipient || player->GetGUID() < recipient->GetGUID()))
+                recipient = player;
+    if (!recipient)
+        return;
+    if (!wantGroup)
+    {
+        pushHandle(out, handleFor(recipient));
+        return;
+    }
+    if (Group* group = recipient->GetGroup())
+    {
+        HandleData h;
+        h.kind = ObjKind::Group;
+        h.guid = fromGuid(group->GetGUID());
+        pushHandle(out, h);
+    }
+}
+
 // The Spell and Aura handles of the running Lua call (E2): the docs' objects are transient, so the module only keeps
 // them while the call that produced them runs (Host::endLuaCall clears the store). The handle carries the caster guid,
 // the spell id (mapId) and a store id (instanceId).
@@ -220,6 +263,8 @@ struct TransientObjects
     uint32_t nextId = 1;
     std::map<uint32_t, Spell*> spells;
     std::map<uint32_t, Aura*> auras;
+    std::map<uint32_t, AuraEffect*> auraEffects;
+    std::map<uint32_t, ProcEventInfo*> procInfos;
 };
 TransientObjects& transient()
 {
@@ -240,6 +285,20 @@ Aura* auraById(uint32_t id)
     std::lock_guard<std::mutex> lock(t.mutex);
     auto it = t.auras.find(id);
     return it == t.auras.end() ? nullptr : it->second;
+}
+AuraEffect* auraEffectById(uint32_t id)
+{
+    TransientObjects& t = transient();
+    std::lock_guard<std::mutex> lock(t.mutex);
+    auto it = t.auraEffects.find(id);
+    return it == t.auraEffects.end() ? nullptr : it->second;
+}
+ProcEventInfo* procInfoById(uint32_t id)
+{
+    TransientObjects& t = transient();
+    std::lock_guard<std::mutex> lock(t.mutex);
+    auto it = t.procInfos.find(id);
+    return it == t.procInfos.end() ? nullptr : it->second;
 }
 uint32_t rememberAura(Aura* aura)
 {
@@ -386,6 +445,18 @@ SpellInfoNumOp const kSpellInfoNumOps[] = {
     // ProcFlagsInit holds the classic ProcFlags in its first 32-bit part (docs: one number).
     {"spellinfo.getProcFlags", [](SpellInfo const* s) { return static_cast<int64_t>(static_cast<uint32>(s->ProcFlags[0])); }},
     {"spellinfo.calcCastTime", [](SpellInfo const* s) { return static_cast<int64_t>(s->CalcCastTime()); }},
+    {"spellinfo.getAllEffectsMechanicMask", [](SpellInfo const* s) { return static_cast<int64_t>(s->GetAllEffectsMechanicMask()); }},
+    {"spellinfo.getAllowedMechanicMask", [](SpellInfo const* s) { return static_cast<int64_t>(s->GetAllowedMechanicMask()); }},
+    {"spellinfo.getExcludeCasterAuraSpell", [](SpellInfo const* s) { return static_cast<int64_t>(s->ExcludeCasterAuraSpell); }},
+    {"spellinfo.getExcludeTargetAuraSpell", [](SpellInfo const* s) { return static_cast<int64_t>(s->ExcludeTargetAuraSpell); }},
+    {"spellinfo.getDiminishingReturnsGroupForSpell",
+     [](SpellInfo const* s) { return static_cast<int64_t>(s->GetDiminishingReturnsGroupForSpell()); }},
+    {"spellinfo.getDiminishingReturnsGroupType",
+     [](SpellInfo const* s) { return static_cast<int64_t>(s->GetDiminishingReturnsGroupType()); }},
+    {"spellinfo.getDiminishingReturnsLimitDuration",
+     [](SpellInfo const* s) { return static_cast<int64_t>(s->GetDiminishingReturnsLimitDuration()); }},
+    {"spellinfo.getDiminishingReturnsMaxLevel",
+     [](SpellInfo const* s) { return static_cast<int64_t>(s->GetDiminishingReturnsMaxLevel()); }},
 };
 
 // The SpellInfo ops that answer a decimal number.
@@ -431,6 +502,30 @@ SpellInfoBoolOp const kSpellInfoBoolOps[] = {
     {"spellinfo.isRangedWeaponSpell", [](SpellInfo const* s) { return s->IsRangedWeaponSpell(); }},
     {"spellinfo.isAutoRepeatRangedSpell", [](SpellInfo const* s) { return s->IsAutoRepeatRangedSpell(); }},
     {"spellinfo.isAffectedBySpellMods", [](SpellInfo const* s) { return s->IsAffectedBySpellMods(); }},
+    {"spellinfo.isBreakingStealth",
+     [](SpellInfo const* s) { return !s->HasAttribute(SPELL_ATTR0_CU_DONT_BREAK_STEALTH) && !s->HasAttribute(SPELL_ATTR1_ALLOW_WHILE_STEALTHED); }},
+    {"spellinfo.isExplicitDiscovery", [](SpellInfo const* s) { return s->IsExplicitDiscovery(); }},
+    {"spellinfo.isLootCrafting", [](SpellInfo const* s) { return s->IsLootCrafting(); }},
+    {"spellinfo.isPassiveStackableWithRanks", [](SpellInfo const* s) { return s->IsPassiveStackableWithRanks(); }},
+    {"spellinfo.isPrimaryProfession", [](SpellInfo const* s) { return s->IsPrimaryProfession(); }},
+    {"spellinfo.isPrimaryProfessionFirstRank", [](SpellInfo const* s) { return s->IsPrimaryProfessionFirstRank(); }},
+    {"spellinfo.isProfession", [](SpellInfo const* s) { return s->IsProfession(); }},
+    {"spellinfo.isStackableOnOneSlotWithDifferentCasters",
+     [](SpellInfo const* s) { return s->IsStackableOnOneSlotWithDifferentCasters(); }},
+    {"spellinfo.isSelfCast",
+     [](SpellInfo const* s) {
+         bool hasEffect = false;
+         for (SpellEffectInfo const& eff : s->GetEffects())
+         {
+             if (!eff.IsEffect())
+                 continue;
+             hasEffect = true;
+             if (eff.TargetA.GetTarget() != TARGET_UNIT_CASTER ||
+                 (eff.TargetB.GetTarget() != 0 && eff.TargetB.GetTarget() != TARGET_UNIT_CASTER))
+                 return false;
+         }
+         return hasEffect;
+     }},
 };
 }  // namespace
 
@@ -453,12 +548,52 @@ HandleData handleForSpell(Spell* spell)
     return h;
 }
 
+HandleData handleForAuraEffect(AuraEffect* eff)
+{
+    if (!eff)
+        return fl::HandleData{};
+    TransientObjects& t = transient();
+    uint32_t id = 0;
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        id = t.nextId++;
+        t.auraEffects[id] = eff;
+    }
+    fl::HandleData h;
+    h.kind = fl::ObjKind::AuraEffect;
+    h.guid = eff->GetCaster() ? fromGuid(eff->GetCaster()->GetGUID()) : fl::Guid{};
+    h.mapId = eff->GetId();
+    h.instanceId = id;
+    return h;
+}
+
+HandleData handleForProcInfo(ProcEventInfo* proc)
+{
+    if (!proc)
+        return fl::HandleData{};
+    TransientObjects& t = transient();
+    uint32_t id = 0;
+    {
+        std::lock_guard<std::mutex> lock(t.mutex);
+        id = t.nextId++;
+        t.procInfos[id] = proc;
+    }
+    fl::HandleData h;
+    h.kind = fl::ObjKind::ElunaProcInfo;
+    h.guid = proc->GetActor() ? fromGuid(proc->GetActor()->GetGUID()) : fl::Guid{};
+    h.mapId = proc->GetSpellInfo() ? proc->GetSpellInfo()->Id : 0;
+    h.instanceId = id;
+    return h;
+}
+
 void ForeverHost::endLuaCall()
 {
     TransientObjects& t = transient();
     std::lock_guard<std::mutex> lock(t.mutex);
     t.spells.clear();
     t.auras.clear();
+    t.auraEffects.clear();
+    t.procInfos.clear();
 }
 
 fl::Access ForeverHost::checkAccess(fl::HandleData const& h) { return accessFor(h); }
@@ -474,6 +609,7 @@ bool ForeverHost::objectInWorld(fl::HandleData const& h)
     {
         case fl::ObjKind::Creature:
         case fl::ObjKind::GameObject:
+        case fl::ObjKind::Corpse:
         case fl::ObjKind::Player: return findObject(h) != nullptr;   // a fresh GUID lookup, null when out of the world
         default: return true;
     }
@@ -803,7 +939,8 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             name == "item.getBuyPrice" || name == "item.getSellPrice" || name == "item.getBuyCount" ||
             name == "item.getMaxStackCount" || name == "item.getStatsCount" || name == "item.getItemSet" ||
             name == "item.getAllowableClass" || name == "item.getAllowableRace" || name == "item.getArmor" ||
-            name == "item.getFlags" || name == "item.getFlags2" || name == "item.getBagSize" ||
+            name == "item.getFlags" || name == "item.getFlags2" || name == "item.getExtraFlags" ||
+            name == "item.getSpeed" || name == "item.getBagSize" ||
             name == "item.getSpellId" || name == "item.getSpellTrigger" || name == "item.getDamageInfo")
         {
             if (!itemProto)
@@ -880,6 +1017,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 out.emplace_back(static_cast<int64_t>(static_cast<uint32>(itemProto->ExtendedData->Flags[0])));
             else if (name == "item.getFlags2")
                 out.emplace_back(static_cast<int64_t>(static_cast<uint32>(itemProto->ExtendedData->Flags[1])));
+            else if (name == "item.getExtraFlags")
+                out.emplace_back(static_cast<int64_t>(itemProto->FlagsCu));
+            else if (name == "item.getSpeed")
+                out.emplace_back(static_cast<int64_t>(itemProto->GetDelay()));
             else if (name == "item.getBagSize")
                 out.emplace_back(static_cast<int64_t>(item->IsBag() ? itemProto->GetContainerSlots() : 0));
             else if (name == "item.getSpellId" || name == "item.getSpellTrigger")
@@ -1130,7 +1271,24 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             return hasGuid && g->RemoveMember(toGuid(target), static_cast<RemoveMethod>(method)) ? 1 : 2;
         };
         WorldCallResult how = WorldCallResult::Ran;
-        std::optional<int> r = callOnWorld<int>(rules(), deferred(), job, &how);
+        // The flags are the world thread's: a map thread goes through callOnWorld without reading them. A world-thread
+        // call from a hook of a change (or of a core social action) already running is queued as well.
+        if (rules().placeForWorld() == AccessRules::Place::Direct && socialWriteBlocked())
+        {
+            runSocialWrite("Group member change", [job] { (void)job(); });
+            return true;   // queued: no result yet
+        }
+        auto guarded = [this, job]() -> int
+        {
+            struct Guard
+            {
+                bool& flag;
+                ~Guard() { flag = false; }
+            } reset{_socialWriteActive};
+            _socialWriteActive = true;
+            return job();
+        };
+        std::optional<int> r = callOnWorld<int>(rules(), deferred(), guarded, &how);
         if (how == WorldCallResult::Dropped)
             log(fl::LogLevel::Warn, "ForeverLua: Group member change dropped: the world thread queue is full");
         if (!r)
@@ -1139,6 +1297,52 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             return false;   // disbanded: "Group no longer exists"
         out.emplace_back(*r == 1);
         return true;
+    }
+    // The other group writes change state and send packets the same way: world thread only, queued from a map thread.
+    if (self.kind == ObjKind::Group &&
+        (name == "group.convertToLfg" || name == "group.convertToRaid" || name == "group.disband" ||
+         name == "group.setLeader" || name == "group.setMemberFlag" || name == "group.setMembersGroup" ||
+         name == "group.setTargetIcon"))
+    {
+        fl::Guid const groupGuid = self.guid;
+        fl::Guid target;
+        fl::Guid setter;
+        bool const hasTarget = fl::parseGuidText(sArg(args, name == "group.setTargetIcon" ? 1 : 0), target);
+        if (name == "group.setTargetIcon")
+            fl::parseGuidText(sArg(args, 2), setter);
+        bool const apply = bArg(args, 1, false);
+        int const flag = iArg(args, name == "group.setTargetIcon" ? 0 : (name == "group.setMemberFlag" ? 2 : 1));
+        auto job = [=]()
+        {
+            Group* g = sGroupMgr->GetGroupByGUID(toGuid(groupGuid));
+            if (!g)
+                return;
+            if (name == "group.convertToLfg")
+                g->ConvertToLFG();
+            else if (name == "group.convertToRaid")
+                g->ConvertToRaid();
+            else if (name == "group.disband")
+                g->Disband();   // frees the group: nothing below touches g afterwards
+            else if (name == "group.setLeader")
+            {
+                if (hasTarget)
+                    g->ChangeLeader(toGuid(target));
+            }
+            else if (name == "group.setMemberFlag")
+            {
+                if (hasTarget)
+                    g->SetGroupMemberFlag(toGuid(target), apply, static_cast<GroupMemberFlags>(flag));
+            }
+            else if (name == "group.setMembersGroup")
+            {
+                if (hasTarget)
+                    g->ChangeMembersGroup(toGuid(target), static_cast<uint8>(flag));
+            }
+            else if (hasTarget)
+                g->SetTargetIcon(static_cast<uint8>(flag), toGuid(target), toGuid(setter));
+        };
+        runSocialWrite("Group change", job);
+        return true;   // the docs: these return nothing, and a queued call has no result yet either
     }
     if (self.kind == ObjKind::Group)
     {
@@ -1153,9 +1357,40 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                         pushHandle(out, handleFor(p));
             return true;
         }
+        if (name == "group.getGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(group->GetGUID())));
+            return true;
+        }
         if (name == "group.getLeaderGuid")
         {
             out.emplace_back(fl::guidText(fromGuid(group->GetLeaderGUID())));
+            return true;
+        }
+        if (name == "group.getMembersCount")
+        {
+            out.emplace_back(static_cast<int64_t>(group->GetMembersCount()));
+            return true;
+        }
+        if (name == "group.getMemberGuid")
+        {
+            ObjectGuid const guid = group->GetMemberGUID(sArg(args, 0));
+            if (!guid.IsEmpty())
+                out.emplace_back(fl::guidText(fromGuid(guid)));
+            return true;
+        }
+        if (name == "group.getMemberFlags")
+        {
+            fl::Guid guid;
+            if (fl::parseGuidText(sArg(args, 0), guid))
+                out.emplace_back(static_cast<int64_t>(group->GetMemberFlags(toGuid(guid))));
+            return true;
+        }
+        if (name == "group.getMemberGroup")
+        {
+            fl::Guid guid;
+            if (fl::parseGuidText(sArg(args, 0), guid))
+                out.emplace_back(static_cast<int64_t>(group->GetMemberGroup(toGuid(guid))));
             return true;
         }
         if (name == "group.isRaidGroup")
@@ -1163,14 +1398,130 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(group->isRaidGroup());
             return true;
         }
-        if (name == "group.addMember" || name == "group.removeMember")
-            return false;   // answered above: a group member change is the world thread's alone
-        if (name == "group.sendPacket" || name == "guild.sendPacket")
-            return false;   // WorldPacket objects are created in E5; no packet can exist here yet
+        if (name == "group.isLfgGroup")
+        {
+            out.emplace_back(group->isLFGGroup());
+            return true;
+        }
+        if (name == "group.isBgGroup")
+        {
+            out.emplace_back(group->isBGGroup());
+            return true;
+        }
+        if (name == "group.isBfGroup")
+        {
+            out.emplace_back(group->isBFGroup());
+            return true;
+        }
+        if (name == "group.isFull")
+        {
+            out.emplace_back(group->IsFull());
+            return true;
+        }
+        if (name == "group.isMember" || name == "group.isLeader" || name == "group.isAssistant")
+        {
+            fl::Guid guid;
+            if (fl::parseGuidText(sArg(args, 0), guid))
+            {
+                if (name == "group.isMember")
+                    out.emplace_back(group->IsMember(toGuid(guid)));
+                else if (name == "group.isLeader")
+                    out.emplace_back(group->IsLeader(toGuid(guid)));
+                else
+                    out.emplace_back(group->IsAssistant(toGuid(guid)));
+            }
+            return true;
+        }
+        if (name == "group.sameSubGroup")
+        {
+            fl::Guid first;
+            fl::Guid second;
+            if (fl::parseGuidText(sArg(args, 0), first) && fl::parseGuidText(sArg(args, 1), second))
+                out.emplace_back(group->SameSubGroup(toGuid(first), toGuid(second)));
+            return true;
+        }
+        if (name == "group.hasFreeSlotSubGroup")
+        {
+            uint32 const subgroup = static_cast<uint32>(iArg(args, 0));
+            if (subgroup < MAX_RAID_SUBGROUPS)   // the counters array the core reads has this many entries
+                out.emplace_back(group->HasFreeSlotSubGroup(static_cast<uint8>(subgroup)));
+            return true;
+        }
         return false;
     }
 
     // ---- Guild ----
+    // The guild writes go through the world thread for the same reason as the group ones (and AddMember/DeleteMember/
+    // ChangeMemberRank take the character database transaction the caller commits).
+    if (self.kind == ObjKind::Guild &&
+        (name == "guild.addMember" || name == "guild.deleteMember" || name == "guild.disband" ||
+         name == "guild.setMemberRank"))
+    {
+        fl::Guid const guildId = self.guid;
+        HandleData player;
+        bool const hasPlayer = asHandle(args.empty() ? EventValue() : args[0], player);
+        flh::GuildWrite write;
+        if (name == "guild.addMember")
+        {
+            write.kind = flh::GuildWriteKind::AddMember;
+            write.hasRank = bArg(args, 2, false);
+            write.rank = static_cast<uint32_t>(iArg(args, 1));
+        }
+        else if (name == "guild.deleteMember")
+        {
+            write.kind = flh::GuildWriteKind::DeleteMember;
+            write.isDisbanding = bArg(args, 1, false);
+        }
+        else if (name == "guild.setMemberRank")
+        {
+            write.kind = flh::GuildWriteKind::ChangeRank;
+            write.rank = static_cast<uint32_t>(iArg(args, 1));
+        }
+        auto job = [=]()
+        {
+            Guild* g = sGuildMgr->GetGuildById(static_cast<uint32>(guildId.lo));
+            bool const needsPlayer = write.kind != flh::GuildWriteKind::Disband;
+            Player* p = g && needsPlayer && hasPlayer ? findPlayer(player) : nullptr;
+            // The core calls of the job, behind the game-free rule of GuildWrite.h.
+            struct CoreGuild
+            {
+                Guild* guild;
+                ObjectGuid guid;
+                // The core adds the member at its lowest rank (no rank passed); an explicit rank is then set through
+                // the public ChangeMemberRank, which refuses a rank the guild does not have (it looks it up itself).
+                flh::GuildAddOutcome AddMember(bool hasRank, uint32_t rank)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    if (!guild->AddMember(trans, guid, Optional<GuildRankId>()))
+                        return flh::GuildAddOutcome::NotAdded;
+                    flh::GuildAddOutcome outcome = flh::GuildAddOutcome::Added;
+                    if (hasRank && !guild->ChangeMemberRank(trans, guid, static_cast<GuildRankId>(rank)))
+                        outcome = flh::GuildAddOutcome::AddedAtDefaultRank;
+                    CharacterDatabase.CommitTransaction(trans);
+                    return outcome;
+                }
+                void DeleteMember(bool isDisbanding)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    guild->DeleteMember(trans, guid, isDisbanding);
+                    CharacterDatabase.CommitTransaction(trans);
+                }
+                void ChangeRank(uint32_t rank)
+                {
+                    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                    if (guild->ChangeMemberRank(trans, guid, static_cast<GuildRankId>(rank)))
+                        CharacterDatabase.CommitTransaction(trans);
+                }
+                void Disband() { guild->Disband(); }
+            } target{g, p ? p->GetGUID() : ObjectGuid::Empty};
+            if (flh::applyGuildWrite(g ? &target : nullptr, p != nullptr, write) ==
+                flh::GuildWriteResult::AddedAtDefaultRank)
+                log(fl::LogLevel::Warn, "ForeverLua: Guild:AddMember: rank " + std::to_string(write.rank) +
+                                            " does not exist; the member was added at the default rank");
+        };
+        runSocialWrite("Guild change", job);
+        return true;
+    }
     if (self.kind == ObjKind::Guild)
     {
         Guild* guild = sGuildMgr->GetGuildById(static_cast<uint32>(self.guid.lo));
@@ -1179,6 +1530,26 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "guild.getName")
         {
             out.emplace_back(guild->GetName());
+            return true;
+        }
+        if (name == "guild.getMotd")
+        {
+            out.emplace_back(guild->GetMOTD());
+            return true;
+        }
+        if (name == "guild.getInfo")
+        {
+            out.emplace_back(guild->GetInfo());
+            return true;
+        }
+        if (name == "guild.getId")
+        {
+            out.emplace_back(static_cast<int64_t>(guild->GetId()));
+            return true;
+        }
+        if (name == "guild.getMemberCount")
+        {
+            out.emplace_back(static_cast<int64_t>(guild->GetMembersCount()));
             return true;
         }
         if (name == "guild.getMembers")
@@ -1194,8 +1565,13 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(fl::guidText(fromGuid(guild->GetLeaderGUID())));
             return true;
         }
-        if (name == "guild.sendPacket")
-            return false;   // WorldPacket objects are created in E5
+        if (name == "guild.getLeader")
+        {
+            if (Player* leader = ObjectAccessor::FindPlayer(guild->GetLeaderGUID()))
+                if (leader->IsInWorld())
+                    pushHandle(out, handleFor(leader));
+            return true;
+        }
         return false;
     }
 
@@ -1206,6 +1582,11 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         Quest const* quest = sObjectMgr->GetQuestTemplate(id);
         if (!quest)
             return false;   // "Quest no longer exists"
+        if (name == "quest.getFlags")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetFlags()));
+            return true;
+        }
         if (name == "quest.getId")
         {
             out.emplace_back(static_cast<int64_t>(quest->GetQuestId()));
@@ -1216,14 +1597,54 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             out.emplace_back(static_cast<int64_t>(quest->GetClassicQuestLevel()));
             return true;
         }
+        if (name == "quest.getMaxLevel")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetMaxLevel()));
+            return true;
+        }
+        if (name == "quest.getMinLevel")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetClassicMinLevel()));
+            return true;
+        }
+        if (name == "quest.getNextQuestId")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetNextQuestId()));
+            return true;
+        }
+        if (name == "quest.getNextQuestInChain")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetNextQuestInChain()));
+            return true;
+        }
+        if (name == "quest.getPrevQuestId")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetPrevQuestId()));
+            return true;
+        }
         if (name == "quest.getTitle")
         {
             out.emplace_back(quest->GetLogTitle());
             return true;
         }
+        if (name == "quest.getType")
+        {
+            out.emplace_back(static_cast<int64_t>(quest->GetQuestType()));
+            return true;
+        }
+        if (name == "quest.hasFlag")
+        {
+            out.emplace_back(quest->HasFlag(static_cast<QuestFlags>(static_cast<uint32>(iArg(args, 0)))));
+            return true;
+        }
         if (name == "quest.isDaily")
         {
             out.emplace_back(quest->IsDaily());
+            return true;
+        }
+        if (name == "quest.isRepeatable")
+        {
+            out.emplace_back(quest->IsRepeatable());
             return true;
         }
         return false;
@@ -1343,7 +1764,9 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "spellinfo.needsToBeTriggeredByCaster" || name == "spellinfo.isRankOf" ||
             name == "spellinfo.isDifferentRankOf" || name == "spellinfo.isHighRankOf" ||
             name == "spellinfo.canDispelAura" || name == "spellinfo.canPierceImmuneAura" ||
-            name == "spellinfo.canSpellProvideImmunityAgainstAura")
+            name == "spellinfo.canSpellProvideImmunityAgainstAura" ||
+            name == "spellinfo.isAuraExclusiveBySpecificWith" ||
+            name == "spellinfo.isAuraExclusiveBySpecificPerCasterWith")
         {
             SpellInfo const* other = spellEntry(static_cast<uint32>(iArg(args, 0)));
             if (!other)
@@ -1360,8 +1783,557 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 out.emplace_back(info->CanDispelAura(other));
             else if (name == "spellinfo.canPierceImmuneAura")
                 out.emplace_back(info->CanPierceImmuneAura(other));
+            else if (name == "spellinfo.isAuraExclusiveBySpecificWith")
+                out.emplace_back(info->IsAuraExclusiveBySpecificWith(other));
+            else if (name == "spellinfo.isAuraExclusiveBySpecificPerCasterWith")
+                out.emplace_back(info->IsAuraExclusiveBySpecificPerCasterWith(other));
             else
                 out.emplace_back(info->CanSpellProvideImmunityAgainstAura(other));
+            return true;
+        }
+        if (name == "spellinfo.getManaCostPercentage")
+        {
+            SpellPowerEntry const* mana = manaCostOf(info);
+            out.emplace_back(static_cast<int64_t>(mana ? static_cast<uint32>(mana->PowerCostPct) : 0));
+            return true;
+        }
+        if (name == "spellinfo.getMaxTicks")
+        {
+            uint32 maxTicks = 0;
+            for (SpellEffectInfo const& eff : info->GetEffects())
+                maxTicks = std::max(maxTicks, eff.GetPeriodicTickCount());
+            out.emplace_back(static_cast<int64_t>(maxTicks));
+            return true;
+        }
+        if (name == "spellinfo.getSpellMechanicMaskByEffectMask")
+        {
+            out.emplace_back(static_cast<int64_t>(
+                info->GetSpellMechanicMaskByEffectMask(static_cast<uint32>(iArg(args, 0)))));
+            return true;
+        }
+        if (name == "spellinfo.getSpellVisual")
+        {
+            uint32 const index = static_cast<uint32>(iArg(args, 0));
+            if (index > 1)
+                throw std::out_of_range("spell visual index " + std::to_string(index) + " is not 0..1");
+            out.emplace_back(static_cast<int64_t>(index == 0 ? info->GetSpellVisual() : 0));
+            return true;
+        }
+        if (name == "spellinfo.isAbilityLearnedWithProfession")
+        {
+            bool learned = false;
+            SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(info->Id);
+            for (auto itr = bounds.first; itr != bounds.second; ++itr)
+            {
+                if (IsProfessionSkill(itr->second->SkillLine) &&
+                    itr->second->GetAcquireMethod() == SkillLineAbilityAcquireMethod::AutomaticSkillRank)
+                {
+                    learned = true;
+                    break;
+                }
+            }
+            out.emplace_back(learned);
+            return true;
+        }
+        if (name == "spellinfo.isAbilityOfSkillType")
+        {
+            out.emplace_back(info->IsAbilityOfSkillType(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "spellinfo.isAffected")
+        {
+            flag128 flags;
+            flags[0] = static_cast<uint32>(iArg(args, 1));
+            flags[1] = static_cast<uint32>(iArg(args, 2));
+            flags[2] = static_cast<uint32>(iArg(args, 3));
+            out.emplace_back(info->IsAffected(static_cast<uint32>(iArg(args, 0)), flags));
+            return true;
+        }
+        if (name == "spellinfo.isProfessionOrRiding")
+        {
+            bool ok = false;
+            for (SpellEffectInfo const& eff : info->GetEffects())
+                if (eff.Effect == SPELL_EFFECT_SKILL && IsProfessionOrRidingSkill(eff.MiscValue))
+                {
+                    ok = true;
+                    break;
+                }
+            out.emplace_back(ok);
+            return true;
+        }
+        if (name == "spellinfo.needsComboPoints")
+        {
+            bool needs = info->HasAttribute(SPELL_ATTR1_FINISHING_MOVE_DAMAGE) ||
+                         info->HasAttribute(SPELL_ATTR1_FINISHING_MOVE_DURATION);
+            if (!needs)
+                for (SpellPowerEntry const* cost : info->PowerCosts)
+                    if (cost && cost->PowerType == POWER_COMBO_POINTS)
+                    {
+                        needs = true;
+                        break;
+                    }
+            out.emplace_back(needs);
+            return true;
+        }
+        if (name == "spellinfo.checkTarget")
+        {
+            HandleData casterH, targetH;
+            asHandle(args[0], casterH);
+            asHandle(args[1], targetH);
+            WorldObject* caster = findObject(casterH);
+            WorldObject* target = findObject(targetH);
+            if (!caster || !target || caster->GetMap() != target->GetMap())
+                out.emplace_back(static_cast<int64_t>(SPELL_FAILED_BAD_TARGETS));
+            else
+                out.emplace_back(static_cast<int64_t>(info->CheckTarget(caster, target)));
+            return true;
+        }
+        if (name == "spellinfo.checkTargetCreatureType")
+        {
+            HandleData targetH;
+            asHandle(args[0], targetH);
+            Unit* target = findUnit(targetH);
+            out.emplace_back(target ? info->CheckTargetCreatureType(target) : false);
+            return true;
+        }
+        if (name == "spellinfo.isItemFitToSpellRequirements")
+        {
+            HandleData itemH;
+            asHandle(args[0], itemH);
+            Item* item = findItem(itemH);
+            out.emplace_back(info->IsItemFitToSpellRequirements(item));
+            return true;
+        }
+        if (name == "spellinfo.spellCancelsAuraEffect")
+        {
+            AuraEffect* eff = auraEffectById(static_cast<uint32>(iArg(args, 0)));
+            if (!eff)
+                throw std::out_of_range("AuraEffect no longer exists");
+            out.emplace_back(info->SpellCancelsAuraEffect(eff));
+            return true;
+        }
+        if (name.rfind("spellinfo.effectIs", 0) == 0 || name.rfind("spellinfo.getEffect", 0) == 0)
+        {
+            uint32 const effIdx = static_cast<uint32>(iArg(args, 0));
+            SpellEffectInfo const& eff = effectAt(info, effIdx);
+            if (name == "spellinfo.effectIsAreaAuraEffect") out.emplace_back(eff.IsAreaAuraEffect());
+            else if (name == "spellinfo.effectIsAura") out.emplace_back(eff.IsAura());
+            else if (name == "spellinfo.effectIsAuraType")
+            {
+                int64 const aura = iArg(args, 1);
+                out.emplace_back(aura >= 0 && aura < TOTAL_AURAS && eff.IsAura(static_cast<AuraType>(aura)));
+            }
+            else if (name == "spellinfo.effectIsEffect") out.emplace_back(eff.IsEffect());
+            else if (name == "spellinfo.effectIsEffectType")
+            {
+                int64 const effect = iArg(args, 1);
+                out.emplace_back(effect >= 0 && effect < TOTAL_SPELL_EFFECTS &&
+                                 eff.IsEffect(static_cast<SpellEffects>(effect)));
+            }
+            else if (name == "spellinfo.effectIsTargetingArea") out.emplace_back(eff.IsTargetingArea());
+            else if (name == "spellinfo.effectIsUnitOwnedAuraEffect") out.emplace_back(eff.IsUnitOwnedAuraEffect());
+            else if (name == "spellinfo.getEffectAmplitude") out.emplace_back(static_cast<int64_t>(eff.ApplyAuraPeriod));
+            else if (name == "spellinfo.getEffectApplyAuraName") out.emplace_back(static_cast<int64_t>(eff.ApplyAuraName));
+            else if (name == "spellinfo.getEffectBasePoints") out.emplace_back(static_cast<int64_t>(eff.BasePoints));
+            else if (name == "spellinfo.getEffectBonusMultiplier") out.emplace_back(static_cast<double>(eff.BonusCoefficient));
+            else if (name == "spellinfo.getEffectCalcRadius") out.emplace_back(static_cast<double>(eff.CalcRadius().Max));
+            else if (name == "spellinfo.getEffectCalcValue") out.emplace_back(static_cast<int64_t>(eff.CalcValueAsInt()));
+            else if (name == "spellinfo.getEffectChainTarget") out.emplace_back(static_cast<int64_t>(eff.ChainTargets));
+            else if (name == "spellinfo.getEffectDamageMultiplier")
+                out.emplace_back(static_cast<double>(eff.CalcDamageMultiplier(nullptr)));
+            else if (name == "spellinfo.getEffectDieSides")
+            {
+                uint32 const vanillaId = sSpellMgr->GetClassicValueSpellId(info->Id);
+                ClassicSpellValue::Value const* vanilla =
+                    ClassicSpellValue::AppliesToSpell(vanillaId) ? sSpellMgr->GetClassicSpellValue(vanillaId, effIdx)
+                                                                 : nullptr;
+                out.emplace_back(static_cast<int64_t>(vanilla ? vanilla->DieSides : 0));
+            }
+            else if (name == "spellinfo.getEffectHasRadius")
+                out.emplace_back(eff.HasRadius(SpellTargetIndex::TargetA));
+            else if (name == "spellinfo.getEffectImplicitTargetType")
+                out.emplace_back(static_cast<int64_t>(eff.GetImplicitTargetType()));
+            else if (name == "spellinfo.getEffectIndex") out.emplace_back(static_cast<int64_t>(eff.EffectIndex));
+            else if (name == "spellinfo.getEffectItemType") out.emplace_back(static_cast<int64_t>(eff.ItemType));
+            else if (name == "spellinfo.getEffectMechanic")
+                out.emplace_back(static_cast<int64_t>(info->GetEffectMechanic(static_cast<SpellEffIndex>(effIdx))));
+            else if (name == "spellinfo.getEffectMechanicMask")
+                out.emplace_back(static_cast<int64_t>(info->GetEffectMechanicMask(static_cast<SpellEffIndex>(effIdx))));
+            else if (name == "spellinfo.getEffectMiscValue") out.emplace_back(static_cast<int64_t>(eff.MiscValue));
+            else if (name == "spellinfo.getEffectMiscValueB") out.emplace_back(static_cast<int64_t>(eff.MiscValueB));
+            else if (name == "spellinfo.getEffectPointsPerComboPoint")
+                out.emplace_back(static_cast<double>(eff.PointsPerResource));
+            else if (name == "spellinfo.getEffectProvidedTargetMask")
+                out.emplace_back(static_cast<int64_t>(eff.GetProvidedTargetMask()));
+            else if (name == "spellinfo.getEffectRealPointsPerLevel")
+                out.emplace_back(static_cast<double>(eff.RealPointsPerLevel));
+            else if (name == "spellinfo.getEffectSpellClassMask")
+            {
+                uint32 const maskIdx = static_cast<uint32>(iArg(args, 1));
+                if (maskIdx > 2)
+                    throw std::out_of_range("spell class mask index " + std::to_string(maskIdx) + " is not 0..2");
+                out.emplace_back(static_cast<int64_t>(static_cast<uint32>(eff.SpellClassMask[maskIdx])));
+            }
+            else if (name == "spellinfo.getEffectTargetACheckType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetA.GetCheckType()));
+            else if (name == "spellinfo.getEffectTargetADirectionAngle")
+                out.emplace_back(static_cast<double>(eff.TargetA.CalcDirectionAngle()));
+            else if (name == "spellinfo.getEffectTargetADirectionType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetA.GetDirectionType()));
+            else if (name == "spellinfo.getEffectTargetAIsArea") out.emplace_back(eff.TargetA.IsArea());
+            else if (name == "spellinfo.getEffectTargetAObjectType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetA.GetObjectType()));
+            else if (name == "spellinfo.getEffectTargetAReferenceType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetA.GetReferenceType()));
+            else if (name == "spellinfo.getEffectTargetASelectionCategory")
+                out.emplace_back(static_cast<int64_t>(eff.TargetA.GetSelectionCategory()));
+            else if (name == "spellinfo.getEffectTargetATarget")
+                out.emplace_back(static_cast<int64_t>(eff.TargetA.GetTarget()));
+            else if (name == "spellinfo.getEffectTargetBCheckType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetB.GetCheckType()));
+            else if (name == "spellinfo.getEffectTargetBDirectionAngle")
+                out.emplace_back(static_cast<double>(eff.TargetB.CalcDirectionAngle()));
+            else if (name == "spellinfo.getEffectTargetBDirectionType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetB.GetDirectionType()));
+            else if (name == "spellinfo.getEffectTargetBIsArea") out.emplace_back(eff.TargetB.IsArea());
+            else if (name == "spellinfo.getEffectTargetBObjectType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetB.GetObjectType()));
+            else if (name == "spellinfo.getEffectTargetBReferenceType")
+                out.emplace_back(static_cast<int64_t>(eff.TargetB.GetReferenceType()));
+            else if (name == "spellinfo.getEffectTargetBSelectionCategory")
+                out.emplace_back(static_cast<int64_t>(eff.TargetB.GetSelectionCategory()));
+            else if (name == "spellinfo.getEffectTargetBTarget")
+                out.emplace_back(static_cast<int64_t>(eff.TargetB.GetTarget()));
+            else if (name == "spellinfo.getEffectTriggerSpell") out.emplace_back(static_cast<int64_t>(eff.TriggerSpell));
+            else if (name == "spellinfo.getEffectType") out.emplace_back(static_cast<int64_t>(eff.Effect));
+            else if (name == "spellinfo.getEffectUsedTargetObjectType")
+                out.emplace_back(static_cast<int64_t>(eff.GetUsedTargetObjectType()));
+            else if (name == "spellinfo.getEffectValueMultiplier")
+                out.emplace_back(static_cast<double>(eff.CalcValueMultiplier(nullptr)));
+            else
+                return false;
+            return true;
+        }
+        return false;
+    }
+
+    if (self.kind == ObjKind::AuraEffect)
+    {
+        AuraEffect* eff = auraEffectById(self.instanceId);
+        if (!eff)
+            return false;   // "AuraEffect no longer exists"
+        if (name == "auraeffect.calculateAmount")
+        {
+            HandleData h;
+            asHandle(args[0], h);
+            Unit* caster = findUnit(h);
+            if (!caster)
+                throw std::out_of_range("Unit no longer exists");
+            out.emplace_back(static_cast<int64_t>(eff->CalculateAmount(caster)));
+            return true;
+        }
+        if (name == "auraeffect.calculatePeriodic")
+        {
+            HandleData h;
+            asHandle(args[0], h);
+            Unit* caster = findUnit(h);
+            if (!caster)
+                throw std::out_of_range("Unit no longer exists");
+            eff->CalculatePeriodic(caster, bArg(args, 1, false), bArg(args, 2, false));
+            return true;
+        }
+        if (name == "auraeffect.canBeRecalculated")
+        {
+            out.emplace_back(eff->CanBeRecalculated());
+            return true;
+        }
+        if (name == "auraeffect.changeAmount")
+        {
+            eff->ChangeAmount(static_cast<SpellEffectValue>(iArg(args, 0)), bArg(args, 1, true),
+                              bArg(args, 2, false));
+            return true;
+        }
+        if (name == "auraeffect.getAmount")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetAmountAsInt()));
+            return true;
+        }
+        if (name == "auraeffect.getAmplitude")
+        {
+            out.emplace_back(static_cast<int64_t>(std::max<int32>(0, eff->GetPeriod())));
+            return true;
+        }
+        if (name == "auraeffect.getAuraType")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetAuraType()));
+            return true;
+        }
+        if (name == "auraeffect.getBase")
+        {
+            if (Aura* base = eff->GetBase())
+            {
+                fl::HandleData h;
+                h.kind = ObjKind::Aura;
+                h.guid = base->GetCaster() ? fromGuid(base->GetCaster()->GetGUID()) : fl::Guid{};
+                h.mapId = base->GetId();
+                h.instanceId = rememberAura(base);
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "auraeffect.getBaseAmount")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetBaseAmount()));
+            return true;
+        }
+        if (name == "auraeffect.getCaster")
+        {
+            if (auto h = liveHandle(eff->GetCaster()))
+                pushHandle(out, *h);
+            return true;
+        }
+        if (name == "auraeffect.getCasterGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(eff->GetCasterGUID())));
+            return true;
+        }
+        if (name == "auraeffect.getEffIndex")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetEffIndex()));
+            return true;
+        }
+        if (name == "auraeffect.getId")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetId()));
+            return true;
+        }
+        if (name == "auraeffect.getPeriodicTimer")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetPeriodicTimer()));
+            return true;
+        }
+        if (name == "auraeffect.getRemainingTicks")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetRemainingTicks()));
+            return true;
+        }
+        if (name == "auraeffect.getSpellInfo")
+        {
+            if (SpellInfo const* info = eff->GetSpellInfo())
+            {
+                fl::HandleData h;
+                h.kind = ObjKind::SpellInfo;
+                h.guid.lo = info->Id;
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "auraeffect.getTargetList")
+        {
+            std::vector<Unit*> targets;
+            eff->GetTargetList(targets);
+            for (Unit* u : targets)
+                if (auto h = liveHandle(u))
+                    pushHandle(out, *h);
+            return true;
+        }
+        if (name == "auraeffect.getTickNumber")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetTickNumber()));
+            return true;
+        }
+        if (name == "auraeffect.getTotalTicks")
+        {
+            out.emplace_back(static_cast<int64_t>(eff->GetTotalTicks()));
+            return true;
+        }
+        if (name == "auraeffect.recalculateAmount")
+        {
+            eff->RecalculateAmount();
+            return true;
+        }
+        if (name == "auraeffect.setAmount")
+        {
+            eff->SetAmount(static_cast<SpellEffectValue>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "auraeffect.setCanBeRecalculated")
+        {
+            eff->SetCanBeRecalculated(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "auraeffect.setPeriodicTimer")
+        {
+            eff->SetPeriodicTimer(static_cast<int32>(iArg(args, 0)));
+            return true;
+        }
+        return false;
+    }
+
+    if (self.kind == ObjKind::ElunaProcInfo)
+    {
+        ProcEventInfo* proc = procInfoById(self.instanceId);
+        if (!proc)
+            return false;   // "ElunaProcInfo no longer exists"
+        if (name == "procinfo.getActionTarget")
+        {
+            if (auto h = liveHandle(proc->GetActionTarget()))
+                pushHandle(out, *h);
+            return true;
+        }
+        if (name == "procinfo.getActor")
+        {
+            if (auto h = liveHandle(proc->GetActor()))
+                pushHandle(out, *h);
+            return true;
+        }
+        if (name == "procinfo.getAttackType")
+        {
+            out.emplace_back(static_cast<int64_t>(
+                proc->GetDamageInfo() ? proc->GetDamageInfo()->GetAttackType() : BASE_ATTACK));
+            return true;
+        }
+        if (name == "procinfo.getBlock")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetDamageInfo() ? proc->GetDamageInfo()->GetBlock() : 0));
+            return true;
+        }
+        if (name == "procinfo.getDamage")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetDamageInfo() ? proc->GetDamageInfo()->GetDamage() : 0));
+            return true;
+        }
+        if (name == "procinfo.getDamageAbsorb")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetDamageInfo() ? proc->GetDamageInfo()->GetAbsorb() : 0));
+            return true;
+        }
+        if (name == "procinfo.getDamageType")
+        {
+            out.emplace_back(static_cast<int64_t>(
+                proc->GetDamageInfo() ? proc->GetDamageInfo()->GetDamageType() : DIRECT_DAMAGE));
+            return true;
+        }
+        if (name == "procinfo.getEffectiveHeal")
+        {
+            out.emplace_back(static_cast<int64_t>(
+                proc->GetHealInfo() ? proc->GetHealInfo()->GetEffectiveHeal() : 0));
+            return true;
+        }
+        if (name == "procinfo.getHeal")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetHealInfo() ? proc->GetHealInfo()->GetHeal() : 0));
+            return true;
+        }
+        if (name == "procinfo.getHealAbsorb")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetHealInfo() ? proc->GetHealInfo()->GetAbsorb() : 0));
+            return true;
+        }
+        if (name == "procinfo.getHitMask")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetHitMask()));
+            return true;
+        }
+        if (name == "procinfo.getMap")
+        {
+            Unit* ref = proc->GetActor() ? proc->GetActor() : proc->GetActionTarget();
+            if (Map* m = (ref ? ref->FindMap() : nullptr))
+                pushHandle(out, mapHandle(m->GetId(), m->GetInstanceId()));
+            return true;
+        }
+        if (name == "procinfo.getProcSpell")
+        {
+            if (Spell const* sp = proc->GetProcSpell())
+                pushHandle(out, handleForSpell(const_cast<Spell*>(sp)));
+            return true;
+        }
+        if (name == "procinfo.getResist")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetDamageInfo() ? proc->GetDamageInfo()->GetResist() : 0));
+            return true;
+        }
+        if (name == "procinfo.getSchoolMask")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetSchoolMask()));
+            return true;
+        }
+        if (name == "procinfo.getSpellInfo")
+        {
+            if (SpellInfo const* info = proc->GetSpellInfo())
+            {
+                fl::HandleData h;
+                h.kind = ObjKind::SpellInfo;
+                h.guid.lo = info->Id;
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "procinfo.getSpellPhaseMask")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetSpellPhaseMask()));
+            return true;
+        }
+        if (name == "procinfo.getSpellTypeMask")
+        {
+            out.emplace_back(static_cast<int64_t>(proc->GetSpellTypeMask()));
+            return true;
+        }
+        if (name == "procinfo.getTypeMask")
+        {
+            out.emplace_back(static_cast<int64_t>(static_cast<uint32>(proc->GetTypeMask()[0])));
+            return true;
+        }
+        if (name == "procinfo.hasDamage")
+        {
+            out.emplace_back(proc->GetDamageInfo() != nullptr);
+            return true;
+        }
+        if (name == "procinfo.hasHeal")
+        {
+            out.emplace_back(proc->GetHealInfo() != nullptr);
+            return true;
+        }
+        if (name == "procinfo.setAbsorbDamage")
+        {
+            if (DamageInfo* dmg = proc->GetDamageInfo())
+                dmg->AbsorbDamage(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "procinfo.setAbsorbHeal")
+        {
+            if (HealInfo* heal = proc->GetHealInfo())
+                heal->AbsorbHeal(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "procinfo.setBlockDamage")
+        {
+            if (DamageInfo* dmg = proc->GetDamageInfo())
+                dmg->BlockDamage(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "procinfo.setDamage")
+        {
+            if (DamageInfo* dmg = proc->GetDamageInfo())
+            {
+                int64_t const target = iArg(args, 0);
+                int64_t const cur = static_cast<int64_t>(dmg->GetDamage());
+                int64_t const delta =
+                    std::clamp(target - cur, -cur, static_cast<int64_t>(std::numeric_limits<int32>::max()));
+                dmg->ModifyDamage(static_cast<int32>(delta));
+            }
+            return true;
+        }
+        if (name == "procinfo.setEffectiveHeal")
+        {
+            if (HealInfo* heal = proc->GetHealInfo())
+                heal->SetEffectiveHeal(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "procinfo.setResistDamage")
+        {
+            if (DamageInfo* dmg = proc->GetDamageInfo())
+                dmg->ResistDamage(static_cast<uint32>(iArg(args, 0)));
             return true;
         }
         return false;
@@ -1778,10 +2750,6 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         obj->SetObjectScale(static_cast<float>(dArg(args, 0, 1.0)));
         return true;
     }
-    // The pinned core has no generic update-field accessors (GetUInt32Value(index) / HasFlag(index, flag) were
-    // removed): the two Object methods answer "not available" (docs/E0-E1-NOTES.md).
-    if (name == "object.hasFlag" || name == "object.getUInt32")
-        return false;
     if (name == "worldobject.getName")
     {
         out.emplace_back(obj->GetName());
@@ -1839,12 +2807,290 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                                                               static_cast<float>(dArg(args, 2)))));
         return true;
     }
+    if (name == "worldobject.getAngle")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetAbsoluteAngle(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(
+            obj->GetAbsoluteAngle(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)))));
+        return true;
+    }
+    if (name == "worldobject.getDistance2d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetDistance2d(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(
+            obj->GetDistance2d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)))));
+        return true;
+    }
+    if (name == "worldobject.getExactDistance")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetExactDist(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(obj->GetExactDist(static_cast<float>(dArg(args, 0)),
+                                                               static_cast<float>(dArg(args, 1)),
+                                                               static_cast<float>(dArg(args, 2)))));
+        return true;
+    }
+    if (name == "worldobject.getExactDistance2d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetExactDist2d(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(
+            obj->GetExactDist2d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)))));
+        return true;
+    }
+    if (name == "worldobject.getRelativePoint")
+    {
+        float x = 0.0f, y = 0.0f, z = 0.0f;
+        obj->GetClosePoint(x, y, z, 0.0f, static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)));
+        out.emplace_back(static_cast<double>(x));
+        out.emplace_back(static_cast<double>(y));
+        out.emplace_back(static_cast<double>(z));
+        return true;
+    }
+    if (name == "worldobject.isInFront" || name == "worldobject.isInBack")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+            {
+                float const arc = static_cast<float>(dArg(args, 1, 3.14159265358979323846));
+                out.emplace_back(name == "worldobject.isInFront" ? obj->isInFront(o, arc) : obj->isInBack(o, arc));
+            }
+        return true;
+    }
+    if (name == "worldobject.isInMap")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+                out.emplace_back(obj->IsInMap(o));
+        return true;
+    }
+    if (name == "worldobject.isInRange")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+                out.emplace_back(obj->IsInRange(o, static_cast<float>(dArg(args, 1)),
+                                                static_cast<float>(dArg(args, 2)), bArg(args, 3, true)));
+        return true;
+    }
+    if (name == "worldobject.isInRange2d")
+    {
+        Position pos(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)));
+        out.emplace_back(
+            obj->IsInRange2d(&pos, static_cast<float>(dArg(args, 2)), static_cast<float>(dArg(args, 3))));
+        return true;
+    }
+    if (name == "worldobject.isInRange3d")
+    {
+        Position pos(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                     static_cast<float>(dArg(args, 2)));
+        out.emplace_back(
+            obj->IsInRange3d(&pos, static_cast<float>(dArg(args, 3)), static_cast<float>(dArg(args, 4))));
+        return true;
+    }
+    if (name == "worldobject.isWithinDist")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+                out.emplace_back(obj->IsWithinDist(o, static_cast<float>(dArg(args, 1)), bArg(args, 2, true)));
+        return true;
+    }
+    if (name == "worldobject.isWithinDist2d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(obj->IsWithinDist2d(o, static_cast<float>(dArg(args, 1))));
+                return true;
+            }
+        out.emplace_back(obj->IsWithinDist2d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                             static_cast<float>(dArg(args, 2))));
+        return true;
+    }
+    if (name == "worldobject.isWithinDist3d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(obj->IsWithinDist3d(o, static_cast<float>(dArg(args, 1))));
+                return true;
+            }
+        out.emplace_back(obj->IsWithinDist3d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                             static_cast<float>(dArg(args, 2)), static_cast<float>(dArg(args, 3))));
+        return true;
+    }
     if (name == "worldobject.isWithinDistInMap")
     {
         HandleData other;
         if (!args.empty() && asHandle(args[0], other))
             if (WorldObject* o = woOf(other))
                 out.emplace_back(obj->IsWithinDistInMap(o, static_cast<float>(dArg(args, 1)), bArg(args, 2, true)));
+        return true;
+    }
+    if (name == "worldobject.isWithinLoS")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(obj->IsWithinLOSInMap(o));
+                return true;
+            }
+        out.emplace_back(obj->IsWithinLOS(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                          static_cast<float>(dArg(args, 2))));
+        return true;
+    }
+    if (name == "worldobject.getNearObjects" || name == "worldobject.getNearObject")
+    {
+        if (!obj->GetMap())
+            return true;
+        float const range = flh::clampSearchRange(dArg(args, 0, 533.333));
+        uint32 const typeMask = static_cast<uint32>(iArg(args, 1, 0));
+        uint32 const entry = static_cast<uint32>(iArg(args, 2, 0));
+        int const hostile = static_cast<int>(iArg(args, 3, 0));
+        int const dead = static_cast<int>(iArg(args, 4, 1));
+        std::vector<std::pair<float, HandleData>> found;
+        auto work = [&](WorldObject* o)
+        {
+            if (!o || o == obj || !o->IsInWorld())
+                return;
+            float const dist = obj->GetDistance(o);
+            if (dist > range)
+                return;
+            if (typeMask)
+            {
+                bool match = false;
+                if ((typeMask & (1u << 3)) && o->IsUnit())
+                    match = true;
+                if ((typeMask & (1u << 4)) && o->IsPlayer())
+                    match = true;
+                if ((typeMask & (1u << 5)) && o->IsGameObject())
+                    match = true;
+                if ((typeMask & (1u << 7)) && o->ToCorpse())
+                    match = true;
+                if (!match)
+                    return;
+            }
+            if (entry && o->GetEntry() != entry)
+                return;
+            if (hostile == 1 && !obj->IsHostileTo(o))
+                return;
+            if (hostile == 2 && !obj->IsFriendlyTo(o))
+                return;
+            if (Unit* u = o->ToUnit())
+            {
+                if (dead == 1 && !u->IsAlive())
+                    return;
+                if (dead == 2 && u->IsAlive())
+                    return;
+            }
+            if (auto h = targetHandle(o))
+                found.emplace_back(dist, *h);
+        };
+        Trinity::WorldObjectWorker worker(obj, work);
+        flh::visitAllNearObjects<::Cell>(obj, worker, range);
+        std::sort(found.begin(), found.end(),
+                  [](auto const& a, auto const& b) { return a.first < b.first; });
+        if (name == "worldobject.getNearObject")
+        {
+            if (!found.empty())
+                pushHandle(out, found.front().second);
+        }
+        else
+        {
+            for (auto const& item : found)
+                pushHandle(out, item.second);
+        }
+        return true;
+    }
+    if (name == "worldobject.playDirectSound" || name == "worldobject.playDistanceSound" ||
+        name == "worldobject.playMusic")
+    {
+        uint32 const id = static_cast<uint32>(iArg(args, 0));
+        Player* target = nullptr;
+        if (args.size() > 1)
+            if (HandleData other; asHandle(args[1], other))
+                target = playerOf(other);
+        if (name == "worldobject.playDirectSound")
+            obj->PlayDirectSound(id, target);
+        else if (name == "worldobject.playDistanceSound")
+            obj->PlayDistanceSound(id, target);
+        else
+            obj->PlayDirectMusic(id, target);
+        return true;
+    }
+    if (name == "worldobject.say" || name == "worldobject.yell")
+    {
+        std::string const msg = sArg(args, 0);
+        auto const lang = static_cast<Language>(iArg(args, 1));
+        bool const isSay = (name == "worldobject.say");
+        if (Unit* u = obj->ToUnit())
+        {
+            if (isSay)
+                u->Say(msg, lang);
+            else
+                u->Yell(msg, lang);
+        }
+        else if (obj->GetMap())
+        {
+            float const range = sWorld->getFloatConfig(isSay ? CONFIG_LISTEN_RANGE_SAY : CONFIG_LISTEN_RANGE_YELL);
+            Trinity::CustomChatTextBuilder builder(obj, isSay ? CHAT_MSG_MONSTER_SAY : CHAT_MSG_MONSTER_YELL, msg, lang);
+            Trinity::LocalizedDo<Trinity::CustomChatTextBuilder> localizer(builder);
+            Trinity::PlayerDistWorker<Trinity::LocalizedDo<Trinity::CustomChatTextBuilder>> worker(obj, range,
+                                                                                                   localizer);
+            ::Cell::VisitWorldObjects(obj, worker, range);
+        }
+        return true;
+    }
+    if (name == "worldobject.whisper")
+    {
+        std::string const msg = sArg(args, 0);
+        auto const lang = static_cast<Language>(iArg(args, 1));
+        bool const boss = bArg(args, 3, false);
+        HandleData receiver;
+        if (args.size() > 2 && asHandle(args[2], receiver))
+        {
+            if (Player* p = playerOf(receiver))
+            {
+                if (Unit* u = obj->ToUnit())
+                    u->Whisper(msg, lang, p, boss);
+                else if (p->GetSession())
+                {
+                    LocaleConstant const locale = p->GetSession()->GetSessionDbLocaleIndex();
+                    WorldPackets::Chat::Chat packet;
+                    packet.Initialize(boss ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_MONSTER_WHISPER, lang, obj, p, msg,
+                                      0, "", locale);
+                    p->SendDirectMessage(packet.Write());
+                }
+            }
+        }
         return true;
     }
     if (name == "worldobject.spawnCreature")
@@ -2733,6 +3979,183 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             unit->RestoreFaction();
             return true;
         }
+        if (name == "unit.addFlatStatModifier")
+        {
+            uint32 const mod = static_cast<uint32>(iArg(args, 0));
+            uint32 const modType = static_cast<uint32>(iArg(args, 1));
+            if (mod < UNIT_MOD_END && modType < MODIFIER_TYPE_FLAT_END)
+                unit->HandleStatFlatModifier(static_cast<UnitMods>(mod), static_cast<UnitModifierFlatType>(modType),
+                                             static_cast<float>(dArg(args, 2)), bArg(args, 3, true));
+            return true;
+        }
+        if (name == "unit.addPctStatModifier")
+        {
+            uint32 const mod = static_cast<uint32>(iArg(args, 0));
+            uint32 const modType = static_cast<uint32>(iArg(args, 1));
+            if (mod < UNIT_MOD_END && modType < MODIFIER_TYPE_PCT_END)
+                unit->ApplyStatPctModifier(static_cast<UnitMods>(mod), static_cast<UnitModifierPctType>(modType),
+                                           static_cast<float>(dArg(args, 2)));
+            return true;
+        }
+        if (name == "unit.canModifyStats")
+        {
+            out.emplace_back(unit->CanModifyStats());
+            return true;
+        }
+        if (name == "unit.castSpellAoF")
+        {
+            unit->CastSpell(Position(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                     static_cast<float>(dArg(args, 2))),
+                            static_cast<uint32>(iArg(args, 3)), CastSpellExtraArgs(bArg(args, 4, true)));
+            return true;
+        }
+        if (name == "unit.countPctFromCurHealth")
+        {
+            out.emplace_back(static_cast<int64_t>(unit->CountPctFromCurHealth(static_cast<float>(dArg(args, 0, 0.0)))));
+            return true;
+        }
+        if (name == "unit.countPctFromMaxHealth")
+        {
+            out.emplace_back(static_cast<int64_t>(unit->CountPctFromMaxHealth(static_cast<float>(dArg(args, 0, 0.0)))));
+            return true;
+        }
+        if (name == "unit.disableMelee")
+        {
+            if (Creature* c = unit->ToCreature())
+            {
+                c->SetCanMelee(!bArg(args, 0, true));
+                out.emplace_back(true);
+            }
+            else
+            {
+                out.emplace_back(false);
+            }
+            return true;
+        }
+        if (name == "unit.getCharmGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(unit->GetCharmedGUID())));
+            return true;
+        }
+        if (name == "unit.getControllerGuids")
+        {
+            out.emplace_back(fl::guidText(fromGuid(unit->GetCharmerOrOwnerOrOwnGUID())));
+            return true;
+        }
+        if (name == "unit.getCritterGuid")
+        {
+            out.emplace_back(fl::guidText(fromGuid(unit->GetCritterGUID())));
+            return true;
+        }
+        if (name == "unit.getStandState")
+        {
+            out.emplace_back(static_cast<int64_t>(unit->GetStandState()));
+            return true;
+        }
+        if (name == "unit.isArmorer") { out.emplace_back(unit->IsArmorer()); return true; }
+        if (name == "unit.isAuctioneer") { out.emplace_back(unit->IsAuctioner()); return true; }
+        if (name == "unit.isBattleMaster") { out.emplace_back(unit->IsBattleMaster()); return true; }
+        if (name == "unit.isDying") { out.emplace_back(unit->isDying()); return true; }
+        if (name == "unit.isGuildMaster") { out.emplace_back(unit->IsGuildMaster()); return true; }
+        if (name == "unit.isInAccessiblePlaceFor")
+        {
+            bool accessible = false;
+            HandleData other;
+            if (!args.empty() && asHandle(args[0], other))
+                if (Creature* c = creatureOf(other))
+                    accessible = unit->isInAccessiblePlaceFor(c);
+            out.emplace_back(accessible);
+            return true;
+        }
+        if (name == "unit.isSpiritGuide") { out.emplace_back(unit->IsAreaSpiritHealer()); return true; }
+        if (name == "unit.isSpiritService") { out.emplace_back(unit->IsSpiritService()); return true; }
+        if (name == "unit.isTabardDesigner") { out.emplace_back(unit->IsTabardDesigner()); return true; }
+        if (name == "unit.isTaxi") { out.emplace_back(unit->IsTaxi()); return true; }
+        if (name == "unit.removeBindSightAuras")
+        {
+            unit->RemoveBindSightAuras();
+            return true;
+        }
+        if (name == "unit.removeCharmAuras")
+        {
+            unit->RemoveCharmAuras();
+            return true;
+        }
+        if (name == "unit.sendUnitEmote")
+        {
+            Unit* receiver = nullptr;
+            HandleData target;
+            if (args.size() > 1 && asHandle(args[1], target))
+                receiver = unitOf(target);
+            Player* p = unit->ToPlayer();
+            if (!p || p->GetSession())
+            {
+                std::string msg = sArg(args, 0);
+                if (msg.size() > 255)
+                    msg.resize(255);
+                unit->TextEmote(msg, receiver, bArg(args, 2, false));
+            }
+            return true;
+        }
+        if (name == "unit.setCanFly")
+        {
+            unit->SetCanFly(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "unit.setCreatorGuid")
+        {
+            unit->SetCreatorGUID(guidArgAt(args, 0, LegacyGuid::Player));
+            return true;
+        }
+        if (name == "unit.setCritterGuid")
+        {
+            unit->SetCritterGUID(guidArgAt(args, 0, LegacyGuid::Creature));
+            return true;
+        }
+        if (name == "unit.setFFA")
+        {
+            if (bArg(args, 0, true))
+                unit->SetPvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
+            else
+                unit->RemovePvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
+            return true;
+        }
+        if (name == "unit.setImmuneTo")
+        {
+            int64_t const mech = iArg(args, 0);
+            if (mech >= 0 && mech < MAX_MECHANIC)
+                unit->ApplySpellImmune(0, IMMUNITY_MECHANIC, static_cast<uint32>(mech), bArg(args, 1, true));
+            return true;
+        }
+        if (name == "unit.setName")
+        {
+            // Player::SaveToDB writes GetName() into characters.name (12 chars), and Pet::SavePetToDB writes m_name into
+            // character_pet.name (21 chars), so only non-pet creatures may be renamed.
+            Creature* c = unit->ToCreature();
+            if (c && !c->IsPet())
+            {
+                std::string s = sArg(args, 0);
+                if (s.size() > 64)
+                    s.resize(64);
+                c->SetName(std::move(s));
+                out.emplace_back(true);
+            }
+            else
+            {
+                out.emplace_back(false);
+            }
+            return true;
+        }
+        if (name == "unit.setPetGuid")
+        {
+            unit->SetPetGUID(guidArgAt(args, 0, LegacyGuid::Pet));
+            return true;
+        }
+        if (name == "unit.setVisible")
+        {
+            unit->SetVisible(bArg(args, 0, true));
+            return true;
+        }
     }
 
     // ---- Creature ----
@@ -2942,22 +4365,7 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         {
             // the tap list (an unordered set) holds the players that may loot; the recipient is the one with the lowest
             // guid that is in the world, so the same list always answers the same player
-            Player* recipient = nullptr;
-            for (ObjectGuid const& guid : creature->GetTapList())
-                if (Player* player = ObjectAccessor::GetPlayer(*creature, guid))
-                    if (player->IsInWorld() && (!recipient || player->GetGUID() < recipient->GetGUID()))
-                        recipient = player;
-            if (!recipient)
-                return true;
-            if (name == "creature.getLootRecipient")
-                pushHandle(out, handleFor(recipient));
-            else if (Group* group = recipient->GetGroup())
-            {
-                HandleData h;
-                h.kind = ObjKind::Group;
-                h.guid = fromGuid(group->GetGUID());
-                pushHandle(out, h);
-            }
+            lootRecipientFromTapList(creature, creature->GetTapList(), name == "creature.getLootRecipientGroup", out);
             return true;
         }
 
@@ -3471,6 +4879,51 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "gameobject.getDBTableGUIDLow")
         {
             out.emplace_back(static_cast<int64_t>(go->GetSpawnId()));
+            return true;
+        }
+        if (name == "gameobject.getDisplayId")
+        {
+            out.emplace_back(static_cast<int64_t>(go->GetDisplayId()));
+            return true;
+        }
+        if (name == "gameobject.getLootRecipient" || name == "gameobject.getLootRecipientGroup")
+        {
+            lootRecipientFromTapList(go, go->GetTapList(), name == "gameobject.getLootRecipientGroup", out);
+            return true;
+        }
+        if (name == "gameobject.hasQuest")
+        {
+            out.emplace_back(go->hasQuest(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "gameobject.isActive")
+        {
+            out.emplace_back(go->isActiveObject());
+            return true;
+        }
+        if (name == "gameobject.isDestructible")
+        {
+            out.emplace_back(go->IsDestructibleBuilding());
+            return true;
+        }
+        if (name == "gameobject.isTransport")
+        {
+            out.emplace_back(go->IsTransport());
+            return true;
+        }
+        if (name == "gameobject.removeFromWorld")
+        {
+            go->AddObjectToRemoveList();
+            return true;
+        }
+        if (name == "gameobject.setRespawnTime")
+        {
+            go->SetRespawnTime(static_cast<int32>(iArg(args, 0, 0)));
+            return true;
+        }
+        if (name == "gameobject.setSpawnedByDefault")
+        {
+            go->SetSpawnedByDefault(bArg(args, 0, true));
             return true;
         }
     }
@@ -4111,14 +5564,6 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             player->ToggleDND();
             return true;
         }
-        if (name == "player.setFFA")
-        {
-            if (bArg(args, 0, true))
-                player->SetPvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
-            else
-                player->RemovePvpFlag(UNIT_BYTE2_FLAG_FFA_PVP);
-            return true;
-        }
         if (name == "player.isImmuneToDamage")
         {
             out.emplace_back(player->IsImmunedToDamage(SPELL_SCHOOL_MASK_ALL));
@@ -4283,6 +5728,1028 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "player.durabilityRepairAll")
         {
             player->DurabilityRepairAll(bArg(args, 0, true), static_cast<float>(dArg(args, 1, 1.0)), bArg(args, 2, false));
+            return true;
+        }
+
+        // ---- E7 long tail, round 2: the documented reads the core answers directly ----
+        if (name == "player.canBlock")
+        {
+            out.emplace_back(player->CanBlock());
+            return true;
+        }
+        if (name == "player.canCompleteRepeatableQuest")
+        {
+            Quest const* quest = sObjectMgr->GetQuestTemplate(static_cast<uint32>(iArg(args, 0)));
+            out.emplace_back(quest && player->CanCompleteRepeatableQuest(quest));
+            return true;
+        }
+        if (name == "player.canFly")
+        {
+            out.emplace_back(player->CanFly());
+            return true;
+        }
+        if (name == "player.canParry")
+        {
+            out.emplace_back(player->CanParry());
+            return true;
+        }
+        if (name == "player.canShareQuest")
+        {
+            out.emplace_back(player->CanShareQuest(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "player.canSpeak")
+        {
+            out.emplace_back(player->GetSession() && player->GetSession()->CanSpeak());
+            return true;
+        }
+        if (name == "player.canUninviteFromGroup")
+        {
+            fl::Guid guid;
+            // The docs' PartyResult: an unreadable guid is the "no such member" answer, not an error.
+            uint8 result = static_cast<uint8>(ERR_TARGET_NOT_IN_GROUP_S);
+            if (args.size() > 0 && fl::parseGuidText(sArg(args, 0), guid))
+                result = static_cast<uint8>(player->CanUninviteFromGroup(toGuid(guid), {}));
+            out.emplace_back(static_cast<int64_t>(result));
+            return true;
+        }
+        if (name == "player.getChatTag")
+        {
+            // The chat flag bits the core sends: AFK 1, DND 2, GM 4 (flh::chatTagBits).
+            out.emplace_back(static_cast<int64_t>(
+                flh::chatTagBits(player->isAFK(), player->isDND(), player->isGMChat())));
+            return true;
+        }
+        if (name == "player.getChampioningFaction")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetChampioningFaction()));
+            return true;
+        }
+        if (name == "player.getDbcLocale")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetSession() ? player->GetSession()->GetSessionDbcLocale()
+                                                                       : LOCALE_enUS));
+            return true;
+        }
+        if (name == "player.getDifficulty")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetMap()->GetDifficultyID()));
+            return true;
+        }
+        if (name == "player.getDrunkValue")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetDrunkValue()));
+            return true;
+        }
+        if (name == "player.getGroupInvite")
+        {
+            if (Group* g = player->GetGroupInvite())
+            {
+                HandleData h;
+                h.kind = ObjKind::Group;
+                h.guid = fromGuid(g->GetGUID());
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "player.getGuildRank")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetGuildRank()));
+            return true;
+        }
+        if (name == "player.getHealthBonusFromStamina")
+        {
+            out.emplace_back(static_cast<double>(player->GetHealthBonusFromStamina()));
+            return true;
+        }
+        if (name == "player.getInGameTime")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetInGameTime()));
+            return true;
+        }
+        if (name == "player.getLifetimeKills")
+        {
+            out.emplace_back(static_cast<int64_t>(player->m_activePlayerData->LifetimeHonorableKills));
+            return true;
+        }
+        if (name == "player.getMailCount")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetMailSize()));
+            return true;
+        }
+        if (name == "player.getMailItem")
+        {
+            // A mailbox attachment is a live item while it sits in the mailbox: Player::GetMItem keys it by its low guid.
+            fl::Guid g;
+            if (fl::parseGuidText(sArg(args, 0), g))
+                if (Item* item = player->GetMItem(g.lo))
+                {
+                    rememberItem(item);
+                    pushHandle(out, handleForItem(item));
+                }
+            return true;
+        }
+        if (name == "player.getManaBonusFromIntellect")
+        {
+            out.emplace_back(static_cast<double>(player->GetManaBonusFromIntellect()));
+            return true;
+        }
+        if (name == "player.getNearbyGameObject")
+        {
+            if (player->GetSession())
+                if (GameObject* go = ChatHandler(player->GetSession()).GetNearbyGameObject())
+                    if (go->IsInWorld())
+                        pushHandle(out, handleFor(go));
+            return true;
+        }
+        if (name == "player.getNextRandomRaidMember")
+        {
+            if (Player* member = player->GetNextRandomRaidMember(static_cast<float>(dArg(args, 0))))
+                pushHandle(out, handleFor(member));
+            return true;
+        }
+        if (name == "player.getOriginalGroup")
+        {
+            if (Group* g = player->GetOriginalGroup())
+            {
+                HandleData h;
+                h.kind = ObjKind::Group;
+                h.guid = fromGuid(g->GetGUID());
+                pushHandle(out, h);
+            }
+            return true;
+        }
+        if (name == "player.getOriginalSubGroup")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetOriginalSubGroup()));
+            return true;
+        }
+        if (name == "player.getQuestLevel")
+        {
+            Quest const* quest = sObjectMgr->GetQuestTemplate(static_cast<uint32>(iArg(args, 0)));
+            out.emplace_back(static_cast<int64_t>(quest ? player->GetQuestLevel(quest) : 0));
+            return true;
+        }
+        if (name == "player.getRecruiterId")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetSession() ? player->GetSession()->GetRecruiterId() : 0));
+            return true;
+        }
+        if (name == "player.getSelectedPlayer")
+        {
+            if (Player* selected = player->GetSelectedPlayer())
+                if (selected->IsInWorld())
+                    pushHandle(out, handleFor(selected));
+            return true;
+        }
+        if (name == "player.getSelectedUnit")
+        {
+            if (Unit* selected = player->GetSelectedUnit())
+                if (selected->IsInWorld())
+                    pushHandle(out, handleFor(selected));
+            return true;
+        }
+        if (name == "player.getShieldBlockValue")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetClassicShieldBlockValue()));
+            return true;
+        }
+        if (name == "player.getSubGroup")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetSubGroup()));
+            return true;
+        }
+        if (name == "player.getXPRestBonus")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetRestMgr().GetRestBonusFor(
+                REST_TYPE_XP, static_cast<uint32>(iArg(args, 0)))));
+            return true;
+        }
+        if (name == "player.hasAtLoginFlag")
+        {
+            out.emplace_back(player->HasAtLoginFlag(static_cast<AtLoginFlags>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "player.hasPendingBind")
+        {
+            out.emplace_back(player->HasPendingBind());
+            return true;
+        }
+        if (name == "player.hasTalent")
+        {
+            out.emplace_back(player->HasTalent(static_cast<uint32>(iArg(args, 0)), static_cast<uint8>(iArg(args, 1))));
+            return true;
+        }
+        if (name == "player.hasTitle")
+        {
+            out.emplace_back(player->HasTitle(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "player.inArena")
+        {
+            out.emplace_back(player->InArena());
+            return true;
+        }
+        if (name == "player.inBattlegroundQueue")
+        {
+            out.emplace_back(player->InBattlegroundQueue(bArg(args, 0, false)));
+            return true;
+        }
+        if (name == "player.isAcceptingWhispers")
+        {
+            out.emplace_back(player->isAcceptWhispers());
+            return true;
+        }
+        if (name == "player.isARecruiter")
+        {
+            out.emplace_back(player->GetSession() && player->GetSession()->IsARecruiter());
+            return true;
+        }
+        if (name == "player.isGMChat")
+        {
+            out.emplace_back(player->isGMChat());
+            return true;
+        }
+        if (name == "player.isGMVisible")
+        {
+            out.emplace_back(player->isGMVisible());
+            return true;
+        }
+        if (name == "player.isHonorOrXPTarget")
+        {
+            HandleData other;
+            if (!args.empty() && asHandle(args[0], other))
+                if (Unit* victim = unitOf(other))
+                    out.emplace_back(player->isHonorOrXPTarget(victim));
+            return true;
+        }
+        if (name == "player.isGroupVisibleFor" || name == "player.isInSameGroupWith" ||
+            name == "player.isInSameRaidWith")
+        {
+            HandleData other;
+            if (args.size() > 0 && asHandle(args[0], other))
+                if (Player* target = playerOf(other))
+                {
+                    if (name == "player.isGroupVisibleFor")
+                        out.emplace_back(player->IsGroupVisibleFor(target));
+                    else if (name == "player.isInSameGroupWith")
+                        out.emplace_back(player->IsInSameGroupWith(target));
+                    else
+                        out.emplace_back(player->IsInSameRaidWith(target));
+                }
+            return true;
+        }
+        if (name == "player.isNeverVisible")
+        {
+            // The core answers visibility per seer; the player itself is the seer a no-argument call means.
+            out.emplace_back(player->IsNeverVisibleFor(player, false));
+            return true;
+        }
+        if (name == "player.isOutdoorPvPActive")
+        {
+            out.emplace_back(player->IsOutdoorPvPActive());
+            return true;
+        }
+        if (name == "player.isVisibleForPlayer")
+        {
+            HandleData other;
+            if (!args.empty() && asHandle(args[0], other))
+                if (Player* target = playerOf(other))
+                    out.emplace_back(player->CanSeeOrDetect(target));
+            return true;
+        }
+        if (name == "player.resetTalentsCost")
+        {
+            out.emplace_back(static_cast<int64_t>(player->GetNextResetTalentsCost()));
+            return true;
+        }
+
+        // ---- E7 long tail, round 2: the documented writes that only change the receiver ----
+        if (name == "player.sendCinematicStart")
+        {
+            player->SendCinematicStart(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.sendMovieStart")
+        {
+            player->SendMovieStart(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.sendUpdateWorldState")
+        {
+            player->SendUpdateWorldState(static_cast<uint32>(iArg(args, 0)), static_cast<uint32>(iArg(args, 1)),
+                                         bArg(args, 2, false));
+            return true;
+        }
+        if (name == "player.sendSpiritResurrect")
+        {
+            if (player->GetSession())
+                player->GetSession()->SendSpiritResurrect();
+            return true;
+        }
+        if (name == "player.setAcceptWhispers")
+        {
+            player->SetAcceptWhispers(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.setAtLoginFlag")
+        {
+            player->SetAtLoginFlag(static_cast<AtLoginFlags>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.setDrunkValue")
+        {
+            player->SetDrunkValue(static_cast<uint8>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.setFactionForRace")
+        {
+            uint8 const race = static_cast<uint8>(iArg(args, 0));
+            if (!sChrRacesStore.LookupEntry(race))
+            {
+                out.emplace_back(false);
+                return true;
+            }
+            player->SetFactionForRace(race);
+            return true;
+        }
+        if (name == "player.setGameMaster")
+        {
+            player->SetGameMaster(bArg(args, 0, false));
+            return true;
+        }
+        if (name == "player.setGender")
+        {
+            int64_t const gender = iArg(args, 0);
+            if (gender != 0 && gender != 1)
+                return false;
+            player->SetGender(static_cast<Gender>(gender));
+            return true;
+        }
+        if (name == "player.setGMChat")
+        {
+            player->SetGMChat(bArg(args, 0, false));
+            return true;
+        }
+        if (name == "player.setGMVisible")
+        {
+            player->SetGMVisible(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.setPvPDeath")
+        {
+            player->SetPvPDeath(bArg(args, 0, false));
+            return true;
+        }
+        if (name == "player.spawnBones")
+        {
+            player->SpawnCorpseBones();
+            return true;
+        }
+        if (name == "player.killPlayer")
+        {
+            player->KillPlayer();
+            return true;
+        }
+        if (name == "player.resetTalents")
+        {
+            bool const noCost = bArg(args, 0, false);
+            int64 const cost = noCost ? 0 : static_cast<int64>(player->GetNextResetTalentsCost());
+            if (!noCost && !player->HasEnoughMoney(cost))
+            {
+                out.emplace_back(false);
+                return true;
+            }
+            // The core's flag marks an involuntary reset (sending TalentsInvoluntarilyReset) and does not charge.
+            bool const ok = player->ResetTalents(false);
+            if (ok)
+            {
+                if (!noCost)
+                {
+                    player->ModifyMoney(-cost);
+                    player->IncreaseResetTalentsCostAndCounters(static_cast<uint32>(cost));
+                }
+                player->SendTalentsInfoData();
+            }
+            out.emplace_back(ok);
+            return true;
+        }
+        if (name == "player.durabilityLoss" || name == "player.durabilityPointsLoss")
+        {
+            // The item is resolved through the receiver's own inventory: an item of another player that a script
+            // holds a handle for is not this player's to damage.
+            HandleData itemHandle;
+            if (!args.empty() && asHandle(args[0], itemHandle))
+                if (Item* item = player->GetItemByGuid(toGuid(itemHandle.guid)))
+                {
+                    if (name == "player.durabilityLoss")
+                    {
+                        double const pct = dArg(args, 1);
+                        if (!std::isfinite(pct))
+                            return false;
+                        player->DurabilityLoss(item, std::clamp(pct, 0.0, 1.0));
+                    }
+                    else
+                        player->DurabilityPointsLoss(item, static_cast<int32>(iArg(args, 1)));
+                }
+            return true;
+        }
+        if (name == "player.durabilityLossAll")
+        {
+            double const pct = dArg(args, 0);
+            if (!std::isfinite(pct))
+                return false;
+            player->DurabilityLossAll(std::clamp(pct, 0.0, 1.0), bArg(args, 1, true));
+            return true;
+        }
+        if (name == "player.durabilityPointLossForEquipSlot")
+        {
+            player->DurabilityPointLossForEquipSlot(static_cast<EquipmentSlots>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.durabilityPointsLossAll")
+        {
+            player->DurabilityPointsLossAll(static_cast<int32>(iArg(args, 0)), bArg(args, 1, true));
+            return true;
+        }
+        if (name == "player.durabilityRepair")
+        {
+            player->DurabilityRepair(static_cast<uint16>(iArg(args, 0)), bArg(args, 1, true),
+                                     static_cast<float>(dArg(args, 2, 1.0)));
+            return true;
+        }
+
+        // ---- E7 long tail, round 3: remaining documented Player reads, writes and social ops ----
+        if (name == "player.canTitanGrip")
+        {
+            bool can = false;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Item* item = findItem(h))
+                    can = player->CanTitanGrip(item);
+            out.emplace_back(can);
+            return true;
+        }
+        if (name == "player.getComboPoints")
+        {
+            out.emplace_back(static_cast<int64_t>(std::max<int32>(0, player->GetPower(POWER_COMBO_POINTS))));
+            return true;
+        }
+        if (name == "player.getComboTarget")
+        {
+            ObjectGuid const targetGuid = player->GetClassicComboTarget();
+            if (!targetGuid.IsEmpty())
+                if (Unit* target = ObjectAccessor::GetUnit(*player, targetGuid))
+                    if (target->IsInWorld())
+                        pushHandle(out, handleFor(target));
+            return true;
+        }
+        if (name == "player.getGossipTextId")
+        {
+            uint32 textId = 0;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (WorldObject* src = woOf(h))
+                    textId = player->GetGossipTextId(src);
+            out.emplace_back(static_cast<int64_t>(textId));
+            return true;
+        }
+        if (name == "player.hasRecruited")
+        {
+            bool has = false;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Player* recruit = playerOf(h))
+                    if (player->GetSession() && recruit->GetSession())
+                    {
+                        uint32 const acct = player->GetSession()->GetAccountId();
+                        has = acct != 0 && recruit->GetSession()->GetRecruiterId() == acct;
+                    }
+            out.emplace_back(has);
+            return true;
+        }
+        if (name == "player.isRecruited")
+        {
+            out.emplace_back(player->GetSession() && player->GetSession()->GetRecruiterId() != 0);
+            return true;
+        }
+        if (name == "player.addComboPoints")
+        {
+            Unit* target = nullptr;
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                target = unitOf(h);
+            int32 const count = static_cast<int32>(iArg(args, 1));
+            if (target)
+            {
+                if (count > 0 && player->GetClassicComboTarget() != target->GetGUID())
+                {
+                    player->SetPower(POWER_COMBO_POINTS, 0);
+                    player->SetClassicComboTarget(target->GetGUID());
+                }
+                if (count != 0 && (count > 0 || player->GetClassicComboTarget() == target->GetGUID()))
+                    player->ModifyPower(POWER_COMBO_POINTS, count);
+            }
+            return true;
+        }
+        if (name == "player.clearComboPoints")
+        {
+            player->SetPower(POWER_COMBO_POINTS, 0);
+            player->SetClassicComboTarget(ObjectGuid::Empty);
+            return true;
+        }
+        if (name == "player.addTalent")
+        {
+            uint32 const spellId = static_cast<uint32>(iArg(args, 0));
+            uint8 const spec = static_cast<uint8>(iArg(args, 1));
+            bool const learning = bArg(args, 2, true);
+            bool ok = false;
+            if (spec < MAX_SPECIALIZATIONS)
+                for (TalentEntry const* talent : sTalentStore)
+                    if (talent && talent->SpellID == spellId)
+                    {
+                        ok = player->AddTalent(talent, spec, learning);
+                        if (ok && spec == player->GetActiveTalentGroup())
+                            player->SendTalentsInfoData();
+                        break;
+                    }
+            out.emplace_back(ok);
+            return true;
+        }
+        if (name == "player.advanceAllSkills")
+        {
+            uint32 const step = static_cast<uint32>(iArg(args, 0));
+            if (step > 0 && step <= std::numeric_limits<uint16>::max())
+                for (uint32 i = 0; i < PLAYER_MAX_SKILLS; ++i)
+                    if (uint16 const skillId = player->GetSkillLineIdByPos(i))
+                        if (uint32 const room = flh::skillAdvanceStep(player->GetPureSkillValue(skillId),
+                                                                      player->GetPureMaxSkillValue(skillId), step))
+                            player->UpdateSkillPro(skillId, 1000, room);
+            return true;
+        }
+        if (name == "player.advanceSkill")
+        {
+            uint32 const skillId = static_cast<uint32>(iArg(args, 0));
+            uint32 const step = static_cast<uint32>(iArg(args, 1));
+            if (skillId <= std::numeric_limits<uint16>::max() && step > 0 &&
+                step <= std::numeric_limits<uint16>::max())
+                if (uint32 const room = flh::skillAdvanceStep(player->GetPureSkillValue(skillId),
+                                                              player->GetPureMaxSkillValue(skillId), step))
+                    player->UpdateSkillPro(static_cast<uint16>(skillId), 1000, room);
+            return true;
+        }
+        if (name == "player.advanceSkillsToMax")
+        {
+            for (uint32 i = 0; i < PLAYER_MAX_SKILLS; ++i)
+                if (uint16 const skillId = player->GetSkillLineIdByPos(i))
+                    if (SkillLineEntry const* sl = sSkillLineStore.LookupEntry(skillId))
+                        if (sl->CategoryID == SKILL_CATEGORY_WEAPON)
+                        {
+                            uint16 const cur = player->GetPureSkillValue(skillId);
+                            uint16 const maxVal = player->GetPureMaxSkillValue(skillId);
+                            if (cur < maxVal)
+                                player->UpdateSkillPro(skillId, 1000, maxVal - cur);
+                        }
+            return true;
+        }
+        if (name == "player.bindToInstance")
+        {
+            // The core's lock creation dereferences the instance script and the instance lock: an instance map without
+            // either (no instance script, no lock) is refused, never handed to it.
+            InstanceMap* imap = player->GetMap() ? player->GetMap()->ToInstanceMap() : nullptr;
+            if (flh::bindToInstanceAllowed(imap != nullptr, imap && imap->GetInstanceScript() != nullptr,
+                                           imap && imap->GetInstanceLock() != nullptr))
+                imap->CreateInstanceLockForPlayer(player);
+            else
+                log(fl::LogLevel::Warn, "ForeverLua: Player:BindToInstance refused: the map is not an instance with "
+                                        "instance data and a lock");
+            return true;
+        }
+        if (name == "player.unbindInstance" || name == "player.unbindAllInstances")
+        {
+            bool const single = name == "player.unbindInstance";
+            uint32 const mapId = single ? static_cast<uint32>(iArg(args, 0)) : 0;
+            uint32 const diffArg = single ? static_cast<uint32>(iArg(args, 1, 0)) : 0;
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            // ResetInstanceLocksForPlayer walks _instanceLocksByPlayer without locking, so run on the world thread.
+            auto job = [=]()
+            {
+                Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid));
+                if (!target)
+                    return;
+                if (single && target->GetMapId() == mapId)
+                    return;
+                Optional<uint32> mapOpt = single ? Optional<uint32>(mapId) : std::nullopt;
+                Optional<Difficulty> diffOpt =
+                    single && diffArg ? Optional<Difficulty>(static_cast<Difficulty>(diffArg)) : std::nullopt;
+                std::vector<InstanceLock const*> reset, failed;
+                sInstanceLockMgr.ResetInstanceLocksForPlayer(target->GetGUID(), mapOpt, diffOpt, &reset, &failed);
+            };
+            runSocialWrite("Instance unbind", job);
+            return true;
+        }
+        if (name == "player.gossipSendPOI")
+        {
+            if (player->GetSession())
+            {
+                float const x = static_cast<float>(dArg(args, 0));
+                float const y = static_cast<float>(dArg(args, 1));
+                float z = player->GetMapHeight(x, y, player->GetPositionZ() + 30.0f, true, 100.0f);
+                if (z <= INVALID_HEIGHT)
+                    z = player->GetPositionZ();
+                std::string const text = sArg(args, 5);
+                WorldPackets::NPC::GossipPOI packet;
+                packet.ID = 0;
+                packet.Flags = static_cast<uint32>(iArg(args, 3));
+                packet.Pos.Pos.Relocate(x, y, z);
+                packet.Icon = static_cast<int32>(iArg(args, 2));
+                packet.Importance = static_cast<int32>(iArg(args, 4));
+                packet.WMOGroupID = 0;
+                packet.Name = text;
+                player->GetSession()->SendPacket(packet.Write());
+            }
+            return true;
+        }
+        if (name == "player.killedPlayerCredit")
+        {
+            player->KilledPlayerCredit(player->GetTarget());
+            return true;
+        }
+        if (name == "player.killGOCredit")
+        {
+            player->KillCreditGO(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.leaveBattleground")
+        {
+            player->LeaveBattleground(bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.mute")
+        {
+            if (WorldSession* s = player->GetSession())
+            {
+                uint32 const secs = static_cast<uint32>(iArg(args, 0));
+                s->m_muteTime = secs ? GameTime::GetGameTime() + secs : 0;
+            }
+            return true;
+        }
+        if (name == "player.removedInsignia")
+        {
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Player* looter = playerOf(h))
+                    player->RemovedInsignia(looter);
+            return true;
+        }
+        if (name == "player.removeFromBattlegroundRaid")
+        {
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            runSocialWrite("Battleground raid leave",
+                           [playerGuid]
+                           {
+                               if (Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid)))
+                                   target->RemoveFromBattlegroundOrBattlefieldRaid();
+                           });
+            return true;
+        }
+        if (name == "player.removeFromGroup")
+        {
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            runSocialWrite("Group leave",
+                           [playerGuid]
+                           {
+                               if (Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid)))
+                                   if (target->GetGroup())
+                                       target->RemoveFromGroup();
+                           });
+            return true;
+        }
+        if (name == "player.removePet")
+        {
+            if (Pet* pet = player->GetPet())
+            {
+                int64 const m = iArg(args, 0, -1);
+                PetSaveMode mode = PET_SAVE_AS_DELETED;
+                if (m == 0)
+                    mode = PET_SAVE_AS_CURRENT;
+                else if (m >= 1 && m <= 4)
+                    mode = static_cast<PetSaveMode>(PET_SAVE_FIRST_STABLE_SLOT + (m - 1));
+                player->RemovePet(pet, mode, bArg(args, 1, false));
+            }
+            return true;
+        }
+        if (name == "player.summonPet")
+        {
+            uint32 const entry = static_cast<uint32>(iArg(args, 0));
+            if (!entry)
+                return true;
+            float const x = static_cast<float>(dArg(args, 1));
+            float const y = static_cast<float>(dArg(args, 2));
+            float const z = static_cast<float>(dArg(args, 3));
+            float const o = static_cast<float>(dArg(args, 4));
+            int64 const petType = iArg(args, 5);
+            uint32 const despawnTime = static_cast<uint32>(iArg(args, 6));
+            if (petType == SUMMON_PET)
+                player->SummonPet(entry, {}, x, y, z, o, despawnTime);
+            else if (petType == HUNTER_PET && player->GetPetGUID().IsEmpty())
+            {
+                if (Pet* pet = player->CreateTamedPetFrom(entry))
+                {
+                    pet->Relocate(x, y, z, o);
+                    if (!pet->IsPositionValid())
+                    {
+                        delete pet;
+                        return true;
+                    }
+                    pet->GetMap()->AddToMap(pet->ToCreature());
+                    player->SetMinion(pet, true);
+                    if (despawnTime > 0)
+                        pet->SetDuration(despawnTime);
+                    pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+                    player->PetSpellInitialize();
+                }
+            }
+            return true;
+        }
+        if (name == "player.sendAddonMessage")
+        {
+            std::string const prefix = sArg(args, 0);
+            std::string const msg = sArg(args, 1);
+            int64 const ch = iArg(args, 2);
+            Player* receiver = nullptr;
+            if (HandleData h; args.size() > 3 && asHandle(args[3], h))
+                receiver = playerOf(h);
+            if (receiver && ch >= 0 && ch < MAX_CHAT_MSG_TYPE)
+            {
+                WorldPackets::Chat::Chat packet;
+                packet.Initialize(static_cast<ChatMsg>(ch), LANG_ADDON, player, receiver, msg, 0, "", DEFAULT_LOCALE,
+                                  prefix);
+                receiver->SendDirectMessage(packet.Write());
+            }
+            return true;
+        }
+        if (name == "player.sendAuctionMenu")
+        {
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (Unit* sender = unitOf(h))
+                    if (player->GetSession())
+                        player->GetSession()->SendAuctionHello(sender->GetGUID(), sender);
+            return true;
+        }
+        if (name == "player.sendQuestTemplate")
+        {
+            if (player->PlayerTalkClass)
+                if (Quest const* quest = sObjectMgr->GetQuestTemplate(static_cast<uint32>(iArg(args, 0))))
+                    player->PlayerTalkClass->SendQuestGiverQuestDetails(quest, player->GetGUID(), bArg(args, 1, true),
+                                                                        false);
+            return true;
+        }
+        if (name == "player.sendShowMailBox")
+        {
+            if (player->GetSession())
+            {
+                ObjectGuid target = player->GetGUID();
+                if (!args.empty())
+                {
+                    ObjectGuid const parsed = guidArgAt(args, 0, LegacyGuid::Player);
+                    if (!parsed.IsEmpty())
+                        target = parsed;
+                }
+                player->GetSession()->SendShowMailBox(target);
+            }
+            return true;
+        }
+        if (name == "player.sendTabardVendorActivate")
+        {
+            if (HandleData h; !args.empty() && asHandle(args[0], h))
+                if (WorldObject* sender = woOf(h))
+                    if (player->GetSession())
+                        player->GetSession()->SendTabardVendorActivate(sender->GetGUID(),
+                                                                       static_cast<TabardVendorType>(0));
+            return true;
+        }
+        if (name == "player.setKnownTitle" || name == "player.unsetKnownTitle")
+        {
+            if (CharTitlesEntry const* title = sCharTitlesStore.LookupEntry(static_cast<uint32>(iArg(args, 0))))
+                player->SetTitle(title, name == "player.unsetKnownTitle");
+            return true;
+        }
+        if (name == "player.setMovement")
+        {
+            switch (iArg(args, 0))
+            {
+                case 1: player->SetControlled(true, UNIT_STATE_ROOT); break;
+                case 2: player->SetControlled(false, UNIT_STATE_ROOT); break;
+                case 3: player->SetWaterWalking(true); break;
+                case 4: player->SetWaterWalking(false); break;
+                default: break;
+            }
+            return true;
+        }
+        if (name == "player.setPlayerLock")
+        {
+            player->SetClientControl(player, !bArg(args, 0, true));
+            return true;
+        }
+        if (name == "player.setQuestStatus")
+        {
+            // Only a quest that holds a slot in the quest log: a status entry made without one is read out of range
+            // by the next save (FindQuestSlot answers MAX_QUEST_LOG_SIZE for an entry with no slot).
+            int64 const status = iArg(args, 1);
+            uint32 const questId = static_cast<uint32>(iArg(args, 0));
+            if (flh::questStatusWriteAllowed(player->FindQuestSlot(questId) < MAX_QUEST_LOG_SIZE, status,
+                                             MAX_QUEST_STATUS))
+                player->SetQuestStatus(questId, static_cast<QuestStatus>(status));
+            else
+                log(fl::LogLevel::Warn, "ForeverLua: Player:SetQuestStatus refused: the quest is not in the player's "
+                                        "quest log");
+            return true;
+        }
+        if (name == "player.startTaxi")
+        {
+            player->ActivateTaxiPathTo(static_cast<uint32>(iArg(args, 0)));
+            return true;
+        }
+        if (name == "player.groupCreate")
+        {
+            HandleData invitedHandle;
+            if (args.empty() || !asHandle(args[0], invitedHandle))
+                return true;
+            HandleData const leaderHandle = self;
+            auto job = [=]() -> std::optional<HandleData>
+            {
+                Player* leader = playerOf(leaderHandle);
+                Player* invited = playerOf(invitedHandle);
+                // A pending invite holds a raw pointer in the inviting group's invitee set; AddMember only clears the
+                // player's side, so both participants must be free of one before a new group takes them.
+                if (!leader || !invited || leader == invited || leader->GetGroup() || invited->GetGroup() ||
+                    leader->GetGroupInvite() || invited->GetGroupInvite())
+                    return std::nullopt;
+                Group* group = new Group();
+                if (!group->Create(leader))
+                {
+                    delete group;
+                    return std::nullopt;
+                }
+                sGroupMgr->AddGroup(group);
+                if (!group->AddMember(invited))
+                {
+                    group->Disband();
+                    return std::nullopt;
+                }
+                HandleData gh;
+                gh.kind = ObjKind::Group;
+                gh.guid = fromGuid(group->GetGUID());
+                return gh;
+            };
+            if (rules().placeForWorld() == AccessRules::Place::Direct && socialWriteBlocked())
+            {
+                runSocialWrite("Group create", [job] { (void)job(); });
+                return true;
+            }
+            auto guarded = [this, job]() -> std::optional<HandleData>
+            {
+                struct Guard
+                {
+                    bool& flag;
+                    ~Guard() { flag = false; }
+                } reset{_socialWriteActive};
+                _socialWriteActive = true;
+                return job();
+            };
+            WorldCallResult how = WorldCallResult::Ran;
+            std::optional<std::optional<HandleData>> r =
+                callOnWorld<std::optional<HandleData>>(rules(), deferred(), guarded, &how);
+            if (how == WorldCallResult::Dropped)
+                log(fl::LogLevel::Warn, "ForeverLua: GroupCreate dropped: the world thread queue is full");
+            if (r && *r)
+                pushHandle(out, **r);
+            return true;
+        }
+        if (name == "player.groupInvite")
+        {
+            HandleData invitedHandle;
+            if (args.empty() || !asHandle(args[0], invitedHandle))
+                return true;
+            HandleData const inviterHandle = self;
+            auto job = [=]() -> bool
+            {
+                Player* inviter = playerOf(inviterHandle);
+                Player* invited = playerOf(invitedHandle);
+                if (!inviter || !invited || inviter == invited || invited->GetGroup() || invited->GetGroupInvite())
+                    return false;
+                Group* group = inviter->GetGroup();
+                if (!group)
+                    group = inviter->GetGroupInvite();
+                if (group)
+                {
+                    if ((!group->IsLeader(inviter->GetGUID()) && !group->IsAssistant(inviter->GetGUID())) ||
+                        group->IsFull())
+                        return false;
+                }
+                else
+                {
+                    group = new Group();
+                    if (!group->AddLeaderInvite(inviter))
+                    {
+                        delete group;
+                        return false;
+                    }
+                }
+                if (!group->AddInvite(invited))
+                {
+                    if (!group->IsCreated())
+                    {
+                        group->RemoveAllInvites();
+                        delete group;
+                    }
+                    return false;
+                }
+                WorldPackets::Party::PartyInvite partyInvite;
+                partyInvite.Initialize(inviter, 0, true);
+                invited->SendDirectMessage(partyInvite.Write());
+                if (inviter->GetSession())
+                    inviter->GetSession()->SendPartyResult(PARTY_OP_INVITE, invited->GetName(), ERR_PARTY_RESULT_OK);
+                return true;
+            };
+            if (rules().placeForWorld() == AccessRules::Place::Direct && socialWriteBlocked())
+            {
+                runSocialWrite("Group invite", [job] { (void)job(); });
+                return true;
+            }
+            auto guarded = [this, job]() -> bool
+            {
+                struct Guard
+                {
+                    bool& flag;
+                    ~Guard() { flag = false; }
+                } reset{_socialWriteActive};
+                _socialWriteActive = true;
+                return job();
+            };
+            WorldCallResult how = WorldCallResult::Ran;
+            std::optional<bool> r = callOnWorld<bool>(rules(), deferred(), guarded, &how);
+            if (how == WorldCallResult::Dropped)
+                log(fl::LogLevel::Warn, "ForeverLua: GroupInvite dropped: the world thread queue is full");
+            if (r)
+                out.emplace_back(*r);
+            return true;
+        }
+        if (name == "player.sendGuildInvite")
+        {
+            HandleData inviteeHandle;
+            if (args.empty() || !asHandle(args[0], inviteeHandle))
+                return true;
+            HandleData const inviterHandle = self;
+            runSocialWrite("Guild invite",
+                           [inviterHandle, inviteeHandle]
+                           {
+                               Player* inviter = findPlayer(inviterHandle);
+                               Player* invitee = findPlayer(inviteeHandle);
+                               if (inviter && invitee && inviter->GetSession())
+                                   if (Guild* guild = inviter->GetGuild())
+                                       guild->HandleInviteMember(inviter->GetSession(), invitee->GetName());
+                           });
+            return true;
+        }
+        if (name == "player.setGuildRank")
+        {
+            uint8 const rank = static_cast<uint8>(iArg(args, 0));
+            if (!flh::guildRankWriteAllowed(rank))
+            {
+                log(fl::LogLevel::Warn, "ForeverLua: Player:SetGuildRank refused: rank 0 is the Guild Master");
+                return true;
+            }
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            runSocialWrite("Guild rank change",
+                           [playerGuid, rank]
+                           {
+                               Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid));
+                               if (!target)
+                                   return;
+                               if (Guild* guild = target->GetGuild())
+                               {
+                                   CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+                                   if (guild->ChangeMemberRank(trans, target->GetGUID(), static_cast<GuildRankId>(rank)))
+                                       CharacterDatabase.CommitTransaction(trans);
+                               }
+                           });
+            return true;
+        }
+        if (name == "player.runCommand")
+        {
+            std::string const line = sArg(args, 0);
+            if (line.empty())
+                return true;
+            fl::Guid const playerGuid = fromGuid(player->GetGUID());
+            auto job = [playerGuid, line]
+            {
+                Player* target = ObjectAccessor::FindPlayer(toGuid(playerGuid));
+                if (!target || !target->GetSession())
+                    return;
+                std::string cmd = (line[0] == '.' || line[0] == '!') ? line : ("." + line);
+                ChatHandler(target->GetSession()).ParseCommands(cmd);
+            };
+            // Through the social write path: a command may change a group or guild (.group disband), so it runs on the
+            // world thread, and from inside a hook of such a change or a core social action it waits for the next tick
+            // instead of re-entering the core.
+            runSocialWrite("Player command", job);
             return true;
         }
 
@@ -4543,6 +7010,7 @@ void ForeverHost::runCommand(std::string const& line)
 std::vector<fl::HandleData> ForeverHost::objectsInRange(fl::HandleData const& self, int kind, float range,
                                                         uint32_t entry, int hostile, int dead)
 {
+    range = flh::clampSearchRange(range);
     std::vector<fl::HandleData> out;
     WorldObject* me = findObject(self);
     if (!me || !me->GetMap())
@@ -4646,6 +7114,17 @@ bool ForeverHost::spellExists(uint32_t spellId) { return spellEntry(spellId) != 
 bool ForeverHost::sendPacket(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
                              bool ignorePlayersInBg, uint64_t ignore)
 {
+    if (target.kind == ObjKind::Creature || target.kind == ObjKind::GameObject || target.kind == ObjKind::Corpse)
+    {
+        WorldObject* wo = findObject(target);
+        if (!wo)
+            return false;
+        WorldPacket packet(opcode, data.size());
+        if (!data.empty())
+            packet.append(data.data(), data.size());
+        wo->SendMessageToSet(&packet, true);
+        return true;
+    }
     if (target.kind != ObjKind::Player && target.kind != ObjKind::Group && target.kind != ObjKind::Guild)
         return false;
     if (!worldThread())
@@ -4686,6 +7165,55 @@ bool ForeverHost::sendPacket(fl::HandleData const& target, uint32_t opcode, std:
         }
         default: return false;
     }
+}
+
+void ForeverHost::runSocialWrite(char const* what, std::function<void()> job)
+{
+    auto guarded = [this, job = std::move(job)]
+    {
+        struct Guard
+        {
+            bool& flag;
+            ~Guard() { flag = false; }
+        } reset{_socialWriteActive};
+        _socialWriteActive = true;
+        job();
+    };
+    // The flags are the world thread's: a map thread queues without reading them. On the world thread a change runs now
+    // unless a script hook of a change (or of a core social action) already running asked for it: that one waits for the
+    // next tick, after the core operation that is still unwinding has returned.
+    bool queue = rules().placeForWorld() != AccessRules::Place::Direct;
+    if (!queue)
+        queue = socialWriteBlocked();
+    if (queue)
+    {
+        if (!deferred().push(guarded))
+            log(fl::LogLevel::Warn, std::string("ForeverLua: ") + what +
+                                        " dropped: the world thread queue is full");
+        return;
+    }
+    guarded();
+}
+
+bool ForeverHost::sendPacketToRanked(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
+                                     uint32_t rank)
+{
+    if (target.kind != ObjKind::Guild)
+        return false;
+    if (!worldThread())
+    {
+        return deferred().push([this, target, opcode, data, rank] {
+            ForeverHost::sendPacketToRanked(target, opcode, data, rank);
+        });
+    }
+    Guild* guild = sGuildMgr->GetGuildById(static_cast<uint32>(target.guid.lo));
+    if (!guild)
+        return false;
+    WorldPacket packet(opcode, data.size());
+    if (!data.empty())
+        packet.append(data.data(), data.size());
+    guild->BroadcastPacketToRank(&packet, static_cast<GuildRankId>(rank));
+    return true;
 }
 
 bool ForeverHost::rawQuery(std::string const& db, std::string const& sql, size_t maxRows, size_t maxBytes,
@@ -5015,5 +7543,32 @@ void ForeverHost::takeDataWrites(std::vector<fl::DataWriteResult>& out)
 {
     if (_db)
         _db->takeConfirmed(out);
+}
+
+fl::Guid ForeverHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId)
+{
+    auto const counter = static_cast<ObjectGuid::LowType>(low);
+    switch (kind)
+    {
+        case ObjKind::Player: return fromGuid(ObjectGuid::Create<HighGuid::Player>(counter));
+        case ObjKind::Item: return fromGuid(ObjectGuid::Create<HighGuid::Item>(counter));
+        case ObjKind::Creature: return fromGuid(ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
+        case ObjKind::GameObject: return fromGuid(ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
+        default: return fl::Guid{};
+    }
+}
+
+uint32_t ForeverHost::realmId() { return sRealmList->GetCurrentRealmId().Realm; }
+
+bool ForeverHost::isInventoryPos(int kind, uint8_t bag, uint8_t slot)
+{
+    switch (kind)
+    {
+        case 0: return Player::IsBagPos(static_cast<uint16>((static_cast<uint16>(bag) << 8) | slot));
+        case 1: return Player::IsBankPos(bag, slot);
+        case 2: return Player::IsEquipmentPos(bag, slot);
+        case 3: return Player::IsInventoryPos(bag, slot);
+        default: return false;
+    }
 }
 }  // namespace flh

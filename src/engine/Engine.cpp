@@ -3,6 +3,7 @@
 #include "engine/Api.h"
 #include "engine/BotHub.h"
 #include "engine/Elu.h"
+#include "engine/GuidText.h"
 #include "engine/Handle.h"
 
 #include <lauxlib.h>
@@ -373,6 +374,8 @@ void Engine::closeState()
     rebuildListenIndex();
     _eluTimers.clear();
     _eluTimerByTimerId.clear();
+    _worldObjectDataOwners.clear();
+    _dataSweepCursor.clear();
     _packets.clear();
     _packetOrder.clear();
     _deferredUnrefs.clear();
@@ -2209,11 +2212,36 @@ bool Engine::ownerGone(HandleData const& owner)
     return !_host.lookup(owner, &info);
 }
 
+void Engine::trackWorldObjectData(HandleData const& owner, std::string const& guidKey)
+{
+    _worldObjectDataOwners[guidKey] = owner;
+}
+
+void Engine::eraseWorldObjectDataKey(std::string const& key)
+{
+    _worldObjectDataOwners.erase(key);
+    if (!_L)
+        return;
+    lua_getfield(_L, LUA_REGISTRYINDEX, "fl.WorldObjectData");
+    if (lua_istable(_L, -1))
+    {
+        lua_pushnil(_L);
+        lua_setfield(_L, -2, key.c_str());
+    }
+    lua_pop(_L, 1);
+}
+
+void Engine::removeWorldObjectData(HandleData const& owner)
+{
+    eraseWorldObjectDataKey(guidText(owner.guid));
+}
+
 size_t Engine::removeLuaEventsOf(HandleData const& owner)
 {
     std::unique_lock<std::recursive_mutex> lock;
     if (_cfg.mode == EngineMode::Eluna)
         lock = std::unique_lock<std::recursive_mutex>(_luaMutex);
+    removeWorldObjectData(owner);
     return removeLuaEvents(owner, false);
 }
 
@@ -2240,6 +2268,24 @@ void Engine::sweepOwners(uint64_t nowMs)
     for (auto const& o : owners)
         if (ownerGone(o))
             removeLuaEvents(o, false);
+
+    if (!_worldObjectDataOwners.empty())
+    {
+        std::vector<std::string> dataGone;
+        std::string lastKey = _dataSweepCursor;
+        auto dit = _dataSweepCursor.empty() ? _worldObjectDataOwners.begin()
+                                            : _worldObjectDataOwners.upper_bound(_dataSweepCursor);
+        size_t checked = 0;
+        for (; dit != _worldObjectDataOwners.end() && checked < kMaxOwnersPerSweep; ++dit, ++checked)
+        {
+            lastKey = dit->first;
+            if (ownerGone(dit->second))
+                dataGone.push_back(dit->first);
+        }
+        _dataSweepCursor = dit == _worldObjectDataOwners.end() ? std::string() : lastKey;
+        for (std::string const& key : dataGone)
+            eraseWorldObjectDataKey(key);
+    }
 }
 
 bool Engine::removeLuaEvent(uint64_t id, std::optional<HandleData> owner, bool onlyGlobal)

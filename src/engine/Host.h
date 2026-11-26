@@ -208,6 +208,16 @@ public:
     {
         return false;
     }
+    // A core-driven group or guild hook is dispatching Lua now: the core's own mutation that called the hook is still
+    // open, so a change the handler asks for must not run inside it.
+    virtual void enterSocialHook() { }
+    virtual void leaveSocialHook() { }
+    // Guild:SendPacketToRanked: the packet to the online members of one guild rank only.
+    virtual bool sendPacketToRanked(fl::HandleData const& /*target*/, uint32_t /*opcode*/,
+                                    std::vector<uint8_t> const& /*data*/, uint32_t /*rank*/)
+    {
+        return false;
+    }
 
     // ForeverData (E3). dataLoad reads every stored value at start; false and `error` refuse the load (database down, more
     // rows than the load cap): the engine then keeps the store unavailable and retries, it never starts empty.
@@ -223,8 +233,8 @@ public:
     virtual void takeDataWrites(std::vector<DataWriteResult>& /*out*/) { }
 
     // ---- fixes of the E2/E3 review round ----
-    // True when the calling thread may run a world-only READ (the member lists of a group or a guild) now: the world
-    // thread with the maps idle. A map-thread handler gets a Lua error instead of a racy read.
+    // True when the calling thread may run a world-only READ (a Group or Guild method) now: the world thread with the
+    // maps idle. A map-thread handler gets a Lua error instead of a racy read of world-owned social state.
     virtual bool worldOnlyReadOk() { return true; }
     // RegisterInstanceEvent / RegisterMapEvent on a dungeon or raid map need core hook C11 (the core's InstanceMapScript is
     // database-bound): true when `mapId` is a dungeon or raid map.
@@ -232,5 +242,15 @@ public:
     // RegisterCommand: true when `name` (lower case) equals or is a prefix of a root of the core's command table, or of
     // one of the module's own roots. Such a name would hijack a core command (or abort the core's command map build).
     virtual bool commandNameReserved(std::string const& /*name*/) { return false; }
+
+    // ---- Eluna Unit/Item/Global coverage ----
+    // Builds a 128-bit guid of `kind` (Player, Item, Creature, GameObject) from a low counter, optional entry and mapId.
+    virtual Guid buildGuid(ObjKind /*kind*/, uint64_t /*low*/, uint32_t /*entry*/, uint16_t /*mapId*/ = 0)
+    {
+        return Guid{};
+    }
+    virtual uint32_t realmId() { return 0; }
+    // Player inventory position predicates (kind: 0 Bag, 1 Bank, 2 Equipment, 3 Inventory).
+    virtual bool isInventoryPos(int /*kind*/, uint8_t /*bag*/, uint8_t /*slot*/) { return false; }
 };
 }  // namespace fl

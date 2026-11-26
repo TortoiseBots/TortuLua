@@ -671,3 +671,291 @@ TEST_CASE("spell and aura: bad arguments raise before the host is called")
     std::string const wrong = spellError("return spell:GetEntry(1) player:GetGUID()");
     CHECK(wrong.find("no error") == std::string::npos);
 }
+
+TEST_CASE("spellinfo: extended scalar, predicate, effect, target and stub methods")
+{
+    SpellRig rig;
+    FakeHost::FakeSpellInfo& i = rig.host.spellInfo(730);
+    i.allEffectsMechanicMask = 201;
+    i.allowedMechanicMask = 202;
+    i.excludeCasterAuraSpell = 203;
+    i.excludeTargetAuraSpell = 204;
+    i.manaCostPercentage = 15;
+    i.maxTicks = 6;
+    i.spellVisual[0] = 205;
+    i.spellVisual[1] = 206;
+    i.diminishingGroup = 7;
+    i.diminishingGroupType = 2;
+    i.diminishingLimitDuration = 10000;
+    i.diminishingMaxLevel = 3;
+    i.abilityLearnedWithProfession = true;
+    i.breakingStealth = true;
+    i.explicitDiscovery = true;
+    i.lootCrafting = true;
+    i.passiveStackableWithRanks = true;
+    i.primaryProfession = true;
+    i.primaryProfessionFirstRank = true;
+    i.profession = true;
+    i.professionOrRiding = true;
+    i.stackableOnOneSlotWithDifferentCasters = true;
+    i.needsComboPoints = true;
+    i.skillTypes = {164};
+    i.affectedFamilyName = 10;
+    i.affectedFlags[0] = 0x4;
+    i.exclusiveWith = {731};
+    i.exclusivePerCasterWith = {732};
+    i.mechanic = 3;
+    i.checkTargetResult = 0;
+
+    FakeHost::FakeSpellInfo::FakeEffect eff0;
+    eff0.isEffect = true;
+    eff0.isAura = true;
+    eff0.isAreaAuraEffect = true;
+    eff0.isTargetingArea = true;
+    eff0.isUnitOwnedAuraEffect = true;
+    eff0.hasRadius = true;
+    eff0.auraType = 12;
+    eff0.effectType = 6;
+    eff0.amplitude = 3000;
+    eff0.basePoints = -45;
+    eff0.calcValue = -44;
+    eff0.chainTarget = 4;
+    eff0.dieSides = 13;
+    eff0.implicitTargetType = 2;
+    eff0.effectIndex = 0;
+    eff0.itemType = 999;
+    eff0.mechanic = 5;
+    eff0.mechanicMask = 32;
+    eff0.miscValue = 17;
+    eff0.miscValueB = 18;
+    eff0.providedTargetMask = 0x10;
+    eff0.triggerSpell = 731;
+    eff0.usedTargetObjectType = 3;
+    eff0.spellClassMask[0] = 0x11;
+    eff0.spellClassMask[1] = 0x22;
+    eff0.spellClassMask[2] = 0x33;
+    eff0.bonusMultiplier = 0.75;
+    eff0.calcRadius = 12.5;
+    eff0.damageMultiplier = 1.25;
+    eff0.pointsPerComboPoint = 2.5;
+    eff0.realPointsPerLevel = 1.5;
+    eff0.valueMultiplier = 2.25;
+    eff0.targetA = {1, 2, 3, 4, 5, 6, 0.5, true};
+    eff0.targetB = {7, 8, 9, 10, 11, 12, 1.5, false};
+    i.effectSlots = {eff0};
+
+    rig.host.spellInfo(731);
+    rig.host.spellInfo(732);
+
+    fl::HandleData caster = creature(50);
+    fl::HandleData target = creature(51);
+    fl::HandleData item = FakeHost::item(801);
+    rig.host.add(caster, fl::ObjectInfo{"Caster", 50});
+    rig.host.add(target, fl::ObjectInfo{"Target", 51});
+    rig.host.add(item, fl::ObjectInfo{"Test Item", 1234});
+    i.fitItems = {801};
+    i.checkTargetCreatureTypes = {51};
+
+    fl::HandleData info;
+    info.kind = fl::ObjKind::SpellInfo;
+    info.guid.lo = 730;
+    setGlobal(rig, "info", info);
+    setGlobal(rig, "caster", caster);
+    setGlobal(rig, "target", target);
+    setGlobal(rig, "item", item);
+
+    fl::HandleData ae;
+    ae.kind = fl::ObjKind::AuraEffect;
+    ae.instanceId = 99;
+    rig.host.auraEffects[99].id = 731;
+    i.cancelsAuraEffects = {99};
+    setGlobal(rig, "ae", ae);
+
+    CHECK(call(rig, "info:GetAllEffectsMechanicMask()") == "201");
+    CHECK(call(rig, "info:GetAllowedMechanicMask()") == "202");
+    CHECK(call(rig, "info:GetExcludeCasterAuraSpell()") == "203");
+    CHECK(call(rig, "info:GetExcludeTargetAuraSpell()") == "204");
+    CHECK(call(rig, "info:GetManaCostPercentage()") == "15");
+    CHECK(call(rig, "info:GetMaxTicks()") == "6");
+    CHECK(call(rig, "info:GetSpellVisual(0)") == "205");
+    CHECK(call(rig, "info:GetSpellVisual(1)") == "206");
+    CHECK(call(rig, "info:GetSpellMechanicMaskByEffectMask(1)") == "40");
+    CHECK(call(rig, "info:GetDiminishingReturnsGroupForSpell(false)") == "7");
+    CHECK(call(rig, "info:GetDiminishingReturnsGroupType(true)") == "2");
+    CHECK(call(rig, "info:GetDiminishingReturnsLimitDuration(false)") == "10000");
+    CHECK(call(rig, "info:GetDiminishingReturnsMaxLevel(false)") == "3");
+
+    CHECK(call(rig, "info:CheckTarget(caster, target)") == "0");
+    CHECK(call(rig, "info:CheckTargetCreatureType(target)") == "true");
+    CHECK(call(rig, "info:CheckTargetCreatureType(caster)") == "false");
+    CHECK(call(rig, "info:IsAbilityLearnedWithProfession()") == "true");
+    CHECK(call(rig, "info:IsAbilityOfSkillType(164)") == "true");
+    CHECK(call(rig, "info:IsAbilityOfSkillType(999)") == "false");
+    CHECK(call(rig, "info:IsAffected(10, 4, 0, 0)") == "true");
+    CHECK(call(rig, "info:IsAffected(10, 8, 0, 0)") == "false");
+    CHECK(call(rig, "info:IsAuraExclusiveBySpecificWith(GetSpellInfo(731))") == "true");
+    CHECK(call(rig, "info:IsAuraExclusiveBySpecificPerCasterWith(GetSpellInfo(732))") == "true");
+    CHECK(call(rig, "info:IsBreakingStealth()") == "true");
+    CHECK(call(rig, "info:IsExplicitDiscovery()") == "true");
+    CHECK(call(rig, "info:IsItemFitToSpellRequirements(item)") == "true");
+    CHECK(call(rig, "info:IsLootCrafting()") == "true");
+    CHECK(call(rig, "info:IsPassiveStackableWithRanks()") == "true");
+    CHECK(call(rig, "info:IsPrimaryProfession()") == "true");
+    CHECK(call(rig, "info:IsPrimaryProfessionFirstRank()") == "true");
+    CHECK(call(rig, "info:IsProfession()") == "true");
+    CHECK(call(rig, "info:IsProfessionOrRiding()") == "true");
+    CHECK(call(rig, "info:IsStackableOnOneSlotWithDifferentCasters()") == "true");
+    CHECK(call(rig, "info:NeedsComboPoints()") == "true");
+    rig.host.auraEffects[99].id = 731;
+    CHECK(call(rig, "info:SpellCancelsAuraEffect(ae)") == "true");
+
+    // Per-effect getters and predicates.
+    CHECK(call(rig, "info:EffectIsAreaAuraEffect(0)") == "true");
+    CHECK(call(rig, "info:EffectIsAura(0)") == "true");
+    CHECK(call(rig, "info:EffectIsAuraType(0, 12)") == "true");
+    CHECK(call(rig, "info:EffectIsAuraType(0, 99)") == "false");
+    CHECK(call(rig, "info:EffectIsEffect(0)") == "true");
+    CHECK(call(rig, "info:EffectIsEffectType(0, 6)") == "true");
+    CHECK(call(rig, "info:EffectIsEffectType(0, 7)") == "false");
+    CHECK(call(rig, "info:EffectIsTargetingArea(0)") == "true");
+    CHECK(call(rig, "info:EffectIsUnitOwnedAuraEffect(0)") == "true");
+    CHECK(call(rig, "info:GetEffectAmplitude(0)") == "3000");
+    CHECK(call(rig, "info:GetEffectApplyAuraName(0)") == "12");
+    CHECK(call(rig, "info:GetEffectBasePoints(0)") == "-45");
+    CHECK(call(rig, "info:GetEffectCalcValue(0)") == "-44");
+    CHECK(call(rig, "info:GetEffectChainTarget(0)") == "4");
+    CHECK(call(rig, "info:GetEffectDieSides(0)") == "13");
+    CHECK(call(rig, "info:GetEffectHasRadius(0)") == "true");
+    CHECK(call(rig, "info:GetEffectImplicitTargetType(0)") == "2");
+    CHECK(call(rig, "info:GetEffectIndex(0)") == "0");
+    CHECK(call(rig, "info:GetEffectItemType(0)") == "999");
+    CHECK(call(rig, "info:GetEffectMechanic(0)") == "5");
+    CHECK(call(rig, "info:GetEffectMechanicMask(0)") == "32");
+    CHECK(call(rig, "info:GetEffectMiscValue(0)") == "17");
+    CHECK(call(rig, "info:GetEffectMiscValueB(0)") == "18");
+    CHECK(call(rig, "info:GetEffectProvidedTargetMask(0)") == "16");
+    CHECK(call(rig, "info:GetEffectSpellClassMask(0, 0)") == "17");
+    CHECK(call(rig, "info:GetEffectSpellClassMask(0, 2)") == "51");
+    CHECK(call(rig, "info:GetEffectTriggerSpell(0)") == "731");
+    CHECK(call(rig, "info:GetEffectType(0)") == "6");
+    CHECK(call(rig, "info:GetEffectUsedTargetObjectType(0)") == "3");
+    CHECK(rig.ok("return string.format('%.2f/%.2f/%.2f/%.2f/%.2f/%.2f', info:GetEffectBonusMultiplier(0), "
+                 "info:GetEffectCalcRadius(0), info:GetEffectDamageMultiplier(0), info:GetEffectPointsPerComboPoint(0), "
+                 "info:GetEffectRealPointsPerLevel(0), info:GetEffectValueMultiplier(0))") ==
+          "0.75/12.50/1.25/2.50/1.50/2.25");
+
+    CHECK(call(rig, "info:GetEffectTargetACheckType(0)") == "1");
+    CHECK(call(rig, "info:GetEffectTargetADirectionType(0)") == "2");
+    CHECK(call(rig, "info:GetEffectTargetAObjectType(0)") == "3");
+    CHECK(call(rig, "info:GetEffectTargetAReferenceType(0)") == "4");
+    CHECK(call(rig, "info:GetEffectTargetASelectionCategory(0)") == "5");
+    CHECK(call(rig, "info:GetEffectTargetATarget(0)") == "6");
+    CHECK(call(rig, "info:GetEffectTargetAIsArea(0)") == "true");
+    CHECK(rig.ok("return string.format('%.1f/%.1f', info:GetEffectTargetADirectionAngle(0), "
+                 "info:GetEffectTargetBDirectionAngle(0))") == "0.5/1.5");
+    CHECK(call(rig, "info:GetEffectTargetBCheckType(0)") == "7");
+    CHECK(call(rig, "info:GetEffectTargetBDirectionType(0)") == "8");
+    CHECK(call(rig, "info:GetEffectTargetBObjectType(0)") == "9");
+    CHECK(call(rig, "info:GetEffectTargetBReferenceType(0)") == "10");
+    CHECK(call(rig, "info:GetEffectTargetBSelectionCategory(0)") == "11");
+    CHECK(call(rig, "info:GetEffectTargetBTarget(0)") == "12");
+    CHECK(call(rig, "info:GetEffectTargetBIsArea(0)") == "false");
+
+    // Self-cast detection from effect targets (TARGET_UNIT_CASTER == 1).
+    CHECK(call(rig, "info:IsSelfCast()") == "false");
+    {
+        FakeHost::FakeSpellInfo& selfInfo = rig.host.spellInfo(733);
+        FakeHost::FakeSpellInfo::FakeEffect se0;
+        se0.isEffect = true;
+        se0.targetA.target = 1;
+        se0.targetB.target = 0;
+        FakeHost::FakeSpellInfo::FakeEffect se1;
+        se1.isEffect = false;
+        se1.targetA.target = 6;
+        selfInfo.effectSlots = {se0, se1};
+        CHECK(call(rig, "GetSpellInfo(733):IsSelfCast()") == "true");
+
+        FakeHost::FakeSpellInfo& areaInfo = rig.host.spellInfo(734);
+        FakeHost::FakeSpellInfo::FakeEffect ae0;
+        ae0.isEffect = true;
+        ae0.targetA.target = 1;
+        ae0.targetB.target = 20;
+        areaInfo.effectSlots = {ae0};
+        CHECK(call(rig, "GetSpellInfo(734):IsSelfCast()") == "false");
+
+        rig.host.spellInfo(735);
+        CHECK(call(rig, "GetSpellInfo(735):IsSelfCast()") == "false");
+    }
+
+    // Bounds checks and core stubs.
+    CHECK(errorOf(rig, "return info:GetEffectType(1)").find("is not an effect") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetEffectDieSides(1)").find("is not an effect") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetEffectDieSides(-1)").find("0..4294967295") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetEffectSpellClassMask(0, 3)").find("0..2") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetSpellVisual(2)").find("0..1") != std::string::npos);
+    CHECK(errorOf(rig, "return info:GetDiminishingReturnsGroupForSpell()").find("boolean") != std::string::npos);
+    for (char const* stubCall : {"info:GetManaPerSecondPerLevel()", "info:GetPriority()",
+                                 "info:GetRuneCostID()", "info:IsAffectedBySpellMod()"})
+    {
+        std::string const err = errorOf(rig, std::string("return ") + stubCall);
+        INFO("stub " << stubCall << ": " << err);
+        CHECK(err.find("not available on this core") != std::string::npos);
+    }
+}
+
+TEST_CASE("eluna spell events: all 23 documented events register as honest C14 stubs and log once")
+{
+    SpellRig rig;
+    static char const* const kExpectedNames[23] = {
+        "CAST",
+        "AURA_APPLICATION",
+        "DISPEL",
+        "PERIODIC_TICK",
+        "PERIODIC_UPDATE",
+        "AURA_CALC_AMOUNT",
+        "CALC_PERIODIC",
+        "CHECK_PROC",
+        "PROC",
+        "CHECK_CAST",
+        "BEFORE_CAST",
+        "AFTER_CAST",
+        "OBJECT_AREA_TARGET",
+        "OBJECT_TARGET",
+        "DEST_TARGET",
+        "EFFECT_LAUNCH",
+        "EFFECT_LAUNCH_TARGET",
+        "EFFECT_CALC_ABSORB",
+        "EFFECT_HIT",
+        "BEFORE_HIT",
+        "EFFECT_HIT_TARGET",
+        "HIT",
+        "AFTER_HIT",
+    };
+
+    for (uint32_t id = 1; id <= 23; ++id)
+    {
+        std::string const lua =
+            "local c = RegisterSpellEvent(133, " + std::to_string(id) + ", function() end) return type(c)";
+        CHECK(rig.ok(lua) == "function");
+        CHECK(rig.host.logContains(std::string("event spell ") + kExpectedNames[id - 1] + " needs core hook C14"));
+    }
+    CHECK(rig.e().status().elunaHandlers == 23);
+
+    // Repeating registration for the same event ids does not duplicate the C14 warnings, and cancel removes one.
+    size_t const logsBefore = rig.host.logs.size();
+    CHECK(rig.ok("local c = RegisterSpellEvent(200, 1, function() end, 1) c() return type(c)") == "function");
+    CHECK(rig.host.logs.size() == logsBefore);
+    CHECK(rig.e().status().elunaHandlers == 23);
+
+    // Undocumented spell event id still registers and notes both the missing spec id and C14 once.
+    CHECK(rig.ok("return type(RegisterSpellEvent(133, 99, function() end))") == "function");
+    CHECK(rig.host.logContains("event spell 99 is not in the Eluna documentation"));
+    CHECK(rig.host.logContains("event spell ? needs core hook C14"));
+
+    // Argument validation runs before registration.
+    CHECK(errorOf(rig, "return RegisterSpellEvent(-1, 1, function() end)").find("entry must be an integer") !=
+          std::string::npos);
+    CHECK(errorOf(rig, "return RegisterSpellEvent(133, -1, function() end)").find("event must be an integer") !=
+          std::string::npos);
+    CHECK(errorOf(rig, "return RegisterSpellEvent(133, 1, 42)").find("function expected") != std::string::npos);
+}

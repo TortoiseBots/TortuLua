@@ -20,6 +20,10 @@ function Map:GetDifficulty() end
 ---@return any
 function Map:GetHeight(arg1, arg2) end
 
+---@deprecated not available (this core)
+---@return any
+function Map:GetInstanceData() end
+
 ---@return any
 function Map:GetInstanceId() end
 
@@ -56,6 +60,10 @@ function Map:IsHeroic() end
 
 ---@return any
 function Map:IsRaid() end
+
+---@deprecated not available (this core)
+---@return any
+function Map:SaveInstanceData() end
 
 ---@param zone any
 ---@param type any

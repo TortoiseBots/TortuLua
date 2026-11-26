@@ -80,7 +80,8 @@
    "status": "implemented"
   },
   "CreateLongLong": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns a native Lua 5.4 signed 64-bit integer"
   },
   "CreateLuaEvent": {
    "status": "implemented"
@@ -89,7 +90,8 @@
    "status": "implemented"
   },
   "CreateULongLong": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns a native Lua 5.4 64-bit integer"
   },
   "GetActiveGameEvents": {
    "status": "implemented"
@@ -130,7 +132,8 @@
    "status": "implemented"
   },
   "GetItemGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID)"
   },
   "GetItemLink": {
    "status": "implemented"
@@ -143,7 +146,8 @@
    "status": "implemented"
   },
   "GetObjectGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)"
   },
   "GetOwnerHalaa": {
    "status": "stub",
@@ -159,7 +163,8 @@
    "status": "implemented"
   },
   "GetPlayerGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID)"
   },
   "GetPlayersInWorld": {
    "status": "implemented"
@@ -171,7 +176,7 @@
    "status": "implemented"
   },
   "GetRealmID": {
-   "status": "missing"
+   "status": "implemented"
   },
   "GetSpellInfo": {
    "status": "implemented"
@@ -189,25 +194,26 @@
    "status": "implemented"
   },
   "GetUnitGUID": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)"
   },
   "IsBagPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "IsBankPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "IsCompatibilityMode": {
    "status": "implemented"
   },
   "IsEquipmentPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "IsGameEventActive": {
    "status": "implemented"
   },
   "IsInventoryPos": {
-   "status": "missing"
+   "status": "implemented"
   },
   "Kick": {
    "status": "implemented"
@@ -272,7 +278,8 @@
    "status": "implemented"
   },
   "RegisterSpellEvent": {
-   "status": "missing"
+   "status": "implemented",
+   "note": "accepts spell event registrations as honest stubs (all 23 events need core hook C14)"
   },
   "RegisterUniqueCreatureEvent": {
    "status": "implemented"
@@ -347,14 +354,18 @@
    "inherits": null,
    "methods": {
     "GetByteValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetEntry": {
      "status": "implemented",
      "declared": "Object"
     },
     "GetFloatValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetGUID": {
      "status": "implemented",
@@ -366,7 +377,9 @@
      "declared": "Object"
     },
     "GetInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetScale": {
      "status": "implemented",
@@ -377,17 +390,23 @@
      "declared": "Object"
     },
     "GetUInt16Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetUInt32Value": {
-     "status": "implemented",
+     "status": "stub",
+     "note": "stub: not available (this core)",
      "declared": "Object"
     },
     "GetUInt64Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "HasFlag": {
-     "status": "implemented",
+     "status": "stub",
+     "note": "stub: not available (this core)",
      "declared": "Object"
     },
     "IsInWorld": {
@@ -399,38 +418,57 @@
      "declared": "Object"
     },
     "RemoveFlag": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetByteValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetFlag": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetFloatValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetInt16Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetScale": {
      "status": "implemented",
      "declared": "Object"
     },
     "SetUInt16Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetUInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetUInt64Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "ToCorpse": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Object"
     },
     "ToCreature": {
      "status": "implemented",
@@ -449,7 +487,9 @@
      "declared": "Object"
     },
     "UpdateUInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     }
    }
   },
@@ -457,10 +497,12 @@
    "inherits": "Object",
    "methods": {
     "Data": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetAngle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetAreaId": {
      "status": "implemented",
@@ -475,16 +517,20 @@
      "declared": "WorldObject"
     },
     "GetDistance2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetExactDistance": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetExactDistance2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetGameObjectsInRange": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetInstanceId": {
      "status": "implemented",
@@ -519,24 +565,29 @@
      "declared": "WorldObject"
     },
     "GetNearObject": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetNearObjects": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetO": {
      "status": "implemented",
      "declared": "WorldObject"
     },
     "GetPhaseMask": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "WorldObject"
     },
     "GetPlayersInRange": {
      "status": "implemented",
      "declared": "WorldObject"
     },
     "GetRelativePoint": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetX": {
      "status": "implemented",
@@ -555,47 +606,60 @@
      "declared": "WorldObject"
     },
     "IsInBack": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInFront": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInMap": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInRange": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInRange2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInRange3d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDist": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDist2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDist3d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDistInMap": {
      "status": "implemented",
      "declared": "WorldObject"
     },
     "IsWithinLoS": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "PlayDirectSound": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "PlayDistanceSound": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "PlayMusic": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "RegisterEvent": {
      "status": "implemented",
@@ -610,23 +674,25 @@
      "declared": "WorldObject"
     },
     "SendPacket": {
-     "status": "missing",
-     "note": "the engine registers it on `Player` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SendUnitSay": {
-     "status": "missing",
-     "note": "the engine registers it on `Unit` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SendUnitWhisper": {
-     "status": "missing",
-     "note": "the engine registers it on `Unit` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SendUnitYell": {
-     "status": "missing",
-     "note": "the engine registers it on `Unit` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SetPhaseMask": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "WorldObject"
     },
     "SpawnCreature": {
      "status": "implemented",
@@ -646,10 +712,12 @@
      "declared": "Unit"
     },
     "AddFlatStatModifier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "AddPctStatModifier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "AddUnitState": {
      "status": "implemented",
@@ -664,7 +732,8 @@
      "declared": "Unit"
     },
     "CanModifyStats": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "CastCustomSpell": {
      "status": "implemented",
@@ -675,7 +744,8 @@
      "declared": "Unit"
     },
     "CastSpellAoF": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "ClearInCombat": {
      "status": "implemented",
@@ -686,10 +756,12 @@
      "declared": "Unit"
     },
     "CountPctFromCurHealth": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "CountPctFromMaxHealth": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "DealDamage": {
      "status": "implemented",
@@ -704,7 +776,8 @@
      "declared": "Unit"
     },
     "DisableMelee": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "Dismount": {
      "status": "implemented",
@@ -731,7 +804,8 @@
      "declared": "Unit"
     },
     "GetCharmGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetClass": {
      "status": "implemented",
@@ -750,7 +824,8 @@
      "declared": "Unit"
     },
     "GetControllerGUIDS": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetCreatorGUID": {
      "status": "implemented",
@@ -761,7 +836,8 @@
      "declared": "Unit"
     },
     "GetCritterGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetCurrentSpell": {
      "status": "implemented",
@@ -860,7 +936,8 @@
      "declared": "Unit"
     },
     "GetStandState": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "GetStat": {
      "status": "implemented",
@@ -909,21 +986,24 @@
      "declared": "Unit"
     },
     "IsArmorer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsAttackingPlayer": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsAuctioneer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsBanker": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsBattleMaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsCasting": {
      "status": "implemented",
@@ -938,7 +1018,8 @@
      "declared": "Unit"
     },
     "IsDying": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsFlying": {
      "status": "implemented",
@@ -957,14 +1038,16 @@
      "declared": "Unit"
     },
     "IsGuildMaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsHostileTo": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsInAccessiblePlaceFor": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsInCombat": {
      "status": "implemented",
@@ -1008,14 +1091,16 @@
      "declared": "Unit"
     },
     "IsSpiritGuide": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsSpiritHealer": {
      "status": "implemented",
      "declared": "Unit"
     },
     "IsSpiritService": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsStandState": {
      "status": "implemented",
@@ -1026,10 +1111,12 @@
      "declared": "Unit"
     },
     "IsTabardDesigner": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsTaxi": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "IsTrainer": {
      "status": "implemented",
@@ -1128,10 +1215,12 @@
      "declared": "Unit"
     },
     "RemoveBindSightAuras": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "RemoveCharmAuras": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "RestoreDisplayId": {
      "status": "implemented",
@@ -1146,7 +1235,8 @@
      "declared": "Unit"
     },
     "SendUnitEmote": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SendUnitSay": {
      "status": "implemented",
@@ -1161,17 +1251,20 @@
      "declared": "Unit"
     },
     "SetCanFly": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetConfused": {
      "status": "implemented",
      "declared": "Unit"
     },
     "SetCreatorGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetCritterGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetDisplayId": {
      "status": "implemented",
@@ -1194,15 +1287,16 @@
      "declared": "Unit"
     },
     "SetFFA": {
-     "status": "missing",
-     "note": "the engine registers it on `Player` only"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetHealth": {
      "status": "implemented",
      "declared": "Unit"
     },
     "SetImmuneTo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetInCombatWith": {
      "status": "implemented",
@@ -1221,7 +1315,9 @@
      "declared": "Unit"
     },
     "SetName": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit",
+     "note": "non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes"
     },
     "SetNativeDisplayId": {
      "status": "implemented",
@@ -1232,7 +1328,8 @@
      "declared": "Unit"
     },
     "SetPetGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetPower": {
      "status": "implemented",
@@ -1271,7 +1368,8 @@
      "declared": "Unit"
     },
     "SetVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Unit"
     },
     "SetWaterWalk": {
      "status": "implemented",
@@ -1287,102 +1385,125 @@
    "inherits": "Unit",
    "methods": {
     "AddComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AddItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "AddLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "AddQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "AddTalent": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AdvanceAllSkills": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AdvanceSkill": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AdvanceSkillsToMax": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "AreaExploredOrEventHappens": {
      "status": "implemented",
      "declared": "Player"
     },
     "BindToInstance": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanBlock": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanCompleteQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "CanCompleteRepeatableQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanEquipItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "CanFly": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanParry": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanRewardQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "CanShareQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanSpeak": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanTitanGrip": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanUninviteFromGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CanUseItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "ClearComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "CompleteQuest": {
      "status": "implemented",
      "declared": "Player"
     },
     "DurabilityLoss": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityLossAll": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityPointLossForEquipSlot": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityPointsLoss": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityPointsLossAll": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityRepair": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "DurabilityRepairAll": {
      "status": "implemented",
@@ -1427,10 +1548,12 @@
      "declared": "Player"
     },
     "GetChampioningFaction": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetChatTag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetClass": {
      "status": "implemented",
@@ -1441,34 +1564,41 @@
      "declared": "Player"
     },
     "GetComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetComboTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetCorpse": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetDbcLocale": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetDbLocaleIndex": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetDifficulty": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetDrunkValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetEquippedItemBySlot": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetFreeTalentPoints": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetGender": {
      "status": "implemented",
@@ -1479,14 +1609,16 @@
      "declared": "Player"
     },
     "GetGossipTextId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetGroup": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetGroupInvite": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetGuild": {
      "status": "implemented",
@@ -1501,17 +1633,20 @@
      "declared": "Player"
     },
     "GetGuildRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetHealthBonusFromStamina": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetHonorPoints": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetInGameTime": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetItemByEntry": {
      "status": "implemented",
@@ -1543,35 +1678,45 @@
      "declared": "Player"
     },
     "GetLifetimeKills": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetMailCount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetMailItem": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetManaBonusFromIntellect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetMaxSkillValue": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetNearbyGameObject": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetNextRandomRaidMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetOriginalGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetOriginalSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetPhaseMaskForSpawn": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "GetPlayerIP": {
      "status": "implemented",
@@ -1586,7 +1731,8 @@
      "declared": "Player"
     },
     "GetQuestLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetQuestRewardStatus": {
      "status": "implemented",
@@ -1601,7 +1747,8 @@
      "declared": "Unit"
     },
     "GetRecruiterId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetReputation": {
      "status": "implemented",
@@ -1620,17 +1767,20 @@
      "declared": "Player"
     },
     "GetSelectedPlayer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetSelectedUnit": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetSelection": {
      "status": "implemented",
      "declared": "Player"
     },
     "GetShieldBlockValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetSkillPermBonusValue": {
      "status": "implemented",
@@ -1654,7 +1804,8 @@
      "declared": "Player"
     },
     "GetSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GetTeam": {
      "status": "implemented",
@@ -1673,7 +1824,8 @@
      "declared": "Player"
     },
     "GetXPRestBonus": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GiveXP": {
      "status": "implemented",
@@ -1700,17 +1852,20 @@
      "declared": "Player"
     },
     "GossipSendPOI": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GroupCreate": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "GroupEventHappens": {
      "status": "implemented",
      "declared": "Player"
     },
     "GroupInvite": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasAchieved": {
      "status": "stub",
@@ -1718,14 +1873,16 @@
      "declared": "Player"
     },
     "HasAtLoginFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "HasPendingBind": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasQuest": {
      "status": "implemented",
@@ -1744,7 +1901,8 @@
      "declared": "Player"
     },
     "HasRecruited": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasSkill": {
      "status": "implemented",
@@ -1759,20 +1917,24 @@
      "declared": "Player"
     },
     "HasTalent": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "HasTitle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "InArena": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "InBattleground": {
      "status": "implemented",
      "declared": "Player"
     },
     "InBattlegroundQueue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IncompleteQuest": {
      "status": "implemented",
@@ -1784,7 +1946,8 @@
      "declared": "Player"
     },
     "IsAcceptingWhispers": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsAFK": {
      "status": "implemented",
@@ -1795,7 +1958,8 @@
      "declared": "Player"
     },
     "IsARecruiter": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsDND": {
      "status": "implemented",
@@ -1814,16 +1978,20 @@
      "declared": "Player"
     },
     "IsGMChat": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsGMVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsGroupVisibleFor": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsHonorOrXPTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsHorde": {
      "status": "implemented",
@@ -1851,10 +2019,12 @@
      "declared": "Player"
     },
     "IsInSameGroupWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsInSameRaidWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsInWater": {
      "status": "implemented",
@@ -1865,13 +2035,16 @@
      "declared": "Player"
     },
     "IsNeverVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsOutdoorPvPActive": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsRecruited": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "IsRested": {
      "status": "implemented",
@@ -1887,7 +2060,8 @@
      "declared": "Player"
     },
     "IsVisibleForPlayer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "KickPlayer": {
      "status": "implemented",
@@ -1898,23 +2072,29 @@
      "declared": "Player"
     },
     "KilledPlayerCredit": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "KillGOCredit": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "KillPlayer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "LearnSpell": {
      "status": "implemented",
      "declared": "Player"
     },
     "LearnTalent": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "LeaveBattleground": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "LogoutPlayer": {
      "status": "implemented",
@@ -1934,7 +2114,8 @@
      "declared": "Player"
     },
     "Mute": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveActiveQuest": {
      "status": "implemented",
@@ -1946,23 +2127,29 @@
      "declared": "Player"
     },
     "RemovedInsignia": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveFromBattlegroundRaid": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveFromGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveItem": {
      "status": "implemented",
      "declared": "Player"
     },
     "RemoveLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "RemovePet": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "RemoveQuest": {
      "status": "implemented",
@@ -1986,17 +2173,21 @@
      "declared": "Player"
     },
     "ResetPetTalents": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "ResetSpellCooldown": {
      "status": "implemented",
      "declared": "Player"
     },
     "ResetTalents": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "ResetTalentsCost": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "ResetTypeCooldowns": {
      "status": "implemented",
@@ -2011,7 +2202,8 @@
      "declared": "Player"
     },
     "RunCommand": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SaveToDB": {
      "status": "implemented",
@@ -2022,30 +2214,37 @@
      "declared": "Player"
     },
     "SendAddonMessage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendAreaTriggerMessage": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "SendAuctionMenu": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendBroadcastMessage": {
      "status": "implemented",
      "declared": "Player"
     },
     "SendCinematicStart": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendGuildInvite": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendListInventory": {
      "status": "implemented",
      "declared": "Player"
     },
     "SendMovieStart": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendNotification": {
      "status": "implemented",
@@ -2056,20 +2255,24 @@
      "declared": "Player"
     },
     "SendQuestTemplate": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendShowBank": {
      "status": "implemented",
      "declared": "Player"
     },
     "SendShowMailBox": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendSpiritResurrect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendTabardVendorActivate": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SendTaxiMenu": {
      "status": "implemented",
@@ -2080,10 +2283,12 @@
      "declared": "Player"
     },
     "SendUpdateWorldState": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetAcceptWhispers": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetAchievement": {
      "status": "stub",
@@ -2096,7 +2301,8 @@
      "declared": "Player"
     },
     "SetAtLoginFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetBindPoint": {
      "status": "implemented",
@@ -2107,58 +2313,75 @@
      "declared": "Player"
     },
     "SetDrunkValue": {
-     "status": "missing"
-    },
-    "SetFactionForRace": {
-     "status": "missing"
-    },
-    "SetFFA": {
      "status": "implemented",
      "declared": "Player"
     },
+    "SetFactionForRace": {
+     "status": "implemented",
+     "declared": "Player",
+     "note": "refuses a race id the core's race store does not know with an error and leaves team and faction unchanged"
+    },
+    "SetFFA": {
+     "status": "implemented",
+     "declared": "Unit"
+    },
     "SetFreeTalentPoints": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "SetGameMaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGender": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGMChat": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGMVisible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetGuildRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetHonorPoints": {
      "status": "implemented",
      "declared": "Player"
     },
     "SetKnownTitle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetLevel": {
      "status": "implemented",
      "declared": "Unit"
     },
     "SetLifetimeKills": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Player"
     },
     "SetMovement": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetPlayerLock": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetPvPDeath": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetQuestStatus": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SetReputation": {
      "status": "implemented",
@@ -2181,13 +2404,16 @@
      "declared": "Player"
     },
     "SpawnBones": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "StartTaxi": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SummonPet": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "SummonPlayer": {
      "status": "implemented",
@@ -2214,13 +2440,16 @@
      "declared": "Player"
     },
     "UnbindAllInstances": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "UnbindInstance": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "UnsetKnownTitle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Player"
     },
     "Whisper": {
      "status": "implemented",
@@ -2618,47 +2847,57 @@
      "declared": "GameObject"
     },
     "GetDisplayId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "GetGoState": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "GetLootRecipient": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "GetLootRecipientGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "GetLootState": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "HasQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "IsActive": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "IsDestructible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "IsSpawned": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "IsTransport": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "RemoveFromWorld": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "Respawn": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "SaveToDB": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this server)",
+     "declared": "GameObject"
     },
     "SetGoState": {
      "status": "implemented",
@@ -2669,10 +2908,12 @@
      "declared": "GameObject"
     },
     "SetRespawnTime": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "SetSpawnedByDefault": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "UseDoorOrButton": {
      "status": "implemented",
@@ -2748,7 +2989,8 @@
      "declared": "Item"
     },
     "GetExtraFlags": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Item"
     },
     "GetFlags": {
      "status": "implemented",
@@ -2803,10 +3045,14 @@
      "declared": "Item"
     },
     "GetRandomProperty": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     },
     "GetRandomSuffix": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     },
     "GetRequiredLevel": {
      "status": "implemented",
@@ -2821,7 +3067,8 @@
      "declared": "Item"
     },
     "GetSpeed": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Item"
     },
     "GetSpellId": {
      "status": "implemented",
@@ -2940,10 +3187,14 @@
      "declared": "Item"
     },
     "SetRandomProperty": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     },
     "SetRandomSuffix": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Item"
     }
    }
   },
@@ -2955,60 +3206,76 @@
      "declared": "Group"
     },
     "ConvertToLFG": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "ConvertToRaid": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "Disband": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetLeaderGUID": {
      "status": "implemented",
      "declared": "Group"
     },
     "GetMemberFlags": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetMemberGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetMemberGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "GetMembers": {
      "status": "implemented",
      "declared": "Group"
     },
     "GetMembersCount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "HasFreeSlotSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsAssistant": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsBFGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsBGGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsFull": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsLeader": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsLFGGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "IsRaidGroup": {
      "status": "implemented",
@@ -3019,23 +3286,28 @@
      "declared": "Group"
     },
     "SameSubGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SendPacket": {
      "status": "implemented",
      "declared": "Group"
     },
     "SetLeader": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SetMemberFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SetMembersGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     },
     "SetTargetIcon": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Group"
     }
    }
   },
@@ -3043,36 +3315,45 @@
    "inherits": null,
    "methods": {
     "AddMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild",
+     "note": "an explicit rankId is validated by the core: the member is added at the lowest rank, then moved to rankId only if the guild has that rank; if it has not, the member stays at the lowest rank and a warning is logged (the call is queued, so it cannot return the refusal)"
     },
     "DeleteMember": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "Disband": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetInfo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetLeader": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetLeaderGUID": {
      "status": "implemented",
      "declared": "Guild"
     },
     "GetMemberCount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetMembers": {
      "status": "implemented",
      "declared": "Guild"
     },
     "GetMOTD": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "GetName": {
      "status": "implemented",
@@ -3083,7 +3364,8 @@
      "declared": "Guild"
     },
     "SendPacketToRanked": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     },
     "SetBankTabText": {
      "status": "stub",
@@ -3091,10 +3373,13 @@
      "declared": "Guild"
     },
     "SetLeader": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this server)",
+     "declared": "Guild"
     },
     "SetMemberRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Guild"
     }
    }
   },
@@ -3102,7 +3387,8 @@
    "inherits": null,
    "methods": {
     "GetFlags": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetId": {
      "status": "implemented",
@@ -3113,36 +3399,44 @@
      "declared": "Quest"
     },
     "GetMaxLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetMinLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetNextQuestId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetNextQuestInChain": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetPrevQuestId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "GetTitle": {
      "status": "implemented",
      "declared": "Quest"
     },
     "GetType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "HasFlag": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     },
     "IsDaily": {
      "status": "implemented",
      "declared": "Quest"
     },
     "IsRepeatable": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Quest"
     }
    }
   },
@@ -3392,7 +3686,9 @@
      "declared": "Map"
     },
     "GetInstanceData": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Map"
     },
     "GetInstanceId": {
      "status": "implemented",
@@ -3443,7 +3739,9 @@
      "declared": "Map"
     },
     "SaveInstanceData": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Map"
     },
     "SetWeather": {
      "status": "implemented",
@@ -3537,7 +3835,8 @@
      "declared": "WorldPacket"
     },
     "ReadByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadDouble": {
      "status": "implemented",
@@ -3548,33 +3847,40 @@
      "declared": "WorldPacket"
     },
     "ReadGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadLong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadString": {
      "status": "implemented",
      "declared": "WorldPacket"
     },
     "ReadUByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadULong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "ReadUShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "SetOpcode": {
      "status": "implemented",
      "declared": "WorldPacket"
     },
     "WriteByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteDouble": {
      "status": "implemented",
@@ -3585,26 +3891,32 @@
      "declared": "WorldPacket"
     },
     "WriteGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteLong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteString": {
      "status": "implemented",
      "declared": "WorldPacket"
     },
     "WriteUByte": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteULong": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     },
     "WriteUShort": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldPacket"
     }
    }
   },
@@ -3749,164 +4061,218 @@
    "inherits": null,
    "methods": {
     "CalculateAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "CalculatePeriodic": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "CanBeRecalculated": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "ChangeAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetAmplitude": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetAuraType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetBase": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetBaseAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetCaster": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetCasterGUID": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetEffIndex": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetPeriodicTimer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetRemainingTicks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetSpellInfo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetTargetList": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetTickNumber": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "GetTotalTicks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "RecalculateAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "SetAmount": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "SetCanBeRecalculated": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     },
     "SetPeriodicTimer": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "AuraEffect"
     }
-   }
+   },
+   "note": "implemented, but unreachable from scripts until core spell hooks exist"
   },
   "ElunaProcInfo": {
    "inherits": null,
    "methods": {
     "GetActionTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetActor": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetAttackType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetBlock": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetDamageAbsorb": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetDamageType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetEffectiveHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetHealAbsorb": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetHitMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetMap": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetProcSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetResist": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSchoolMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSpellInfo": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSpellPhaseMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetSpellTypeMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "GetTypeMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "HasDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "HasHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetAbsorbDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetAbsorbHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetBlockDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetEffectiveHeal": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     },
     "SetHeal": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "ElunaProcInfo"
     },
     "SetResistDamage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "ElunaProcInfo"
     }
-   }
+   },
+   "note": "implemented, but unreachable from scripts until core spell hooks exist"
   },
   "SpellInfo": {
    "inherits": null,
@@ -3932,41 +4298,52 @@
      "declared": "SpellInfo"
     },
     "CheckTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "CheckTargetCreatureType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsAreaAuraEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsAura": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsAuraType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsEffectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsTargetingArea": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "EffectIsUnitOwnedAuraEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetActiveIconID": {
      "status": "implemented",
      "declared": "SpellInfo"
     },
     "GetAllEffectsMechanicMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetAllowedMechanicMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetAreaGroupId": {
      "status": "implemented",
@@ -4049,16 +4426,20 @@
      "declared": "SpellInfo"
     },
     "GetDiminishingReturnsGroupForSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDiminishingReturnsGroupType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDiminishingReturnsLimitDuration": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDiminishingReturnsMaxLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetDispel": {
      "status": "implemented",
@@ -4073,127 +4454,169 @@
      "declared": "SpellInfo"
     },
     "GetEffectAmplitude": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectApplyAuraName": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectBasePoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectBonusMultiplier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectCalcRadius": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectCalcValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectChainTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectDamageMultiplier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectDieSides": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo",
+     "note": "returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing effects; 0 for others)"
     },
     "GetEffectHasRadius": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectImplicitTargetType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectIndex": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectItemType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMechanic": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMechanicMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMiscValue": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectMiscValueB": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectPointsPerComboPoint": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectProvidedTargetMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectRealPointsPerLevel": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectSpellClassMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetACheckType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetADirectionAngle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetADirectionType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetAIsArea": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetAObjectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetAReferenceType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetASelectionCategory": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetATarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBCheckType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBDirectionAngle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBDirectionType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBIsArea": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBObjectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBReferenceType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBSelectionCategory": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTargetBTarget": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectTriggerSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectUsedTargetObjectType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEffectValueMultiplier": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetEquippedItemClass": {
      "status": "implemented",
@@ -4208,10 +4631,12 @@
      "declared": "SpellInfo"
     },
     "GetExcludeCasterAuraSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetExcludeTargetAuraSpell": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetExplicitTargetMask": {
      "status": "implemented",
@@ -4234,7 +4659,8 @@
      "declared": "SpellInfo"
     },
     "GetManaCostPercentage": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetManaCostPerlevel": {
      "status": "implemented",
@@ -4245,7 +4671,9 @@
      "declared": "SpellInfo"
     },
     "GetManaPerSecondPerLevel": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "GetMaxAffectedTargets": {
      "status": "implemented",
@@ -4268,7 +4696,8 @@
      "declared": "SpellInfo"
     },
     "GetMaxTicks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetMechanic": {
      "status": "implemented",
@@ -4287,7 +4716,9 @@
      "declared": "SpellInfo"
     },
     "GetPriority": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "GetProcChance": {
      "status": "implemented",
@@ -4322,7 +4753,9 @@
      "declared": "SpellInfo"
     },
     "GetRuneCostID": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "GetSchoolMask": {
      "status": "implemented",
@@ -4349,14 +4782,16 @@
      "declared": "SpellInfo"
     },
     "GetSpellMechanicMaskByEffectMask": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetSpellSpecific": {
      "status": "implemented",
      "declared": "SpellInfo"
     },
     "GetSpellVisual": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "GetStackAmount": {
      "status": "implemented",
@@ -4427,16 +4862,21 @@
      "declared": "SpellInfo"
     },
     "IsAbilityLearnedWithProfession": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAbilityOfSkillType": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAffected": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAffectedBySpellMod": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "SpellInfo"
     },
     "IsAffectedBySpellMods": {
      "status": "implemented",
@@ -4451,10 +4891,12 @@
      "declared": "SpellInfo"
     },
     "IsAuraExclusiveBySpecificPerCasterWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAuraExclusiveBySpecificWith": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsAutocastable": {
      "status": "implemented",
@@ -4465,7 +4907,8 @@
      "declared": "SpellInfo"
     },
     "IsBreakingStealth": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsChanneled": {
      "status": "implemented",
@@ -4484,7 +4927,8 @@
      "declared": "SpellInfo"
     },
     "IsExplicitDiscovery": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsGroupBuff": {
      "status": "implemented",
@@ -4495,10 +4939,12 @@
      "declared": "SpellInfo"
     },
     "IsItemFitToSpellRequirements": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsLootCrafting": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsMoveAllowedChannel": {
      "status": "implemented",
@@ -4517,7 +4963,8 @@
      "declared": "SpellInfo"
     },
     "IsPassiveStackableWithRanks": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsPositive": {
      "status": "implemented",
@@ -4528,16 +4975,20 @@
      "declared": "SpellInfo"
     },
     "IsPrimaryProfession": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsPrimaryProfessionFirstRank": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsProfession": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsProfessionOrRiding": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsRangedWeaponSpell": {
      "status": "implemented",
@@ -4556,14 +5007,16 @@
      "declared": "SpellInfo"
     },
     "IsSelfCast": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsSingleTarget": {
      "status": "implemented",
      "declared": "SpellInfo"
     },
     "IsStackableOnOneSlotWithDifferentCasters": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "IsStackableWithRanks": {
      "status": "implemented",
@@ -4574,7 +5027,8 @@
      "declared": "SpellInfo"
     },
     "NeedsComboPoints": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     },
     "NeedsExplicitUnitTarget": {
      "status": "implemented",
@@ -4585,7 +5039,8 @@
      "declared": "SpellInfo"
     },
     "SpellCancelsAuraEffect": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "SpellInfo"
     }
    }
   }
@@ -5052,8 +5507,8 @@
    "51": {
     "status": "implemented",
     "name": "QUEST_STATUS_CHANGED",
-    "note": "documented by name; the spec's id table has no id for it",
-    "requires": null
+    "requires": null,
+    "note": "documented by name; the spec's id table has no id for it"
    }
   },
   "creature": {
@@ -5337,17 +5792,23 @@
     "requires": null,
     "note": "fires for items whose ScriptName is forever_lua_item"
    },
-   "on_add": {
-    "status": "missing",
-    "name": "on_add"
+   "6": {
+    "status": "stub",
+    "name": "ADD",
+    "note": "stub: needs core hook C13; documented by name; the spec's id table has no id for it",
+    "requires": "C13"
    },
-   "on_equip": {
-    "status": "missing",
-    "name": "on_equip"
+   "7": {
+    "status": "stub",
+    "name": "EQUIP",
+    "note": "stub: needs core hook C13; documented by name; the spec's id table has no id for it",
+    "requires": "C13"
    },
-   "on_unequip": {
-    "status": "missing",
-    "name": "on_unequip"
+   "8": {
+    "status": "stub",
+    "name": "UNEQUIP",
+    "note": "stub: needs core hook C13; documented by name; the spec's id table has no id for it",
+    "requires": "C13"
    }
   },
   "player gossip": {
@@ -5434,9 +5895,11 @@
     "note": "stub: needs core hook C10",
     "requires": "C10"
    },
-   "on_member_accept": {
-    "status": "missing",
-    "name": "on_member_accept"
+   "7": {
+    "status": "stub",
+    "name": "MEMBER_ACCEPT",
+    "note": "stub: needs core hook C10; documented by name; the spec's id table has no id for it",
+    "requires": "C10"
    }
   },
   "guild": {
@@ -5617,321 +6080,149 @@
    }
   },
   "spell": {
-   "on_cast": {
-    "status": "missing",
-    "name": "on_cast"
+   "1": {
+    "status": "stub",
+    "name": "CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_aura_application": {
-    "status": "missing",
-    "name": "on_aura_application"
+   "2": {
+    "status": "stub",
+    "name": "AURA_APPLICATION",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_dispel": {
-    "status": "missing",
-    "name": "on_dispel"
+   "3": {
+    "status": "stub",
+    "name": "DISPEL",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_periodic_tick": {
-    "status": "missing",
-    "name": "on_periodic_tick"
+   "4": {
+    "status": "stub",
+    "name": "PERIODIC_TICK",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_periodic_update": {
-    "status": "missing",
-    "name": "on_periodic_update"
+   "5": {
+    "status": "stub",
+    "name": "PERIODIC_UPDATE",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_aura_calc_amount": {
-    "status": "missing",
-    "name": "on_aura_calc_amount"
+   "6": {
+    "status": "stub",
+    "name": "AURA_CALC_AMOUNT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_calc_periodic": {
-    "status": "missing",
-    "name": "on_calc_periodic"
+   "7": {
+    "status": "stub",
+    "name": "CALC_PERIODIC",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_check_proc": {
-    "status": "missing",
-    "name": "on_check_proc"
+   "8": {
+    "status": "stub",
+    "name": "CHECK_PROC",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_proc": {
-    "status": "missing",
-    "name": "on_proc"
+   "9": {
+    "status": "stub",
+    "name": "PROC",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_check_cast": {
-    "status": "missing",
-    "name": "on_check_cast"
+   "10": {
+    "status": "stub",
+    "name": "CHECK_CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_before_cast": {
-    "status": "missing",
-    "name": "on_before_cast"
+   "11": {
+    "status": "stub",
+    "name": "BEFORE_CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_after_cast": {
-    "status": "missing",
-    "name": "on_after_cast"
+   "12": {
+    "status": "stub",
+    "name": "AFTER_CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_object_area_target": {
-    "status": "missing",
-    "name": "on_object_area_target"
+   "13": {
+    "status": "stub",
+    "name": "OBJECT_AREA_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_object_target": {
-    "status": "missing",
-    "name": "on_object_target"
+   "14": {
+    "status": "stub",
+    "name": "OBJECT_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_dest_target": {
-    "status": "missing",
-    "name": "on_dest_target"
+   "15": {
+    "status": "stub",
+    "name": "DEST_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_launch": {
-    "status": "missing",
-    "name": "on_effect_launch"
+   "16": {
+    "status": "stub",
+    "name": "EFFECT_LAUNCH",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_launch_target": {
-    "status": "missing",
-    "name": "on_effect_launch_target"
+   "17": {
+    "status": "stub",
+    "name": "EFFECT_LAUNCH_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_calc_absorb": {
-    "status": "missing",
-    "name": "on_effect_calc_absorb"
+   "18": {
+    "status": "stub",
+    "name": "EFFECT_CALC_ABSORB",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_hit": {
-    "status": "missing",
-    "name": "on_effect_hit"
+   "19": {
+    "status": "stub",
+    "name": "EFFECT_HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_before_hit": {
-    "status": "missing",
-    "name": "on_before_hit"
+   "20": {
+    "status": "stub",
+    "name": "BEFORE_HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_hit_target": {
-    "status": "missing",
-    "name": "on_effect_hit_target"
+   "21": {
+    "status": "stub",
+    "name": "EFFECT_HIT_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_hit": {
-    "status": "missing",
-    "name": "on_hit"
+   "22": {
+    "status": "stub",
+    "name": "HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_after_hit": {
-    "status": "missing",
-    "name": "on_after_hit"
+   "23": {
+    "status": "stub",
+    "name": "AFTER_HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    }
   }
  },
  "missing": {
-  "globals": [
-   "CreateLongLong",
-   "CreateULongLong",
-   "GetItemGUID",
-   "GetObjectGUID",
-   "GetPlayerGUID",
-   "GetRealmID",
-   "GetUnitGUID",
-   "IsBagPos",
-   "IsBankPos",
-   "IsEquipmentPos",
-   "IsInventoryPos",
-   "RegisterSpellEvent"
-  ],
+  "globals": [],
   "classes": {
-   "Object": [
-    "GetByteValue",
-    "GetFloatValue",
-    "GetInt32Value",
-    "GetUInt16Value",
-    "GetUInt64Value",
-    "RemoveFlag",
-    "SetByteValue",
-    "SetFlag",
-    "SetFloatValue",
-    "SetInt16Value",
-    "SetInt32Value",
-    "SetUInt16Value",
-    "SetUInt32Value",
-    "SetUInt64Value",
-    "ToCorpse",
-    "UpdateUInt32Value"
-   ],
-   "WorldObject": [
-    "Data",
-    "GetAngle",
-    "GetDistance2d",
-    "GetExactDistance",
-    "GetExactDistance2d",
-    "GetGameObjectsInRange",
-    "GetNearObject",
-    "GetNearObjects",
-    "GetPhaseMask",
-    "GetRelativePoint",
-    "IsInBack",
-    "IsInFront",
-    "IsInMap",
-    "IsInRange",
-    "IsInRange2d",
-    "IsInRange3d",
-    "IsWithinDist",
-    "IsWithinDist2d",
-    "IsWithinDist3d",
-    "IsWithinLoS",
-    "PlayDirectSound",
-    "PlayDistanceSound",
-    "PlayMusic",
-    "SendPacket",
-    "SendUnitSay",
-    "SendUnitWhisper",
-    "SendUnitYell",
-    "SetPhaseMask"
-   ],
-   "Unit": [
-    "AddFlatStatModifier",
-    "AddPctStatModifier",
-    "CanModifyStats",
-    "CastSpellAoF",
-    "CountPctFromCurHealth",
-    "CountPctFromMaxHealth",
-    "DisableMelee",
-    "GetCharmGUID",
-    "GetControllerGUIDS",
-    "GetCritterGUID",
-    "GetStandState",
-    "IsArmorer",
-    "IsAuctioneer",
-    "IsBattleMaster",
-    "IsDying",
-    "IsGuildMaster",
-    "IsInAccessiblePlaceFor",
-    "IsSpiritGuide",
-    "IsSpiritService",
-    "IsTabardDesigner",
-    "IsTaxi",
-    "RemoveBindSightAuras",
-    "RemoveCharmAuras",
-    "SendUnitEmote",
-    "SetCanFly",
-    "SetCreatorGUID",
-    "SetCritterGUID",
-    "SetFFA",
-    "SetImmuneTo",
-    "SetName",
-    "SetPetGUID",
-    "SetVisible"
-   ],
-   "Player": [
-    "AddComboPoints",
-    "AddLifetimeKills",
-    "AddTalent",
-    "AdvanceAllSkills",
-    "AdvanceSkill",
-    "AdvanceSkillsToMax",
-    "BindToInstance",
-    "CanBlock",
-    "CanCompleteRepeatableQuest",
-    "CanFly",
-    "CanParry",
-    "CanShareQuest",
-    "CanSpeak",
-    "CanTitanGrip",
-    "CanUninviteFromGroup",
-    "ClearComboPoints",
-    "DurabilityLoss",
-    "DurabilityLossAll",
-    "DurabilityPointLossForEquipSlot",
-    "DurabilityPointsLoss",
-    "DurabilityPointsLossAll",
-    "DurabilityRepair",
-    "GetChampioningFaction",
-    "GetChatTag",
-    "GetComboPoints",
-    "GetComboTarget",
-    "GetDbcLocale",
-    "GetDifficulty",
-    "GetDrunkValue",
-    "GetFreeTalentPoints",
-    "GetGossipTextId",
-    "GetGroupInvite",
-    "GetGuildRank",
-    "GetHealthBonusFromStamina",
-    "GetInGameTime",
-    "GetLifetimeKills",
-    "GetMailCount",
-    "GetMailItem",
-    "GetManaBonusFromIntellect",
-    "GetNearbyGameObject",
-    "GetNextRandomRaidMember",
-    "GetOriginalGroup",
-    "GetOriginalSubGroup",
-    "GetPhaseMaskForSpawn",
-    "GetQuestLevel",
-    "GetRecruiterId",
-    "GetSelectedPlayer",
-    "GetSelectedUnit",
-    "GetShieldBlockValue",
-    "GetSubGroup",
-    "GetXPRestBonus",
-    "GossipSendPOI",
-    "GroupCreate",
-    "GroupInvite",
-    "HasAtLoginFlag",
-    "HasPendingBind",
-    "HasRecruited",
-    "HasTalent",
-    "HasTitle",
-    "InArena",
-    "InBattlegroundQueue",
-    "IsAcceptingWhispers",
-    "IsARecruiter",
-    "IsGMChat",
-    "IsGMVisible",
-    "IsGroupVisibleFor",
-    "IsHonorOrXPTarget",
-    "IsInSameGroupWith",
-    "IsInSameRaidWith",
-    "IsNeverVisible",
-    "IsOutdoorPvPActive",
-    "IsRecruited",
-    "IsVisibleForPlayer",
-    "KilledPlayerCredit",
-    "KillGOCredit",
-    "KillPlayer",
-    "LearnTalent",
-    "LeaveBattleground",
-    "Mute",
-    "RemovedInsignia",
-    "RemoveFromBattlegroundRaid",
-    "RemoveFromGroup",
-    "RemoveLifetimeKills",
-    "RemovePet",
-    "ResetPetTalents",
-    "ResetTalents",
-    "ResetTalentsCost",
-    "RunCommand",
-    "SendAddonMessage",
-    "SendAreaTriggerMessage",
-    "SendAuctionMenu",
-    "SendCinematicStart",
-    "SendGuildInvite",
-    "SendMovieStart",
-    "SendQuestTemplate",
-    "SendShowMailBox",
-    "SendSpiritResurrect",
-    "SendTabardVendorActivate",
-    "SendUpdateWorldState",
-    "SetAcceptWhispers",
-    "SetAtLoginFlag",
-    "SetDrunkValue",
-    "SetFactionForRace",
-    "SetFreeTalentPoints",
-    "SetGameMaster",
-    "SetGender",
-    "SetGMChat",
-    "SetGMVisible",
-    "SetGuildRank",
-    "SetKnownTitle",
-    "SetLifetimeKills",
-    "SetMovement",
-    "SetPlayerLock",
-    "SetPvPDeath",
-    "SetQuestStatus",
-    "SpawnBones",
-    "StartTaxi",
-    "SummonPet",
-    "UnbindAllInstances",
-    "UnbindInstance",
-    "UnsetKnownTitle"
-   ],
    "Creature": [
     "CanAggro",
     "CanCompleteQuest",
@@ -5940,270 +6231,6 @@
     "IsTargetableForAttack",
     "RemoveFromWorld",
     "SetAggroEnabled"
-   ],
-   "GameObject": [
-    "GetDisplayId",
-    "GetLootRecipient",
-    "GetLootRecipientGroup",
-    "HasQuest",
-    "IsActive",
-    "IsDestructible",
-    "IsTransport",
-    "RemoveFromWorld",
-    "SaveToDB",
-    "SetRespawnTime",
-    "SetSpawnedByDefault"
-   ],
-   "Item": [
-    "GetExtraFlags",
-    "GetRandomProperty",
-    "GetRandomSuffix",
-    "GetSpeed",
-    "SetRandomProperty",
-    "SetRandomSuffix"
-   ],
-   "Group": [
-    "ConvertToLFG",
-    "ConvertToRaid",
-    "Disband",
-    "GetGUID",
-    "GetMemberFlags",
-    "GetMemberGroup",
-    "GetMemberGUID",
-    "GetMembersCount",
-    "HasFreeSlotSubGroup",
-    "IsAssistant",
-    "IsBFGroup",
-    "IsBGGroup",
-    "IsFull",
-    "IsLeader",
-    "IsLFGGroup",
-    "IsMember",
-    "SameSubGroup",
-    "SetLeader",
-    "SetMemberFlag",
-    "SetMembersGroup",
-    "SetTargetIcon"
-   ],
-   "Guild": [
-    "AddMember",
-    "DeleteMember",
-    "Disband",
-    "GetId",
-    "GetInfo",
-    "GetLeader",
-    "GetMemberCount",
-    "GetMOTD",
-    "SendPacketToRanked",
-    "SetLeader",
-    "SetMemberRank"
-   ],
-   "Quest": [
-    "GetFlags",
-    "GetMaxLevel",
-    "GetMinLevel",
-    "GetNextQuestId",
-    "GetNextQuestInChain",
-    "GetPrevQuestId",
-    "GetType",
-    "HasFlag",
-    "IsRepeatable"
-   ],
-   "Map": [
-    "GetInstanceData",
-    "SaveInstanceData"
-   ],
-   "WorldPacket": [
-    "ReadByte",
-    "ReadGUID",
-    "ReadLong",
-    "ReadShort",
-    "ReadUByte",
-    "ReadULong",
-    "ReadUShort",
-    "WriteByte",
-    "WriteGUID",
-    "WriteLong",
-    "WriteShort",
-    "WriteUByte",
-    "WriteULong",
-    "WriteUShort"
-   ],
-   "AuraEffect": [
-    "CalculateAmount",
-    "CalculatePeriodic",
-    "CanBeRecalculated",
-    "ChangeAmount",
-    "GetAmount",
-    "GetAmplitude",
-    "GetAuraType",
-    "GetBase",
-    "GetBaseAmount",
-    "GetCaster",
-    "GetCasterGUID",
-    "GetEffIndex",
-    "GetId",
-    "GetPeriodicTimer",
-    "GetRemainingTicks",
-    "GetSpellInfo",
-    "GetTargetList",
-    "GetTickNumber",
-    "GetTotalTicks",
-    "RecalculateAmount",
-    "SetAmount",
-    "SetCanBeRecalculated",
-    "SetPeriodicTimer"
-   ],
-   "ElunaProcInfo": [
-    "GetActionTarget",
-    "GetActor",
-    "GetAttackType",
-    "GetBlock",
-    "GetDamage",
-    "GetDamageAbsorb",
-    "GetDamageType",
-    "GetEffectiveHeal",
-    "GetHeal",
-    "GetHealAbsorb",
-    "GetHitMask",
-    "GetMap",
-    "GetProcSpell",
-    "GetResist",
-    "GetSchoolMask",
-    "GetSpellInfo",
-    "GetSpellPhaseMask",
-    "GetSpellTypeMask",
-    "GetTypeMask",
-    "HasDamage",
-    "HasHeal",
-    "SetAbsorbDamage",
-    "SetAbsorbHeal",
-    "SetBlockDamage",
-    "SetDamage",
-    "SetEffectiveHeal",
-    "SetHeal",
-    "SetResistDamage"
-   ],
-   "SpellInfo": [
-    "CheckTarget",
-    "CheckTargetCreatureType",
-    "EffectIsAreaAuraEffect",
-    "EffectIsAura",
-    "EffectIsAuraType",
-    "EffectIsEffect",
-    "EffectIsEffectType",
-    "EffectIsTargetingArea",
-    "EffectIsUnitOwnedAuraEffect",
-    "GetAllEffectsMechanicMask",
-    "GetAllowedMechanicMask",
-    "GetDiminishingReturnsGroupForSpell",
-    "GetDiminishingReturnsGroupType",
-    "GetDiminishingReturnsLimitDuration",
-    "GetDiminishingReturnsMaxLevel",
-    "GetEffectAmplitude",
-    "GetEffectApplyAuraName",
-    "GetEffectBasePoints",
-    "GetEffectBonusMultiplier",
-    "GetEffectCalcRadius",
-    "GetEffectCalcValue",
-    "GetEffectChainTarget",
-    "GetEffectDamageMultiplier",
-    "GetEffectDieSides",
-    "GetEffectHasRadius",
-    "GetEffectImplicitTargetType",
-    "GetEffectIndex",
-    "GetEffectItemType",
-    "GetEffectMechanic",
-    "GetEffectMechanicMask",
-    "GetEffectMiscValue",
-    "GetEffectMiscValueB",
-    "GetEffectPointsPerComboPoint",
-    "GetEffectProvidedTargetMask",
-    "GetEffectRealPointsPerLevel",
-    "GetEffectSpellClassMask",
-    "GetEffectTargetACheckType",
-    "GetEffectTargetADirectionAngle",
-    "GetEffectTargetADirectionType",
-    "GetEffectTargetAIsArea",
-    "GetEffectTargetAObjectType",
-    "GetEffectTargetAReferenceType",
-    "GetEffectTargetASelectionCategory",
-    "GetEffectTargetATarget",
-    "GetEffectTargetBCheckType",
-    "GetEffectTargetBDirectionAngle",
-    "GetEffectTargetBDirectionType",
-    "GetEffectTargetBIsArea",
-    "GetEffectTargetBObjectType",
-    "GetEffectTargetBReferenceType",
-    "GetEffectTargetBSelectionCategory",
-    "GetEffectTargetBTarget",
-    "GetEffectTriggerSpell",
-    "GetEffectType",
-    "GetEffectUsedTargetObjectType",
-    "GetEffectValueMultiplier",
-    "GetExcludeCasterAuraSpell",
-    "GetExcludeTargetAuraSpell",
-    "GetManaCostPercentage",
-    "GetManaPerSecondPerLevel",
-    "GetMaxTicks",
-    "GetPriority",
-    "GetRuneCostID",
-    "GetSpellMechanicMaskByEffectMask",
-    "GetSpellVisual",
-    "IsAbilityLearnedWithProfession",
-    "IsAbilityOfSkillType",
-    "IsAffected",
-    "IsAffectedBySpellMod",
-    "IsAuraExclusiveBySpecificPerCasterWith",
-    "IsAuraExclusiveBySpecificWith",
-    "IsBreakingStealth",
-    "IsExplicitDiscovery",
-    "IsItemFitToSpellRequirements",
-    "IsLootCrafting",
-    "IsPassiveStackableWithRanks",
-    "IsPrimaryProfession",
-    "IsPrimaryProfessionFirstRank",
-    "IsProfession",
-    "IsProfessionOrRiding",
-    "IsSelfCast",
-    "IsStackableOnOneSlotWithDifferentCasters",
-    "NeedsComboPoints",
-    "SpellCancelsAuraEffect"
-   ]
-  },
-  "events": {
-   "item": [
-    "on_add",
-    "on_equip",
-    "on_unequip"
-   ],
-   "group": [
-    "on_member_accept"
-   ],
-   "spell": [
-    "on_cast",
-    "on_aura_application",
-    "on_dispel",
-    "on_periodic_tick",
-    "on_periodic_update",
-    "on_aura_calc_amount",
-    "on_calc_periodic",
-    "on_check_proc",
-    "on_proc",
-    "on_check_cast",
-    "on_before_cast",
-    "on_after_cast",
-    "on_object_area_target",
-    "on_object_target",
-    "on_dest_target",
-    "on_effect_launch",
-    "on_effect_launch_target",
-    "on_effect_calc_absorb",
-    "on_effect_hit",
-    "on_before_hit",
-    "on_effect_hit_target",
-    "on_hit",
-    "on_after_hit"
    ]
   }
  },
@@ -6259,7 +6286,7 @@
     "table": null
    },
    "RegisterBotEvent": {
-    "note": "our extension (B1): the nine bot events, world state only",
+    "note": "our extension (B1): the ten bot events, world state only",
     "table": null
    },
    "RegisterCommand": {
@@ -6331,7 +6358,8 @@
     "6": "BOT_DIED",
     "7": "WIPE",
     "8": "RUN_STEP",
-    "9": "RUN_STOPPED"
+    "9": "RUN_STOPPED",
+    "10": "RUN_LOST"
    }
   }
  },

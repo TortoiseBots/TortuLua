@@ -231,6 +231,12 @@ ItemEvents = {
     EXPIRE = 4,
     ---fires for items whose ScriptName is forever_lua_item
     REMOVE = 5,
+    ---@deprecated needs core hook C13; documented by name; the spec's id table has no id for it
+    ADD = 6,
+    ---@deprecated needs core hook C13; documented by name; the spec's id table has no id for it
+    EQUIP = 7,
+    ---@deprecated needs core hook C13; documented by name; the spec's id table has no id for it
+    UNEQUIP = 8,
 }
 
 ---@enum PlayerGossipEvents
@@ -270,6 +276,8 @@ GroupEvents = {
     DISBAND = 5,
     ---@deprecated needs core hook C10
     CREATE = 6,
+    ---@deprecated needs core hook C10; documented by name; the spec's id table has no id for it
+    MEMBER_ACCEPT = 7,
 }
 
 ---@enum GuildEvents
@@ -338,6 +346,52 @@ BGEvents = BattleGroundEvents
 
 ---@enum SpellEvents
 SpellEvents = {
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    CAST = 1,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    AURA_APPLICATION = 2,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    DISPEL = 3,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    PERIODIC_TICK = 4,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    PERIODIC_UPDATE = 5,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    AURA_CALC_AMOUNT = 6,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    CALC_PERIODIC = 7,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    CHECK_PROC = 8,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    PROC = 9,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    CHECK_CAST = 10,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    BEFORE_CAST = 11,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    AFTER_CAST = 12,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    OBJECT_AREA_TARGET = 13,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    OBJECT_TARGET = 14,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    DEST_TARGET = 15,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    EFFECT_LAUNCH = 16,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    EFFECT_LAUNCH_TARGET = 17,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    EFFECT_CALC_ABSORB = 18,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    EFFECT_HIT = 19,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    BEFORE_HIT = 20,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    EFFECT_HIT_TARGET = 21,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    HIT = 22,
+    ---@deprecated needs core hook C14; documented by name; the spec's id table has no id for it
+    AFTER_HIT = 23,
 }
 
 ---@enum BotEvents
@@ -361,4 +415,6 @@ BotEvents = {
     RUN_STEP = 8,
     ---our extension
     RUN_STOPPED = 9,
+    ---our extension
+    RUN_LOST = 10,
 }

@@ -13,7 +13,7 @@ namespace fl
 {
 namespace
 {
-// The nine bot events: the ids of the maintainers' bot API specification section 3, and the test-mode names of its section 4.
+// The ten bot events: the ids of the maintainers' bot API specification section 3, and the test-mode names of its section 4.
 enum class BotEvent : uint32_t
 {
     Added = 1,       // BOT_ADDED(bot)
@@ -24,11 +24,14 @@ enum class BotEvent : uint32_t
     Died = 6,        // BOT_DIED(bot)
     Wipe = 7,        // WIPE(group, bots)
     RunStep = 8,     // RUN_STEP(leader, plan, step, leg)
-    RunStopped = 9   // RUN_STOPPED(leader, plan, done|stopped, why)
+    RunStopped = 9,  // RUN_STOPPED(leader, plan, done|stopped, why)
+    RunLost = 10     // RUN_LOST(count)
 };
 
-constexpr char const* kEventNames[] = {"bot.added",      "bot.removed",      "bot.order",  "bot.order_done", "bot.order_failed",
-                                       "bot.death",      "bot.wipe",         "bot.run_step", "bot.run_stop"};
+constexpr char const* kEventNames[] = {"bot.added",   "bot.removed",    "bot.order",    "bot.order_done", "bot.order_failed",
+                                       "bot.death",   "bot.wipe",       "bot.run_step", "bot.run_stop",   "bot.run_lost"};
+
+static_assert(sizeof(kEventNames) / sizeof(kEventNames[0]) == static_cast<size_t>(BotEvent::RunLost));
 
 size_t eventIndex(BotEvent id) { return static_cast<size_t>(id) - 1; }
 
@@ -220,7 +223,16 @@ void BotHub::pump(Engine& world, uint64_t nowMs)
         // "Never unregistered; empty snapshot after the bot module's OnShutdown": a provider that went away leaves no bot behind, and
         // every order it still had open ends first, once each (ORDER_FAILED `unavailable`), so nothing is lost silently.
         if (_builtOnce || !_track.empty() || !ordersEmpty())
-            clear(world, listeningAny(world));
+        {
+            bool const listen = listeningAny(world);
+            if (provider)
+            {
+                std::vector<RunEventInfo> last;
+                provider->takeRunEvents(last);   // the final take: a shutdown's last run events
+                emitRunEvents(last, world, listen);
+            }
+            clear(world, listen);
+        }
         return;
     }
 
@@ -438,6 +450,11 @@ void BotHub::emitRunEvents(std::vector<RunEventInfo> const& events, Engine& worl
         {
             emitEvent(world, BotEvent::RunStep,
                       {playerValue(event.leader), EventValue(event.plan), EventValue(event.step), EventValue(event.leg)});
+            continue;
+        }
+        if (event.kind == RunEventKind::Lost)
+        {
+            emitEvent(world, BotEvent::RunLost, {EventValue(event.lost)});
             continue;
         }
         emitEvent(world, BotEvent::RunStopped,

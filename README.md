@@ -13,7 +13,7 @@ touching core C++ scripts. It supports both a sandboxed test toolkit and a clean
 
 The module folder, config keys and log category are named `ForeverLua`.
 
-**Status: 0.1.0-beta.** See [`CHANGELOG.md`](CHANGELOG.md) for what works and the known limits, and
+**Status: 0.2.0-beta.** See [`CHANGELOG.md`](CHANGELOG.md) for what works and the known limits, and
 [`docs/COVERAGE.md`](docs/COVERAGE.md) for the per-name Eluna compatibility matrix.
 
 ## Modes

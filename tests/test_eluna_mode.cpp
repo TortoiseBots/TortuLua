@@ -38,6 +38,11 @@ TEST_CASE("eluna mode: the Eluna API is installed and the toolkit tables are not
     CHECK(test.ok("return type(Event)") == "table");
     CHECK(test.ok("return type(RegisterPlayerEvent)") == "nil");
     CHECK(test.ok("return type(WorldDBQuery)") == "nil");
+    CHECK(test.ok("return type(CreateLongLong)") == "nil");
+    CHECK(test.ok("return type(GetPlayerGUID)") == "nil");
+    CHECK(test.ok("return type(GetRealmID)") == "nil");
+    CHECK(test.ok("return type(IsBagPos)") == "nil");
+    CHECK(test.ok("return type(RegisterSpellEvent)") == "nil");
 }
 
 TEST_CASE("eluna mode: the standard libraries open only with OpenStdLibs")

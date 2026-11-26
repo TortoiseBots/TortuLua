@@ -45,6 +45,7 @@ bool StateSet::mapBound(EluKind kind)
         case EluKind::Map:
         case EluKind::Instance:
         case EluKind::BattleGround:
+        case EluKind::Spell:
             return true;
         case EluKind::Player:
         case EluKind::Server:

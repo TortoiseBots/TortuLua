@@ -10,15 +10,20 @@ status: stable
 
 A separate bot module that implements the `fl::BotProvider` interface (`src/engine/BotProvider.h`) registers it with TortuLua.
 
-- **Snapshot model:** The world thread captures one immutable snapshot per tick (`flh::pumpBots()` in `OnUpdate`); Lua states read only the snapshot and never call into the provider directly.
+- **Snapshot model:** The world thread captures one immutable snapshot per tick (`flh::pumpBots()` in `OnUpdate`); Lua states read only the snapshot and never call into the provider directly. On transition to unavailable (shutdown or disable), `BotHub::pump` calls `takeRunEvents` once more before clearing the snapshot, and `stopEngine()` pumps once before `server.stop` so queued run events still reach listeners.
 - **No provider:** `IsBotApiAvailable()` returns `false` and bot globals raise `"bots not built"`.
 - **State scope:** `RegisterBotEvent` is world-state only (calling it from a map state raises an error).
 
 # B1: Read API and Events
 
 - **`Bot` class (Eluna mode):** Exposes name, level, class, role (and forced flag), spec, engine and state, alive/in-combat flags, master, commander, group, underlying `Player`, last order, and active dungeon run.
-- **Eluna events (`RegisterBotEvent(event, fn [, shots])`):** IDs 1-9: `BOT_ADDED`, `BOT_REMOVED`, `ORDER_GIVEN`, `ORDER_DONE`, `ORDER_FAILED`, `BOT_DIED`, `WIPE`, `RUN_STEP`, `RUN_STOPPED`.
-- **Test mode events:** `Event.on("bot.added|removed|order|order_done|order_failed|death|wipe|run_step|run_stop", fn)`.
+- **Eluna events (`RegisterBotEvent(event, fn [, shots])`):** IDs 1-10: `BOT_ADDED`, `BOT_REMOVED`, `ORDER_GIVEN`, `ORDER_DONE`, `ORDER_FAILED`, `BOT_DIED`, `WIPE`, `RUN_STEP`, `RUN_STOPPED`, `RUN_LOST`.
+- **Test mode events:** `Event.on("bot.added|removed|order|order_done|order_failed|death|wipe|run_step|run_stop|run_lost", fn)`.
+- **Run loss event:**
+
+| ID | Event | Test-mode name | Args | Meaning |
+|---|---|---|---|---|
+| 10 | `RUN_LOST` | `bot.run_lost` | `count` | the provider dropped `count` run events (the engine did not take them in time); the events after it are the newest ones |
 
 # B2: Queued Orders
 

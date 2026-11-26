@@ -8,6 +8,19 @@ local Unit = {}
 ---@return any
 function Unit:AddAura(spell, target) end
 
+---@param statType any
+---@param modType any
+---@param value any
+---@param arg4 any
+---@return any
+function Unit:AddFlatStatModifier(statType, modType, value, arg4) end
+
+---@param statType any
+---@param modType any
+---@param value any
+---@return any
+function Unit:AddPctStatModifier(statType, modType, value) end
+
 ---@param arg1 any
 ---@return any
 function Unit:AddUnitState(arg1) end
@@ -19,6 +32,9 @@ function Unit:Attack(who, arg2) end
 
 ---@return any
 function Unit:AttackStop() end
+
+---@return any
+function Unit:CanModifyStats() end
 
 ---@param target any
 ---@param spell any
@@ -37,12 +53,28 @@ function Unit:CastCustomSpell(target, spell, arg3, arg4, arg5, arg6, castItem, o
 ---@return any
 function Unit:CastSpell(target, spell, arg3) end
 
+---@param x any
+---@param y any
+---@param z any
+---@param spell any
+---@param arg5 any
+---@return any
+function Unit:CastSpellAoF(x, y, z, spell, arg5) end
+
 ---@return any
 function Unit:ClearInCombat() end
 
 ---@param arg1 any
 ---@return any
 function Unit:ClearUnitState(arg1) end
+
+---@param pct any
+---@return any
+function Unit:CountPctFromCurHealth(pct) end
+
+---@param pct any
+---@return any
+function Unit:CountPctFromMaxHealth(pct) end
 
 ---@param target any
 ---@param arg2 any
@@ -61,6 +93,10 @@ function Unit:DealHeal(target, spell, amount, arg4) end
 
 ---@return any
 function Unit:DeMorph() end
+
+---@param arg1 any
+---@return any
+function Unit:DisableMelee(arg1) end
 
 ---@return any
 function Unit:Dismount() end
@@ -88,6 +124,9 @@ function Unit:GetBaseSpellPower(spellSchool) end
 function Unit:GetCharmerGUID() end
 
 ---@return any
+function Unit:GetCharmGUID() end
+
+---@return any
 function Unit:GetClass() end
 
 ---@param arg1 any
@@ -101,10 +140,16 @@ function Unit:GetClassMask() end
 function Unit:GetControllerGUID() end
 
 ---@return any
+function Unit:GetControllerGUIDS() end
+
+---@return any
 function Unit:GetCreatorGUID() end
 
 ---@return any
 function Unit:GetCreatureType() end
+
+---@return any
+function Unit:GetCritterGUID() end
 
 ---@param spellType any
 ---@return any
@@ -190,6 +235,9 @@ function Unit:GetRaceMask() end
 ---@return any
 function Unit:GetSpeed(arg1) end
 
+---@return any
+function Unit:GetStandState() end
+
 ---@param statType any
 ---@return any
 function Unit:GetStat(statType) end
@@ -234,10 +282,19 @@ function Unit:InterruptSpell(spellType, arg2) end
 function Unit:IsAlive() end
 
 ---@return any
+function Unit:IsArmorer() end
+
+---@return any
 function Unit:IsAttackingPlayer() end
 
 ---@return any
+function Unit:IsAuctioneer() end
+
+---@return any
 function Unit:IsBanker() end
+
+---@return any
+function Unit:IsBattleMaster() end
 
 ---@return any
 function Unit:IsCasting() end
@@ -247,6 +304,9 @@ function Unit:IsCharmed() end
 
 ---@return any
 function Unit:IsDead() end
+
+---@return any
+function Unit:IsDying() end
 
 ---@return any
 function Unit:IsFlying() end
@@ -261,9 +321,17 @@ function Unit:IsFullHealth() end
 ---@return any
 function Unit:IsGossip() end
 
+---@return any
+function Unit:IsGuildMaster() end
+
 ---@param other any
 ---@return any
 function Unit:IsHostileTo(other) end
+
+---@param obj any
+---@param radius any
+---@return any
+function Unit:IsInAccessiblePlaceFor(obj, radius) end
 
 ---@return any
 function Unit:IsInCombat() end
@@ -297,13 +365,25 @@ function Unit:IsRooted() end
 function Unit:IsServiceProvider() end
 
 ---@return any
+function Unit:IsSpiritGuide() end
+
+---@return any
 function Unit:IsSpiritHealer() end
+
+---@return any
+function Unit:IsSpiritService() end
 
 ---@return any
 function Unit:IsStandState() end
 
 ---@return any
 function Unit:IsStopped() end
+
+---@return any
+function Unit:IsTabardDesigner() end
+
+---@return any
+function Unit:IsTaxi() end
 
 ---@return any
 function Unit:IsTrainer() end
@@ -411,6 +491,12 @@ function Unit:RemoveArenaAuras() end
 function Unit:RemoveAura(spell) end
 
 ---@return any
+function Unit:RemoveBindSightAuras() end
+
+---@return any
+function Unit:RemoveCharmAuras() end
+
+---@return any
 function Unit:RestoreDisplayId() end
 
 ---@return any
@@ -422,6 +508,12 @@ function Unit:RestoreFaction() end
 ---@param target any
 ---@return any
 function Unit:SendChatMessageToPlayer(type, lang, msg, target) end
+
+---@param msg any
+---@param receiver any
+---@param arg3 any
+---@return any
+function Unit:SendUnitEmote(msg, receiver, arg3) end
 
 ---@param msg any
 ---@param language any
@@ -442,7 +534,19 @@ function Unit:SendUnitYell(msg, language) end
 
 ---@param arg1 any
 ---@return any
+function Unit:SetCanFly(arg1) end
+
+---@param arg1 any
+---@return any
 function Unit:SetConfused(arg1) end
+
+---@param arg1 any
+---@return any
+function Unit:SetCreatorGUID(arg1) end
+
+---@param arg1 any
+---@return any
+function Unit:SetCritterGUID(arg1) end
 
 ---@param displayId any
 ---@return any
@@ -464,9 +568,18 @@ function Unit:SetFaction(faction) end
 ---@return any
 function Unit:SetFeared(arg1) end
 
+---@param arg1 any
+---@return any
+function Unit:SetFFA(arg1) end
+
 ---@param health any
 ---@return any
 function Unit:SetHealth(health) end
+
+---@param immunity any
+---@param arg2 any
+---@return any
+function Unit:SetImmuneTo(immunity, arg2) end
 
 ---@param enemy any
 ---@return any
@@ -485,6 +598,11 @@ function Unit:SetMaxHealth(maxHealth) end
 ---@return any
 function Unit:SetMaxPower(type, maxPower) end
 
+---non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes
+---@param name any
+---@return any
+function Unit:SetName(name) end
+
 ---@param displayId any
 ---@return any
 function Unit:SetNativeDisplayId(displayId) end
@@ -492,6 +610,10 @@ function Unit:SetNativeDisplayId(displayId) end
 ---@param arg1 any
 ---@return any
 function Unit:SetOwnerGUID(arg1) end
+
+---@param arg1 any
+---@return any
+function Unit:SetPetGUID(arg1) end
 
 ---@param amount any
 ---@param type any
@@ -531,6 +653,10 @@ function Unit:SetStandState(state) end
 ---@param arg1 any
 ---@return any
 function Unit:SetStunned(arg1) end
+
+---@param arg1 any
+---@return any
+function Unit:SetVisible(arg1) end
 
 ---@param arg1 any
 ---@return any

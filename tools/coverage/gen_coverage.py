@@ -56,6 +56,7 @@ KIND_FAMILY = {
     "Instance": "instance",
     "Packet": "packet",
     "BattleGround": "battleground",
+    "Spell": "spell",
     "Bot": "bot",
 }
 
@@ -73,7 +74,7 @@ KNOWN_EXTRA_GLOBALS = {
     "GetBotsOfOwner": "our extension (B1): the bots of a player's Battle.net account",
     "GetBotsOfMaster": "our extension (B1): the bots a player masters or commands",
     "GetBotsInGroup": "our extension (B1): the bots of a group",
-    "RegisterBotEvent": "our extension (B1): the nine bot events, world state only",
+    "RegisterBotEvent": "our extension (B1): the ten bot events, world state only",
     "ClearBotEvents": "our extension (B1): clears the bot handlers",
     # Our bot API (stage B2): the party-level order calls; the per-bot orders are Bot methods.
     "BotsInterrupt": "our extension (B2): the party's interrupt for a unit, one order returned",
@@ -109,9 +110,23 @@ EVENT_NOTES = {
 }
 
 # Engine caveats of a documented name, from README.md ('Eluna mode') and knowledge/modes/eluna-mode.md.
+CLASS_NOTES = {
+    "AuraEffect": "implemented, but unreachable from scripts until core spell hooks exist",
+    "ElunaProcInfo": "implemented, but unreachable from scripts until core spell hooks exist",
+}
+
 METHOD_NOTES = {
+    ("Guild", "AddMember"): "an explicit rankId is validated by the core: the member is added at the lowest rank, then "
+                            "moved to rankId only if the guild has that rank; if it has not, the member stays at the "
+                            "lowest rank and a warning is logged (the call is queued, so it cannot return the refusal)",
     ("Object", "GetGUID"): "returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the "
                            "type, entry and map live in the high half",
+    ("Player", "SetFactionForRace"): "refuses a race id the core's race store does not know with an error and leaves "
+                                     "team and faction unchanged",
+    ("Unit", "SetName"): "non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist "
+                         "an oversized name); capped at 64 bytes",
+    ("SpellInfo", "GetEffectDieSides"): "returns ClassicSpellValue DieSides (vanilla damaging/healing/absorbing "
+                                        "effects; 0 for others)",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
 }
 GLOBAL_NOTES = {
@@ -119,12 +134,22 @@ GLOBAL_NOTES = {
     "GetCoreName": "answers ForeverCore",
     "GetLuaEngine": "answers ForeverLua",
     "GetCoreExpansion": "answers 0 (Classic 1.60)",
+    "CreateLongLong": "returns a native Lua 5.4 signed 64-bit integer",
+    "CreateULongLong": "returns a native Lua 5.4 64-bit integer",
+    "GetItemGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetObjectGUID": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 "
+                     "(required to match spawns off map 0)",
+    "GetPlayerGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetUnitGUID": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 "
+                   "(required to match spawns off map 0)",
+    "RegisterSpellEvent": "accepts spell event registrations as honest stubs (all 23 events need core hook C14)",
 }
 
 STUB_MARKERS = [
     (re.compile(r"not available on Classic 1\.60"), "Classic 1.60"),
     (re.compile(r"needs core hook (C\d+)"), "core hook"),
     (re.compile(r"not available on this server"), "this server"),
+    (re.compile(r"not available on this core"), "this core"),
 ]
 
 FUNCTION_KEYWORDS = {"if", "for", "while", "switch", "return", "sizeof", "catch", "do", "else"}
@@ -303,7 +328,10 @@ class Engine:
             tables = {}
             for tm in re.finditer(r"(?:static\s+)?luaL_Reg\s+const\s+(\w+)\s*\[\]\s*=\s*\{", body):
                 end = matching(body, tm.end() - 1, "{", "}")
-                tables[tm.group(1)] = re.findall(r'\{\s*"(\w+)"\s*,\s*(?:fl::)?safe<(?:\w+::)?(\w+)>', body[tm.end():end])
+                tables[tm.group(1)] = re.findall(
+                    r'\{\s*"(\w+)"\s*,\s*(?:fl::)?safe<(?:\w+::)?(\w+)(?:<[^>{}]+>)?\s*>',
+                    body[tm.end():end],
+                )
             for am in re.finditer(r"addMethods\(L,\s*\"(\w+)\",\s*(\w+)\)", body):
                 cls, table = am.group(1), am.group(2)
                 if table not in tables:
@@ -318,6 +346,13 @@ class Engine:
                     self._add_stub(loop.group(3), method)
             for call in re.finditer(r"addStubMethod\(L,\s*\"(\w+)\",\s*\"(\w+)\"\);", body):
                 self._add_stub(call.group(1), call.group(2))
+            # A documented call the pinned core has no API for (EluStubs.cpp): "not available on this core".
+            for loop in re.finditer(r"for\s*\(\s*char\s+const\s*\*\s*(\w+)\s*:\s*\{([^}]*)\}\s*\)\s*"
+                                    r"addCoreStubMethod\(L,\s*\"(\w+)\",\s*\1\);", body):
+                for method in re.findall(r'"(\w+)"', loop.group(2)):
+                    self._add_stub(loop.group(3), method, "this core")
+            for call in re.finditer(r"addCoreStubMethod\(L,\s*\"(\w+)\",\s*\"(\w+)\"\);", body):
+                self._add_stub(call.group(1), call.group(2), "this core")
 
         if "registerStubMethods" not in self.fns:
             raise ParseError("registerStubMethods() not found: the section 7 stubs would be missed")
@@ -326,15 +361,15 @@ class Engine:
                 if not info["stub"]:
                     info["reason"] = stub_reason(self._body(info["fn"]), self.fns)
 
-    def _add_stub(self, cls, method):
+    def _add_stub(self, cls, method, why="Classic 1.60"):
         self.methods.setdefault(cls, {})
-        self.methods[cls][method] = {"stub": True, "reason": "stub: not available (Classic 1.60)",
+        self.methods[cls][method] = {"stub": True, "reason": f"stub: not available ({why})",
                                     "declared": cls, "fn": None}
 
     def _scan_eluna_globals(self):
         for register in ("registerGlobals", "registerGameGlobals"):
             body = self._body(register)
-            for m in re.finditer(r"set\(L,\s*\"(\w+)\",\s*(?:fl::)?safe<(?:\w+::)?(\w+)>\)", body):
+            for m in re.finditer(r"set\(L,\s*\"(\w+)\",\s*(?:fl::)?safe<(?:\w+::)?(\w+)(?:<[^>{}]+>)?\s*>\)", body):
                 self.globals[m.group(1)] = {"fn": m.group(2), "table": None, "where": register}
             if not any(True for _ in re.finditer(r"set\(L,", body)):
                 raise ParseError(f"{register}(): no set(L, ...) globals found")
@@ -719,7 +754,7 @@ def scan_event_tables(alias_text):
             for kind in current:
                 family_block[KIND_FAMILY[kind]] = m.group(1)
             current = []
-    missing = [f for f in EVENT_FAMILIES if f != "spell" and f not in family_block]
+    missing = [f for f in EVENT_FAMILIES if f not in family_block]
     if missing:
         raise ParseError(f"eluEventSpec does not map {missing}")
     return blocks, family_block
@@ -845,6 +880,8 @@ class Coverage:
                     row = dict(row)
                     row["note"] = (row.get("note") + "; " if row.get("note") else "") + METHOD_NOTES[(cls, name)]
                 self.json["classes"].setdefault(cls, {"inherits": self.e.inherits.get(cls), "methods": {}})
+                if cls in CLASS_NOTES:
+                    self.json["classes"][cls]["note"] = CLASS_NOTES[cls]
                 self.json["classes"][cls]["methods"][name] = row
                 rows.append((name, row))
             extra = []
@@ -864,8 +901,10 @@ class Coverage:
                 self.json["missing"].setdefault("classes", {})[cls] = missing
 
             lines = [f"### Class `{cls}`" +
-                     (f" (inherits `{self.e.inherits[cls]}`)" if self.e.inherits.get(cls) else ""), "",
-                     "| Documented method | Status | Note |", "|---|---|---|"]
+                     (f" (inherits `{self.e.inherits[cls]}`)" if self.e.inherits.get(cls) else ""), ""]
+            if cls in CLASS_NOTES:
+                lines += [f"Note: {CLASS_NOTES[cls]}.", ""]
+            lines += ["| Documented method | Status | Note |", "|---|---|---|"]
             if not documented_methods:
                 lines = [f"### Class `{cls}` (engine only: no documented counterpart)", ""]
             for name, row in rows:
@@ -880,6 +919,25 @@ class Coverage:
                 self.add_block("\n".join(lines) + "\n")
 
     # -- events ----------------------------------------------------------------------------------------------
+    def _event_row(self, notes, kind, event_id, name):
+        classic = notes.classic(kind, event_id)
+        gap, conditional = notes.hook(kind, event_id)
+        if classic:
+            return {"status": "stub", "name": name,
+                    "note": f"stub: not available ({classic})", "requires": None}
+        if gap and not conditional:
+            return {"status": "stub", "name": name,
+                    "note": f"stub: needs core hook {gap}", "requires": gap}
+        if gap in ("C1", "C2", "C3"):
+            # The engine's own line names the interim ScriptName path for these three hooks.
+            return {"status": "implemented", "name": name,
+                    "requires": gap,
+                    "note": f"needs core hook {gap}; the engine names its interim ScriptName path"}
+        if gap:
+            return {"status": "stub", "name": name, "requires": gap,
+                    "note": f"stub: needs core hook {gap}"}
+        return {"status": "implemented", "name": name, "requires": None}
+
     def events(self, notes, blocks, family_block):
         for family in EVENT_FAMILIES:
             doc_family = self.doc["events"].get(family)
@@ -895,40 +953,18 @@ class Coverage:
                     self.json["extra"].setdefault("events", {}).setdefault(family, {})[str(event_id)] = name
                 self.add_block("\n".join(lines) + "\n")
                 continue
+            kind = next((k for k, f in KIND_FAMILY.items() if f == family), None)
+            # Instance events are registered through RegisterInstanceEvent (a C11 stub); the ids of the map
+            # table are what the engine knows, so the note is taken from the map events of the same table.
+            if kind is None:
+                kind = "Map"
             rows = []
             for event_id in sorted(documented_ids):
                 name = documented_ids[event_id]
                 if event_id not in engine_ids:
                     row = {"status": "missing", "name": name}
                 else:
-                    row = {"status": "implemented", "name": engine_ids[event_id]}
-                    kind = None
-                    for k, f in KIND_FAMILY.items():
-                        if f == family:
-                            kind = k
-                            break
-                    # Instance events are registered through RegisterInstanceEvent (a C11 stub); the ids of the map
-                    # table are what the engine knows, so the note is taken from the map events of the same table.
-                    if kind is None:
-                        kind = "Map"
-                    classic = notes.classic(kind, event_id)
-                    gap, conditional = notes.hook(kind, event_id)
-                    if classic:
-                        row = {"status": "stub", "name": engine_ids[event_id],
-                               "note": f"stub: not available ({classic})", "requires": None}
-                    elif gap and not conditional:
-                        row = {"status": "stub", "name": engine_ids[event_id],
-                               "note": f"stub: needs core hook {gap}", "requires": gap}
-                    elif gap in ("C1", "C2", "C3"):
-                        # The engine's own line names the interim ScriptName path for these three hooks.
-                        row = {"status": "implemented", "name": engine_ids[event_id],
-                               "requires": gap,
-                               "note": f"needs core hook {gap}; the engine names its interim ScriptName path"}
-                    elif gap:
-                        row = {"status": "stub", "name": engine_ids[event_id], "requires": gap,
-                               "note": f"stub: needs core hook {gap}"}
-                    else:
-                        row = {"status": "implemented", "name": engine_ids[event_id], "requires": None}
+                    row = self._event_row(notes, kind, event_id, engine_ids[event_id])
                 if EVENT_NOTES.get((family, event_id)):
                     row = dict(row)
                     row["note"] = (row.get("note") + "; " if row.get("note") else "") + EVENT_NOTES[(family, event_id)]
@@ -941,18 +977,23 @@ class Coverage:
                 entry = {k: v for k, v in row.items()}
                 self.json["events"].setdefault(family, {})[str(event_id)] = entry
                 rows.append((event_id, row))
+
+            # An event the spec's id table does not carry but the documentation names (matched by its words): when
+            # the engine registers it, it is resolved here through the same hook/classic notes instead of missing.
+            engine_tokens = {token(n) for n in engine_ids.values()}
             for name in name_only:
+                if token(name) in engine_tokens:
+                    continue
                 self.json["events"].setdefault(family, {})[name] = {"status": "missing", "name": name}
                 rows.append((name, {"status": "missing", "name": name, "note": "documented, no id in the spec"}))
 
-            # An event the spec's id table does not carry but the documentation names (matched by its words): the
-            # engine provides it, so it is documented and implemented.
             doc_tokens = {token(n) for n in (doc_family or {}).get("docs_names", [])}
             for event_id, name in sorted(engine_ids.items()):
                 if event_id in documented_ids or token(name) not in doc_tokens:
                     continue
-                row = {"status": "implemented", "name": name,
-                       "note": "documented by name; the spec's id table has no id for it", "requires": None}
+                row = self._event_row(notes, kind, event_id, name)
+                spec_note = "documented by name; the spec's id table has no id for it"
+                row["note"] = (row.get("note") + "; " if row.get("note") else "") + spec_note
                 self.json["events"].setdefault(family, {})[str(event_id)] = dict(row)
                 rows.append((event_id, row))
 
@@ -1010,11 +1051,12 @@ class Coverage:
             "Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification "
             "needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook "
             "(`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one "
-            "(C5-C11) has no path on this core.",
+            "(C5-C14) has no path on this core.",
             "",
             "Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the "
-            "documented error (`not available on Classic 1.60`, `needs core hook Cn`); **missing** = documented and not "
-            "in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).",
+            "documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); "
+            "**missing** = documented and not in the engine; **extra** = in the engine and not in the documented API "
+            "(our extensions, the Lua sandbox).",
             "",
             "## Summary",
             "",
@@ -1040,8 +1082,11 @@ class Coverage:
                   "`Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the "
                   "documented stubs (the call exists and raises the documented error instead of `attempt to call a nil "
                   "value`). A class row counts the class's own documented methods; inherited ones are counted on the "
-                  "class the documentation declares them on.",
-                  "",
+                  "class the documentation declares them on."]
+        class_notes = [(c, CLASS_NOTES[c]) for c in self.class_order if c in CLASS_NOTES and c in self.json["classes"]]
+        if class_notes:
+            lines += ["", "Class notes: " + "; ".join(f"`{c}` — {n}" for c, n in class_notes) + "."]
+        lines += ["",
                   f"Test-mode only: {self.test_mode_count} names in {len(self.e.test_mode)} toolkit tables (`Event`, "
                   "`Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and "
                   "are not part of the eluna surface (appendix A).",
@@ -1063,7 +1108,8 @@ class Coverage:
         out += ["", "## Appendix B: documented names with no id in the spec's event tables", "",
                 "The documentation pages list event names without numeric ids; the maintainers' API specification, section 3 "
                 "carries the ids. Where the documentation lists more names than the spec's table (item, group) or the "
-                "spec has no table at all (spell), those names cannot be joined by id and are counted as missing.", ""]
+                "spec has no table at all (spell), the engine assigns ids and matches those names by words against its "
+                "event tables (counted as missing only if the engine does not register them).", ""]
         for family, data in sorted(self.doc["events"].items()):
             if data.get("name_only"):
                 out.append(f"* `{family}`: " + ", ".join(f"`{n}`" for n in data["name_only"]))
@@ -1072,12 +1118,14 @@ class Coverage:
                 "`ForeverData` table of `registerForeverData`, and `print`/`require` of `registerCommon`.",
                 "* Class methods: the `luaL_Reg` tables passed to `addMethods` (plus `Corpse`, `BattleGround`, the "
                 "`Map` methods of `registerBattleGroundMethods`, `Aura` where the engine has it) and "
-                "the section 7 stubs of `addStubMethod`; inheritance from the `createClass` calls.",
+                "the section 7 stubs of `addStubMethod` and the core stubs of `addCoreStubMethod`; inheritance from the "
+                "`createClass` calls.",
                 "* Events: the `SpecRow` tables of `EluAlias.cpp`, joined to the families by `eluEventSpec`; the hook "
                 "note comes from `hookGapFor` and the Classic-era note from `classicStubFor` (`EluCommon.cpp`), "
                 "evaluated for a core without the C1-C4 hooks.",
                 "* Stub detection: the registered C++ function (or the single function it only forwards to) raises "
-                "`not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`.", ""]
+                "`not available on Classic 1.60`, `needs core hook Cn` or `not available on this server`; a name "
+                "registered with `addCoreStubMethod` or raising `not available on this core` is a core stub.", ""]
         return out
 
 

@@ -408,7 +408,7 @@ TEST_CASE("review e4 H6: player events from a map run in the world state, creatu
         CHECK(rig.states->route(kind, fl::StateSet::Key{1, 0}).get() == &rig.world());
     for (fl::EluKind kind : {fl::EluKind::Creature, fl::EluKind::GameObject, fl::EluKind::Item, fl::EluKind::CreatureGossip,
                              fl::EluKind::GameObjectGossip, fl::EluKind::ItemGossip, fl::EluKind::Map,
-                             fl::EluKind::Instance, fl::EluKind::BattleGround})
+                             fl::EluKind::Instance, fl::EluKind::BattleGround, fl::EluKind::Spell})
         CHECK(rig.states->route(kind, fl::StateSet::Key{1, 0}).get() == rig.map(1));
 }
 
