@@ -26,7 +26,13 @@ SECOND_IP = ".".join(["172", "16", "5", "9"])
 DOC_IPS = ["192.0.2.7", "198.51.100.23", "203.0.113.250"]
 LOOPBACK_IPS = ["127.0.0.1", "0.0.0.0"]
 POSIX_HOME = "/" + "home/alice/tortulua-notes.txt"
+MACOS_HOME = "/" + "Users/alice/tortulua-notes.txt"
+ROOT_PATH = "/" + "root/tortulua-notes.txt"
+ROOT_DIR_ONLY = "/" + "root/"
 WINDOWS_HOME = "C:" + chr(92) + "Users" + chr(92) + "alice"
+WINDOWS_FORWARD_HOME = "C:" + "/Users/" + "alice"
+NOREPLY_EMAIL = "12345678+" + "test-user@users.noreply.github.com"
+PRIVATE_EMAIL = "alice" + "@example.invalid"
 SECRET_WORD = "secret" + "word"
 PASSWORD_LINE = "password" + " = " + "hunt" + "er2!"
 YAML_PASSWORD_LINE = "password" + ": " + "hunt" + "er2!"
@@ -64,7 +70,7 @@ class CheckerRepoTest(unittest.TestCase):
         self.write_file("tools/public_text_allow.txt", "# empty\n")
         self.git("init", "-q", "-b", "main")
         self.git("config", "user.name", "Test")
-        self.git("config", "user.email", "test@example.invalid")
+        self.git("config", "user.email", NOREPLY_EMAIL)
 
     def write_file(self, rel: str, content: str) -> None:
         path = self.root / rel
@@ -80,9 +86,13 @@ class CheckerRepoTest(unittest.TestCase):
         )
         return result.stdout.strip()
 
-    def commit(self, message: str) -> str:
+    def commit(self, message: str, email: str | None = None) -> str:
         self.git("add", "-A")
-        self.git("commit", "-q", "--allow-empty", "-m", message)
+        args = ["commit", "-q", "--allow-empty", "-m", message]
+        if email is not None:
+            self.git("-c", f"user.email={email}", *args)
+        else:
+            self.git(*args)
         return self.git("rev-parse", "HEAD")
 
     def run_checker(self, *args: str) -> subprocess.CompletedProcess[str]:
@@ -141,6 +151,34 @@ class CheckerRepoTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("docs/posix.md:1", result.stdout)
         self.assertIn("docs/windows.md:1", result.stdout)
+        self.assertEqual(result.stdout.count("home directory"), 2, result.stdout)
+
+    def test_windows_forward_slash_home_directory_fails(self) -> None:
+        self.write_file("docs/win-fwd.md", "Log at " + WINDOWS_FORWARD_HOME + "/notes.txt\n")
+        self.commit("Document local path")
+        result = self.run_checker()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("docs/win-fwd.md:1", result.stdout)
+        self.assertIn("home directory", result.stdout)
+        self.assertIn(WINDOWS_FORWARD_HOME, result.stdout)
+
+    def test_macos_home_directory_fails(self) -> None:
+        self.write_file("docs/macos.md", "Copied from " + MACOS_HOME + "\n")
+        self.commit("Document local path")
+        result = self.run_checker()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("docs/macos.md:1", result.stdout)
+        self.assertIn("home directory", result.stdout)
+
+    def test_root_paths_fail(self) -> None:
+        self.write_file("docs/root.md", "Copied from " + ROOT_PATH + "\nDir " + ROOT_DIR_ONLY + "\n")
+        self.write_file("docs/clean.md", "Relative src" + ROOT_PATH + "\n")
+        self.commit("Document local path")
+        result = self.run_checker()
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("docs/root.md:1", result.stdout)
+        self.assertIn("docs/root.md:2", result.stdout)
+        self.assertNotIn("docs/clean.md", result.stdout)
         self.assertEqual(result.stdout.count("home directory"), 2, result.stdout)
 
     def test_denylisted_word_fails(self) -> None:
@@ -234,6 +272,24 @@ class CheckerRepoTest(unittest.TestCase):
 
     def test_commit_before_base_is_ignored(self) -> None:
         self.commit("Retry against " + PRIVATE_IP)
+        head = self.commit("Clean follow-up")
+        result = self.run_checker("--base", head)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("0 commit(s)", result.stdout)
+
+    def test_commit_author_email_must_be_github_noreply(self) -> None:
+        base = self.commit("Initial import")
+        self.write_file("README.md", "No secrets here.\n")
+        self.commit("Clean message", email=PRIVATE_EMAIL)
+        result = self.run_checker("--base", base)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("commit ", result.stdout)
+        self.assertIn("author email", result.stdout)
+        self.assertIn(PRIVATE_EMAIL, result.stdout)
+        self.assertIn("cannot be allow-listed", result.stdout)
+
+    def test_commit_author_email_before_base_is_ignored(self) -> None:
+        self.commit("Earlier commit", email=PRIVATE_EMAIL)
         head = self.commit("Clean follow-up")
         result = self.run_checker("--base", head)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
