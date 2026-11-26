@@ -117,8 +117,8 @@ METHOD_NOTES = {
                            "type, entry and map live in the high half",
     ("Player", "SetFactionForRace"): "refuses a race id the core's race store does not know with an error and leaves "
                                      "team and faction unchanged",
-    ("Unit", "SetName"): "creature only (refuses Player handles so SaveToDB cannot persist an invalid player name); "
-                         "capped at 64 bytes",
+    ("Unit", "SetName"): "non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist "
+                         "an oversized name); capped at 64 bytes",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
 }
 GLOBAL_NOTES = {

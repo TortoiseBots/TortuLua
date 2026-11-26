@@ -598,7 +598,7 @@ function Unit:SetMaxHealth(maxHealth) end
 ---@return any
 function Unit:SetMaxPower(type, maxPower) end
 
----creature only (refuses Player handles so SaveToDB cannot persist an invalid player name); capped at 64 bytes
+---non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes
 ---@param name any
 ---@return any
 function Unit:SetName(name) end

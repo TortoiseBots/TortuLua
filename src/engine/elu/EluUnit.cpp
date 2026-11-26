@@ -710,7 +710,7 @@ int uSetName(lua_State* L)
         luaL_error(L, "name is longer than 64 bytes");
     std::vector<EventValue> out;
     gameCall(L, h, "unit.setName", {EventValue(name)}, out, "SetName");
-    requireHostOk(L, out, "SetName", "only available on a creature");
+    requireHostOk(L, out, "SetName", "only available on a creature (not a pet)");
     return 0;
 }
 int uSetPetGUID(lua_State* L)

@@ -434,7 +434,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `SetLevel` | implemented |  |
 | `SetMaxHealth` | implemented |  |
 | `SetMaxPower` | implemented |  |
-| `SetName` | implemented | creature only (refuses Player handles so SaveToDB cannot persist an invalid player name); capped at 64 bytes |
+| `SetName` | implemented | non-pet creatures only (refuses Player and Pet handles so SaveToDB/SavePetToDB cannot persist an oversized name); capped at 64 bytes |
 | `SetNativeDisplayId` | implemented |  |
 | `SetOwnerGUID` | implemented |  |
 | `SetPetGUID` | implemented |  |

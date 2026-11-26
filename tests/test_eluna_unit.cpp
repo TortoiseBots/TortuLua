@@ -534,14 +534,37 @@ TEST_CASE("eluna unit long tail: the values flow both ways through the fake unit
     rig.ok("stored:SetImmuneTo(12, false)");
     CHECK(state.immuneMechanics.empty());
 
-    // SetName is creature-only (Player::SaveToDB persists GetName() into characters.name) and capped at 64 bytes.
+    // SetName is non-pet creature-only (Player::SaveToDB persists into characters.name; Pet::SavePetToDB persists into
+    // a 21-char column) and capped at 64 bytes.
     rig.ok("mob:SetName('Renamed')");
     CHECK(mobState.name == "Renamed");
     CHECK(rig.run("mob:SetName(string.rep('a', 64))").ok);
     {
         fl::CallResult r = rig.run("stored:SetName('Renamed')");
         REQUIRE_FALSE(r.ok);
-        CHECK(r.error.find("SetName: only available on a creature") != std::string::npos);
+        CHECK(r.error.find("SetName: only available on a creature (not a pet)") != std::string::npos);
+    }
+    {
+        fl::HandleData pet = FakeHost::pet(99, 0, 0, 299);
+        fl::ObjectInfo petInfo;
+        petInfo.entry = 299;
+        petInfo.name = "Wolf";
+        rig.host.add(pet, petInfo);
+        auto& petState = rig.host.unitState(pet);
+        petState.name = "Wolf";
+        rig.ok("RegisterCreatureEvent(299, 5, function(ev, creature) pet = creature end)");
+        rig.e().emitEluna(fl::EluKind::Creature, 299, 5, {fl::EventValue(pet)});
+
+        fl::CallResult r = rig.run("pet:SetName('TwentyTwoCharactersLong')");
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("SetName: only available on a creature (not a pet)") != std::string::npos);
+        CHECK(petState.name == "Wolf");
+
+        rig.host.creatureState(mob).isPet = true;
+        fl::CallResult r2 = rig.run("mob:SetName('PetFlag')");
+        REQUIRE_FALSE(r2.ok);
+        CHECK(r2.error.find("SetName: only available on a creature (not a pet)") != std::string::npos);
+        rig.host.creatureState(mob).isPet = false;
     }
     rig.ok("stored:SetVisible(false)");
     CHECK_FALSE(state.visible);

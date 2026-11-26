@@ -3480,8 +3480,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "unit.setName")
         {
-            // Player::SaveToDB writes GetName() into characters.name (12 chars), so only creatures may be renamed.
-            if (Creature* c = unit->ToCreature())
+            // Player::SaveToDB writes GetName() into characters.name (12 chars), and Pet::SavePetToDB writes m_name into
+            // character_pet.name (21 chars), so only non-pet creatures may be renamed.
+            Creature* c = unit->ToCreature();
+            if (c && !c->IsPet())
             {
                 std::string s = sArg(args, 0);
                 if (s.size() > 64)

@@ -852,7 +852,9 @@ bool FakeHost::unitStateCall(fl::HandleData const& self, std::string const& op,
     }
     else if (op == "unit.setName")
     {
-        if (self.kind != fl::ObjKind::Creature)
+        auto cit = creatureStates.find({self.guid.hi, self.guid.lo});
+        bool const isPet = (self.guid.hi >> 58) == kTypePet || (cit != creatureStates.end() && cit->second.isPet);
+        if (self.kind != fl::ObjKind::Creature || isPet)
         {
             out.emplace_back(false);
             return true;
