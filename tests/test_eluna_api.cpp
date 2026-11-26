@@ -549,7 +549,11 @@ TEST_CASE("eluna globals: 64-bit integer helpers, GUID builders, realm id, inven
     CHECK(errorOf(rig, "return IsBagPos(256, 0)").find("bag must be an integer 0..255") != std::string::npos);
     CHECK(errorOf(rig, "return IsInventoryPos(0, -1)").find("slot must be an integer 0..255") != std::string::npos);
 
-    // RegisterSpellEvent stub
-    CHECK(errorOf(rig, "return RegisterSpellEvent(133, 1, function() end)").find("RegisterSpellEvent: not available on this core") !=
-          std::string::npos);
+    // RegisterSpellEvent honest stub: accepts registration, returns cancel closure, logs once per event id
+    CHECK(rig.ok("local c = RegisterSpellEvent(133, 1, function() end) return type(c)") == "function");
+    CHECK(rig.host.logContains("event spell CAST needs core hook C14"));
+    size_t const warnCount = rig.host.logs.size();
+    rig.ok("RegisterSpellEvent(133, 1, function() end)");
+    CHECK(rig.host.logs.size() == warnCount);   // logged once per event id
+    CHECK(errorOf(rig, "return RegisterSpellEvent(133, 1, 'not_a_fn')").find("function expected") != std::string::npos);
 }

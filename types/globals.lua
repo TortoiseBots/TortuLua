@@ -428,9 +428,13 @@ function RegisterPlayerGossipEvent(entry, event, arg3, arg4) end
 ---@return any
 function RegisterServerEvent(event, arg2, arg3) end
 
----@deprecated not available (this core)
+---accepts spell event registrations as honest stubs (all 23 events need core hook C14)
+---@param entry any
+---@param event any
+---@param arg3 any
+---@param arg4 any
 ---@return any
-function RegisterSpellEvent() end
+function RegisterSpellEvent(entry, event, arg3, arg4) end
 
 ---@param arg1 any
 ---@param instance_id any

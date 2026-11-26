@@ -356,3 +356,28 @@ TEST_CASE("eluna item long tail: the host's refusals raise with the method's own
     CHECK(errorOf("bag:GetSpeed()").find("the item has no template on the server") != std::string::npos);
     CHECK(errorOf("bag:GetMaxStackCount()").find("the item has no template on the server") != std::string::npos);
 }
+
+TEST_CASE("eluna item events: missing add/equip/unequip register as honest C13 stubs and log once")
+{
+    ItemRig rig;
+    rig.ok("local c1 = RegisterItemEvent(900, 6, function() end)\n"
+           "local c2 = RegisterItemEvent(900, 7, function() end)\n"
+           "local c3 = RegisterItemEvent(900, 8, function() end)\n"
+           "assert(type(c1) == 'function' and type(c2) == 'function' and type(c3) == 'function')");
+    CHECK(rig.e().status().elunaHandlers == 3);
+    CHECK(rig.host.logContains("event item ADD needs core hook C13"));
+    CHECK(rig.host.logContains("event item EQUIP needs core hook C13"));
+    CHECK(rig.host.logContains("event item UNEQUIP needs core hook C13"));
+
+    // Second registration of the same event ids does not repeat the gap warning.
+    size_t const logsBefore = rig.host.logs.size();
+    rig.ok("local c4 = RegisterItemEvent(901, 6, function() end)\n"
+           "RegisterItemEvent(901, 7, function() end)\n"
+           "RegisterItemEvent(901, 8, function() end)\n"
+           "c4()");
+    CHECK(rig.host.logs.size() == logsBefore);
+    CHECK(rig.e().status().elunaHandlers == 5);
+
+    rig.ok("ClearItemEvents(900) ClearItemEvents(901)");
+    CHECK(rig.e().status().elunaHandlers == 0);
+}

@@ -33,7 +33,7 @@ core without the optional C1-C4 core hooks.
 
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
-| Global | 110 | 105 | 5 | 0 | 95% | 100% |
+| Global | 110 | 106 | 4 | 0 | 96% | 100% |
 | Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 164 | 3 | 0 | 98% | 100% |
@@ -59,21 +59,21 @@ core without the optional C1-C4 core hooks.
 | events: player | 51 | 27 | 24 | 0 | 53% | 100% |
 | events: creature | 28 | 27 | 1 | 0 | 96% | 100% |
 | events: gameobject | 13 | 10 | 3 | 0 | 77% | 100% |
-| events: item | 8 | 4 | 1 | 3 | 50% | 62% |
+| events: item | 8 | 4 | 4 | 0 | 50% | 100% |
 | events: player gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: creature gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: gameobject gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: item gossip | 2 | 2 | 0 | 0 | 100% | 100% |
-| events: group | 7 | 5 | 1 | 1 | 71% | 86% |
+| events: group | 7 | 5 | 2 | 0 | 71% | 100% |
 | events: guild | 11 | 9 | 2 | 0 | 82% | 100% |
 | events: map | 7 | 3 | 4 | 0 | 43% | 100% |
 | events: instance | 7 | 3 | 4 | 0 | 43% | 100% |
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
-| events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1293** | **116** | **34** | **90%** | **98%** |
+| events: spell | 23 | 0 | 23 | 0 | 0% | 100% |
+| **all** | **1443** | **1294** | **142** | **7** | **90%** | **100%** |
 
-`AuraEffect` and `ElunaProcInfo` are implemented on the engine and host, but unreachable from scripts until spell events land.
+`AuraEffect` and `ElunaProcInfo` are implemented on the engine and host, and `RegisterSpellEvent` accepts spell event registrations as honest stubs (`needs core hook C14`), so `AuraEffect` and `ElunaProcInfo` remain unreachable from scripts at runtime until core spell hooks land.
 
 ### Known limits
 
@@ -81,9 +81,9 @@ core without the optional C1-C4 core hooks.
   scripts and has raw SQL on the module's own connections, and the GM bridge can reach command handlers that expect a
   console. Read the [Security Model](knowledge/architecture/security.md) and [Limits](knowledge/architecture/limits.md)
   before enabling the module.
-* **Low-coverage classes.** Spell events are not implemented (0%, so `AuraEffect` and `ElunaProcInfo` are implemented
-  but unreachable until spell events land); Object (43%) is only partly
-  covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG)
+* **Low-coverage classes.** Spell events register as stubs needing core hook C14 (0% implemented, 100% resolvable, so
+  `AuraEffect` and `ElunaProcInfo` are implemented but unreachable at runtime until core spell hooks land); Object (43%)
+  is only partly covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG)
   are documented stubs that raise an error; documented Object, WorldObject, Player, Item, Map, SpellInfo and
   ElunaProcInfo calls the core has no API for are stubs that raise `not available on this core`.
 * **Core hooks.** Some events need the optional core hooks C1-C4 (and further hooks for instance maps); without them

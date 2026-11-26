@@ -32,11 +32,6 @@ int pRegisterVehicleEvent(lua_State* L)
 {
     return luaL_error(L, "RegisterVehicleEvent: not available on Classic 1.60");
 }
-// ForeverCore has no all-spell hook (SpellScript is database-bound via spell_script_names) and no spell event id table.
-int pRegisterSpellEvent(lua_State* L)
-{
-    return luaL_error(L, "RegisterSpellEvent: not available on this core");
-}
 
 // Register<Family>Event(...): the handler id goes into the docs' cancel closure.
 int addHandler(lua_State* L, EluKind kind, uint32_t entry, uint32_t event, int fnIndex, uint32_t shots,
@@ -83,6 +78,9 @@ int pRegisterPlayerGossip(lua_State* L) { return registerByEntry(L, EluKind::Pla
 int pRegisterCreatureGossip(lua_State* L) { return registerByEntry(L, EluKind::CreatureGossip); }
 int pRegisterGameObjectGossip(lua_State* L) { return registerByEntry(L, EluKind::GameObjectGossip); }
 int pRegisterItemGossip(lua_State* L) { return registerByEntry(L, EluKind::ItemGossip); }
+// ForeverCore has no all-spell hook (SpellScript is database-bound via spell_script_names): RegisterSpellEvent accepts
+// registrations as honest stubs and logs once per event id that it needs core hook C14.
+int pRegisterSpellEvent(lua_State* L) { return registerByEntry(L, EluKind::Spell); }
 
 // RegisterUniqueCreatureEvent(guid, instance_id, event, function [, shots])
 int pRegisterUniqueCreature(lua_State* L)
