@@ -1,11 +1,13 @@
 #include "FakeHost.h"
 
 #include "CreatureLookup.h"
+#include "NearSearch.h"
 
 #include "engine/GuidText.h"
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <stdexcept>
 #include <fstream>
 #include <unistd.h>
@@ -115,6 +117,16 @@ fl::HandleData FakeHost::gameObject(uint64_t id, uint32_t map, uint32_t instance
     return h;
 }
 
+fl::HandleData FakeHost::corpse(uint64_t id, uint32_t map, uint32_t instance)
+{
+    fl::HandleData h;
+    h.kind = fl::ObjKind::Corpse;
+    h.guid = makeGuid(kTypeCorpse, id);
+    h.mapId = map;
+    h.instanceId = instance;
+    return h;
+}
+
 fl::HandleData FakeHost::item(uint64_t id)
 {
     fl::HandleData h;
@@ -147,7 +159,7 @@ fl::ObjectInfo* FakeHost::find(fl::HandleData const& h)
         return nullptr;
     // A creature or game object is in ONE map's store: a handle naming another map does not find it (the core's
     // Map::GetCreature on the handle's map). Players and items are global tables.
-    if ((h.kind == fl::ObjKind::Creature || h.kind == fl::ObjKind::GameObject) &&
+    if ((h.kind == fl::ObjKind::Creature || h.kind == fl::ObjKind::GameObject || h.kind == fl::ObjKind::Corpse) &&
         it->second.current != flh::MapKey{h.mapId, h.instanceId})
         return nullptr;
     if (h.kind == fl::ObjKind::Creature)
@@ -246,7 +258,8 @@ bool FakeHost::currentMap(fl::HandleData const& h, uint32_t& mapId, uint32_t& in
 
 bool FakeHost::objectInWorld(fl::HandleData const& h)
 {
-    if (h.kind != fl::ObjKind::Creature && h.kind != fl::ObjKind::GameObject && h.kind != fl::ObjKind::Player)
+    if (h.kind != fl::ObjKind::Creature && h.kind != fl::ObjKind::GameObject && h.kind != fl::ObjKind::Corpse &&
+        h.kind != fl::ObjKind::Player)
         return true;
     // Like the real host (findObject): a creature/game object resolves only through its map's store(s), a player globally.
     if (h.kind == fl::ObjKind::Player)
@@ -1409,7 +1422,11 @@ bool FakeHost::gameCall(fl::HandleData const& self, std::string_view op, std::ve
         return true;
     if (unitStateCall(self, std::string(op), args, out))
         return true;
+    if (worldObjectStateCall(self, std::string(op), args, out))
+        return true;
     if (self.kind == fl::ObjKind::Creature && creatureStateCall(self, std::string(op), args, out))
+        return true;
+    if (self.kind == fl::ObjKind::GameObject && gameObjectStateCall(self, std::string(op), args, out))
         return true;
     if (self.kind == fl::ObjKind::Item && itemStateCall(self, std::string(op), args, out))
         return true;
@@ -2573,6 +2590,392 @@ std::vector<fl::HandleData> FakeHost::playersInWorld(int team, bool onlyGm)
     (void)team;
     (void)onlyGm;
     return players;
+}
+
+namespace
+{
+constexpr double kFakePi = 3.14159265358979323846;
+
+double normAngle(double a)
+{
+    double r = std::fmod(a, 2.0 * kFakePi);
+    return r < 0.0 ? r + 2.0 * kFakePi : r;
+}
+
+fl::HandleData handleFromObjKey(std::tuple<int, uint64_t, uint64_t> const& key, flh::MapKey const& map)
+{
+    fl::HandleData h;
+    h.kind = static_cast<fl::ObjKind>(std::get<0>(key));
+    h.guid.hi = std::get<1>(key);
+    h.guid.lo = std::get<2>(key);
+    h.mapId = map.map;
+    h.instanceId = map.instance;
+    return h;
+}
+}  // namespace
+
+std::vector<fl::HandleData> FakeHost::objectsInRange(fl::HandleData const& self, int kind, float range, uint32_t entry,
+                                                     int hostile, int dead)
+{
+    range = flh::clampSearchRange(range);
+    std::vector<std::pair<double, fl::HandleData>> found;
+    auto selfIt = _objects.find(keyOf(self));
+    if (selfIt == _objects.end())
+        return {};
+    fl::ObjectInfo const& me = selfIt->second.info;
+    flh::MapKey const myMap = selfIt->second.current;
+    double const myReach = woState(self).combatReach;
+    for (auto const& [k, obj] : _objects)
+    {
+        if (k == keyOf(self) || obj.current != myMap)
+            continue;
+        auto const objKind = static_cast<fl::ObjKind>(std::get<0>(k));
+        if (kind == 0 && objKind != fl::ObjKind::Player)
+            continue;
+        if (kind == 1 && objKind != fl::ObjKind::Creature)
+            continue;
+        if (kind == 2 && objKind != fl::ObjKind::GameObject)
+            continue;
+        if (entry && obj.info.entry != entry)
+            continue;
+        fl::HandleData const h = handleFromObjKey(k, obj.current);
+        FakeWorldObject const& fwo = woState(h);
+        if (hostile == 1 && !fwo.hostileToAll)
+            continue;
+        if (hostile == 2 && !fwo.friendlyToAll)
+            continue;
+        if (objKind == fl::ObjKind::Player || objKind == fl::ObjKind::Creature)
+        {
+            if (dead == 1 && !obj.info.alive)
+                continue;
+            if (dead == 2 && obj.info.alive)
+                continue;
+        }
+        double const dx = obj.info.x - me.x;
+        double const dy = obj.info.y - me.y;
+        double const dz = obj.info.z - me.z;
+        double const d = std::max(0.0, std::sqrt(dx * dx + dy * dy + dz * dz) - myReach - fwo.combatReach);
+        if (d <= static_cast<double>(range))
+            found.emplace_back(d, h);
+    }
+    std::sort(found.begin(), found.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+    std::vector<fl::HandleData> out;
+    out.reserve(found.size());
+    for (auto const& item : found)
+        out.push_back(item.second);
+    return out;
+}
+
+bool FakeHost::worldObjectStateCall(fl::HandleData const& self, std::string const& op,
+                                    std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out)
+{
+    static std::set<std::string> const ops = {
+        "worldobject.getAngle",        "worldobject.getDistance2d",    "worldobject.getExactDistance",
+        "worldobject.getExactDistance2d", "worldobject.getRelativePoint", "worldobject.isInFront",
+        "worldobject.isInBack",        "worldobject.isInMap",          "worldobject.isInRange",
+        "worldobject.isInRange2d",     "worldobject.isInRange3d",      "worldobject.isWithinDist",
+        "worldobject.isWithinDist2d",  "worldobject.isWithinDist3d",   "worldobject.isWithinLoS",
+        "worldobject.getNearObjects",  "worldobject.getNearObject",    "worldobject.playDirectSound",
+        "worldobject.playDistanceSound", "worldobject.playMusic",      "worldobject.say",
+        "worldobject.yell",            "worldobject.whisper",          "unit.say",
+        "unit.yell",                   "unit.whisper"};
+    if (!ops.count(op))
+        return false;
+
+    auto selfIt = _objects.find(keyOf(self));
+    if (selfIt == _objects.end())
+        return true;
+    fl::ObjectInfo const& me = selfIt->second.info;
+    flh::MapKey const myMap = selfIt->second.current;
+    FakeWorldObject& fwo = woState(self);
+
+    auto resolveOther = [&](size_t idx, fl::ObjectInfo& info, flh::MapKey& map, double& reach) -> bool
+    {
+        fl::HandleData h;
+        if (!handleAt(args, idx, h))
+            return false;
+        auto it = _objects.find(keyOf(h));
+        if (it == _objects.end())
+            return false;
+        info = it->second.info;
+        map = it->second.current;
+        reach = woState(h).combatReach;
+        return true;
+    };
+
+    if (op == "worldobject.getAngle")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        double const tx = resolveOther(0, o, m, r) ? o.x : doubleAt(args, 0);
+        double const ty = resolveOther(0, o, m, r) ? o.y : doubleAt(args, 1);
+        out.emplace_back(normAngle(std::atan2(ty - me.y, tx - me.x)));
+    }
+    else if (op == "worldobject.getDistance2d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const d = std::hypot(tx - me.x, ty - me.y) - fwo.combatReach - (hasOther ? r : 0.0);
+        out.emplace_back(std::max(0.0, d));
+    }
+    else if (op == "worldobject.getExactDistance")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const tz = hasOther ? o.z : doubleAt(args, 2);
+        double const dx = tx - me.x, dy = ty - me.y, dz = tz - me.z;
+        out.emplace_back(std::sqrt(dx * dx + dy * dy + dz * dz));
+    }
+    else if (op == "worldobject.getExactDistance2d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        out.emplace_back(std::hypot(tx - me.x, ty - me.y));
+    }
+    else if (op == "worldobject.getRelativePoint")
+    {
+        double const dist = doubleAt(args, 0);
+        double const angle = me.o + doubleAt(args, 1);
+        out.emplace_back(me.x + (fwo.combatReach + dist) * std::cos(angle));
+        out.emplace_back(me.y + (fwo.combatReach + dist) * std::sin(angle));
+        out.emplace_back(static_cast<double>(me.z));
+    }
+    else if (op == "worldobject.isInFront" || op == "worldobject.isInBack")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        double const arc = doubleAt(args, 1, kFakePi);
+        auto inArc = [&](double a)
+        {
+            double const d2 = std::hypot(o.x - me.x, o.y - me.y);
+            if (d2 < 2.0)
+                return true;
+            double diff = std::fabs(normAngle(std::atan2(o.y - me.y, o.x - me.x) - me.o));
+            if (diff > kFakePi)
+                diff = 2.0 * kFakePi - diff;
+            return diff <= a * 0.5;
+        };
+        out.emplace_back(op == "worldobject.isInFront" ? inArc(arc) : !inArc(2.0 * kFakePi - arc));
+    }
+    else if (op == "worldobject.isInMap")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        out.emplace_back(myMap == m);
+    }
+    else if (op == "worldobject.isInRange")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        double const minR = doubleAt(args, 1), maxR = doubleAt(args, 2);
+        bool const is3d = boolAt(args, 3, true);
+        double const dx = o.x - me.x, dy = o.y - me.y, dz = is3d ? (o.z - me.z) : 0.0;
+        double const dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+        double const sf = fwo.combatReach + r;
+        bool const ok = (minR <= 0.0 || dist >= minR + sf) && dist < maxR + sf;
+        out.emplace_back(ok);
+    }
+    else if (op == "worldobject.isInRange2d")
+    {
+        double const dist = std::hypot(doubleAt(args, 0) - me.x, doubleAt(args, 1) - me.y);
+        double const minR = doubleAt(args, 2), maxR = doubleAt(args, 3);
+        bool const ok = (minR <= 0.0 || dist >= minR + fwo.combatReach) && dist < maxR + fwo.combatReach;
+        out.emplace_back(ok);
+    }
+    else if (op == "worldobject.isInRange3d")
+    {
+        double const dx = doubleAt(args, 0) - me.x, dy = doubleAt(args, 1) - me.y, dz = doubleAt(args, 2) - me.z;
+        double const dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+        double const minR = doubleAt(args, 3), maxR = doubleAt(args, 4);
+        bool const ok = (minR <= 0.0 || dist >= minR + fwo.combatReach) && dist < maxR + fwo.combatReach;
+        out.emplace_back(ok);
+    }
+    else if (op == "worldobject.isWithinDist")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        if (!resolveOther(0, o, m, r))
+            return true;
+        double const maxDist = doubleAt(args, 1) + fwo.combatReach + r;
+        bool const is3d = boolAt(args, 2, true);
+        double const dx = o.x - me.x, dy = o.y - me.y, dz = is3d ? (o.z - me.z) : 0.0;
+        out.emplace_back((dx * dx + dy * dy + dz * dz) < maxDist * maxDist);
+    }
+    else if (op == "worldobject.isWithinDist2d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const maxDist = (hasOther ? doubleAt(args, 1) : doubleAt(args, 2)) + fwo.combatReach;
+        double const dx = tx - me.x, dy = ty - me.y;
+        out.emplace_back((dx * dx + dy * dy) < maxDist * maxDist);
+    }
+    else if (op == "worldobject.isWithinDist3d")
+    {
+        fl::ObjectInfo o;
+        flh::MapKey m;
+        double r = 0.0;
+        bool const hasOther = resolveOther(0, o, m, r);
+        double const tx = hasOther ? o.x : doubleAt(args, 0);
+        double const ty = hasOther ? o.y : doubleAt(args, 1);
+        double const tz = hasOther ? o.z : doubleAt(args, 2);
+        double const maxDist = (hasOther ? doubleAt(args, 1) : doubleAt(args, 3)) + fwo.combatReach;
+        double const dx = tx - me.x, dy = ty - me.y, dz = tz - me.z;
+        out.emplace_back((dx * dx + dy * dy + dz * dz) < maxDist * maxDist);
+    }
+    else if (op == "worldobject.isWithinLoS")
+    {
+        out.emplace_back(fwo.losOk);
+    }
+    else if (op == "worldobject.getNearObjects" || op == "worldobject.getNearObject")
+    {
+        double const range = static_cast<double>(flh::clampSearchRange(doubleAt(args, 0, 533.33333)));
+        uint32_t const typeMask = static_cast<uint32_t>(intAt(args, 1, 0));
+        uint32_t const entry = static_cast<uint32_t>(intAt(args, 2, 0));
+        int const hostile = static_cast<int>(intAt(args, 3, 0));
+        int const dead = static_cast<int>(intAt(args, 4, 1));
+        std::vector<std::pair<double, fl::HandleData>> found;
+        for (auto const& [k, obj] : _objects)
+        {
+            if (k == keyOf(self) || obj.current != myMap)
+                continue;
+            auto const objKind = static_cast<fl::ObjKind>(std::get<0>(k));
+            if (typeMask)
+            {
+                bool match = false;
+                if ((typeMask & (1u << 3)) && (objKind == fl::ObjKind::Creature || objKind == fl::ObjKind::Player))
+                    match = true;
+                if ((typeMask & (1u << 4)) && objKind == fl::ObjKind::Player)
+                    match = true;
+                if ((typeMask & (1u << 5)) && objKind == fl::ObjKind::GameObject)
+                    match = true;
+                if ((typeMask & (1u << 7)) && objKind == fl::ObjKind::Corpse)
+                    match = true;
+                if (!match)
+                    continue;
+            }
+            if (entry && obj.info.entry != entry)
+                continue;
+            fl::HandleData const h = handleFromObjKey(k, obj.current);
+            FakeWorldObject const& otherFwo = woState(h);
+            if (hostile == 1 && !otherFwo.hostileToAll)
+                continue;
+            if (hostile == 2 && !otherFwo.friendlyToAll)
+                continue;
+            if (objKind == fl::ObjKind::Player || objKind == fl::ObjKind::Creature)
+            {
+                if (dead == 1 && !obj.info.alive)
+                    continue;
+                if (dead == 2 && obj.info.alive)
+                    continue;
+            }
+            double const dx = obj.info.x - me.x, dy = obj.info.y - me.y, dz = obj.info.z - me.z;
+            double const d = std::max(0.0, std::sqrt(dx * dx + dy * dy + dz * dz) - fwo.combatReach - otherFwo.combatReach);
+            if (d <= range)
+                found.emplace_back(d, h);
+        }
+        std::sort(found.begin(), found.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        if (op == "worldobject.getNearObject")
+        {
+            if (!found.empty())
+                out.emplace_back(found.front().second);
+        }
+        else
+        {
+            for (auto const& item : found)
+                out.emplace_back(item.second);
+        }
+    }
+    else if (op == "worldobject.playDirectSound" || op == "worldobject.playDistanceSound" ||
+             op == "worldobject.playMusic")
+    {
+        fl::HandleData target;
+        uint64_t const targetLow = handleAt(args, 1, target) ? target.guid.lo : 0;
+        fwo.sounds.push_back(FakeWorldObject::SoundCall{op, static_cast<uint32_t>(intAt(args, 0)), targetLow});
+    }
+    else if (op == "worldobject.say" || op == "worldobject.yell" || op == "unit.say" || op == "unit.yell")
+    {
+        fwo.chats.push_back(
+            FakeWorldObject::WoChat{op, stringAt(args, 0), static_cast<uint32_t>(intAt(args, 1)), 0, false});
+    }
+    else if (op == "worldobject.whisper" || op == "unit.whisper")
+    {
+        fl::HandleData receiver;
+        uint64_t const targetLow = handleAt(args, 2, receiver) ? receiver.guid.lo : 0;
+        fwo.chats.push_back(FakeWorldObject::WoChat{op, stringAt(args, 0), static_cast<uint32_t>(intAt(args, 1)),
+                                                    targetLow, boolAt(args, 3, false)});
+    }
+    return true;
+}
+
+bool FakeHost::gameObjectStateCall(fl::HandleData const& self, std::string const& op,
+                                   std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out)
+{
+    static std::set<std::string> const ops = {
+        "gameobject.getDisplayId",     "gameobject.getLootRecipient", "gameobject.getLootRecipientGroup",
+        "gameobject.hasQuest",         "gameobject.isActive",      "gameobject.isDestructible",
+        "gameobject.isTransport",      "gameobject.removeFromWorld", "gameobject.setRespawnTime",
+        "gameobject.setSpawnedByDefault"};
+    if (!ops.count(op))
+        return false;
+
+    FakeGameObject& g = goState(self);
+    if (op == "gameobject.getDisplayId")
+        out.emplace_back(static_cast<int64_t>(g.displayId));
+    else if (op == "gameobject.getLootRecipient")
+    {
+        if (g.lootRecipient)
+            out.emplace_back(*g.lootRecipient);
+    }
+    else if (op == "gameobject.getLootRecipientGroup")
+    {
+        if (g.lootRecipientGroup)
+            out.emplace_back(*g.lootRecipientGroup);
+    }
+    else if (op == "gameobject.hasQuest")
+        out.emplace_back(g.quests.count(static_cast<uint32_t>(intAt(args, 0))) != 0);
+    else if (op == "gameobject.isActive")
+        out.emplace_back(g.active);
+    else if (op == "gameobject.isDestructible")
+        out.emplace_back(g.destructible);
+    else if (op == "gameobject.isTransport")
+        out.emplace_back(g.transport);
+    else if (op == "gameobject.removeFromWorld")
+    {
+        g.actions.emplace_back(op, args);
+        remove(self);
+    }
+    else if (op == "gameobject.setRespawnTime")
+        g.respawnTime = static_cast<int32_t>(intAt(args, 0, 0));
+    else if (op == "gameobject.setSpawnedByDefault")
+        g.spawnedByDefault = boolAt(args, 0, true);
+    return true;
 }
 
 bool FakeHost::performSpawn(int type, uint32_t entry, uint32_t mapId, uint32_t instanceId, float, float, float, float,

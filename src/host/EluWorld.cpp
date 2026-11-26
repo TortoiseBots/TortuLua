@@ -10,11 +10,13 @@
 #include "CharacterCache.h"
 #include "DataSql.h"
 #include "GuildWrite.h"
+#include "NearSearch.h"
 #include "WorldCall.h"
 
 #include "Chat.h"
 #include "ChatPackets.h"
 #include "ChatCommand.h"
+#include "ChatTextBuilder.h"
 #include "Corpse.h"
 #include "Creature.h"
 #include "Pet.h"
@@ -28,6 +30,7 @@
 #include "GossipDef.h"
 #include "Group.h"
 #include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "GroupMgr.h"
 #include "Guild.h"
 #include "GuildMgr.h"
@@ -211,6 +214,30 @@ int typeOfGuid(fl::Guid const& g)
 }
 
 void pushHandle(std::vector<EventValue>& out, fl::HandleData const& h) { out.emplace_back(EventValue(h)); }
+
+void lootRecipientFromTapList(WorldObject const* obj, GuidUnorderedSet const& tapList, bool wantGroup,
+                              std::vector<EventValue>& out)
+{
+    Player* recipient = nullptr;
+    for (ObjectGuid const& guid : tapList)
+        if (Player* player = ObjectAccessor::GetPlayer(*obj, guid))
+            if (player->IsInWorld() && (!recipient || player->GetGUID() < recipient->GetGUID()))
+                recipient = player;
+    if (!recipient)
+        return;
+    if (!wantGroup)
+    {
+        pushHandle(out, handleFor(recipient));
+        return;
+    }
+    if (Group* group = recipient->GetGroup())
+    {
+        HandleData h;
+        h.kind = ObjKind::Group;
+        h.guid = fromGuid(group->GetGUID());
+        pushHandle(out, h);
+    }
+}
 
 // The Spell and Aura handles of the running Lua call (E2): the docs' objects are transient, so the module only keeps
 // them while the call that produced them runs (Host::endLuaCall clears the store). The handle carries the caster guid,
@@ -475,6 +502,7 @@ bool ForeverHost::objectInWorld(fl::HandleData const& h)
     {
         case fl::ObjKind::Creature:
         case fl::ObjKind::GameObject:
+        case fl::ObjKind::Corpse:
         case fl::ObjKind::Player: return findObject(h) != nullptr;   // a fresh GUID lookup, null when out of the world
         default: return true;
     }
@@ -2014,10 +2042,6 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         obj->SetObjectScale(static_cast<float>(dArg(args, 0, 1.0)));
         return true;
     }
-    // The pinned core has no generic update-field accessors (GetUInt32Value(index) / HasFlag(index, flag) were
-    // removed): the two Object methods answer "not available" (docs/E0-E1-NOTES.md).
-    if (name == "object.hasFlag" || name == "object.getUInt32")
-        return false;
     if (name == "worldobject.getName")
     {
         out.emplace_back(obj->GetName());
@@ -2075,12 +2099,290 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                                                               static_cast<float>(dArg(args, 2)))));
         return true;
     }
+    if (name == "worldobject.getAngle")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetAbsoluteAngle(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(
+            obj->GetAbsoluteAngle(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)))));
+        return true;
+    }
+    if (name == "worldobject.getDistance2d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetDistance2d(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(
+            obj->GetDistance2d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)))));
+        return true;
+    }
+    if (name == "worldobject.getExactDistance")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetExactDist(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(obj->GetExactDist(static_cast<float>(dArg(args, 0)),
+                                                               static_cast<float>(dArg(args, 1)),
+                                                               static_cast<float>(dArg(args, 2)))));
+        return true;
+    }
+    if (name == "worldobject.getExactDistance2d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(static_cast<double>(obj->GetExactDist2d(o)));
+                return true;
+            }
+        out.emplace_back(static_cast<double>(
+            obj->GetExactDist2d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)))));
+        return true;
+    }
+    if (name == "worldobject.getRelativePoint")
+    {
+        float x = 0.0f, y = 0.0f, z = 0.0f;
+        obj->GetClosePoint(x, y, z, 0.0f, static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)));
+        out.emplace_back(static_cast<double>(x));
+        out.emplace_back(static_cast<double>(y));
+        out.emplace_back(static_cast<double>(z));
+        return true;
+    }
+    if (name == "worldobject.isInFront" || name == "worldobject.isInBack")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+            {
+                float const arc = static_cast<float>(dArg(args, 1, 3.14159265358979323846));
+                out.emplace_back(name == "worldobject.isInFront" ? obj->isInFront(o, arc) : obj->isInBack(o, arc));
+            }
+        return true;
+    }
+    if (name == "worldobject.isInMap")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+                out.emplace_back(obj->IsInMap(o));
+        return true;
+    }
+    if (name == "worldobject.isInRange")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+                out.emplace_back(obj->IsInRange(o, static_cast<float>(dArg(args, 1)),
+                                                static_cast<float>(dArg(args, 2)), bArg(args, 3, true)));
+        return true;
+    }
+    if (name == "worldobject.isInRange2d")
+    {
+        Position pos(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)));
+        out.emplace_back(
+            obj->IsInRange2d(&pos, static_cast<float>(dArg(args, 2)), static_cast<float>(dArg(args, 3))));
+        return true;
+    }
+    if (name == "worldobject.isInRange3d")
+    {
+        Position pos(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                     static_cast<float>(dArg(args, 2)));
+        out.emplace_back(
+            obj->IsInRange3d(&pos, static_cast<float>(dArg(args, 3)), static_cast<float>(dArg(args, 4))));
+        return true;
+    }
+    if (name == "worldobject.isWithinDist")
+    {
+        HandleData other;
+        if (!args.empty() && asHandle(args[0], other))
+            if (WorldObject* o = woOf(other))
+                out.emplace_back(obj->IsWithinDist(o, static_cast<float>(dArg(args, 1)), bArg(args, 2, true)));
+        return true;
+    }
+    if (name == "worldobject.isWithinDist2d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(obj->IsWithinDist2d(o, static_cast<float>(dArg(args, 1))));
+                return true;
+            }
+        out.emplace_back(obj->IsWithinDist2d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                             static_cast<float>(dArg(args, 2))));
+        return true;
+    }
+    if (name == "worldobject.isWithinDist3d")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(obj->IsWithinDist3d(o, static_cast<float>(dArg(args, 1))));
+                return true;
+            }
+        out.emplace_back(obj->IsWithinDist3d(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                             static_cast<float>(dArg(args, 2)), static_cast<float>(dArg(args, 3))));
+        return true;
+    }
     if (name == "worldobject.isWithinDistInMap")
     {
         HandleData other;
         if (!args.empty() && asHandle(args[0], other))
             if (WorldObject* o = woOf(other))
                 out.emplace_back(obj->IsWithinDistInMap(o, static_cast<float>(dArg(args, 1)), bArg(args, 2, true)));
+        return true;
+    }
+    if (name == "worldobject.isWithinLoS")
+    {
+        if (!args.empty())
+            if (HandleData other; asHandle(args[0], other))
+            {
+                if (WorldObject* o = woOf(other))
+                    out.emplace_back(obj->IsWithinLOSInMap(o));
+                return true;
+            }
+        out.emplace_back(obj->IsWithinLOS(static_cast<float>(dArg(args, 0)), static_cast<float>(dArg(args, 1)),
+                                          static_cast<float>(dArg(args, 2))));
+        return true;
+    }
+    if (name == "worldobject.getNearObjects" || name == "worldobject.getNearObject")
+    {
+        if (!obj->GetMap())
+            return true;
+        float const range = flh::clampSearchRange(dArg(args, 0, 533.333));
+        uint32 const typeMask = static_cast<uint32>(iArg(args, 1, 0));
+        uint32 const entry = static_cast<uint32>(iArg(args, 2, 0));
+        int const hostile = static_cast<int>(iArg(args, 3, 0));
+        int const dead = static_cast<int>(iArg(args, 4, 1));
+        std::vector<std::pair<float, HandleData>> found;
+        auto work = [&](WorldObject* o)
+        {
+            if (!o || o == obj || !o->IsInWorld())
+                return;
+            float const dist = obj->GetDistance(o);
+            if (dist > range)
+                return;
+            if (typeMask)
+            {
+                bool match = false;
+                if ((typeMask & (1u << 3)) && o->IsUnit())
+                    match = true;
+                if ((typeMask & (1u << 4)) && o->IsPlayer())
+                    match = true;
+                if ((typeMask & (1u << 5)) && o->IsGameObject())
+                    match = true;
+                if ((typeMask & (1u << 7)) && o->ToCorpse())
+                    match = true;
+                if (!match)
+                    return;
+            }
+            if (entry && o->GetEntry() != entry)
+                return;
+            if (hostile == 1 && !obj->IsHostileTo(o))
+                return;
+            if (hostile == 2 && !obj->IsFriendlyTo(o))
+                return;
+            if (Unit* u = o->ToUnit())
+            {
+                if (dead == 1 && !u->IsAlive())
+                    return;
+                if (dead == 2 && u->IsAlive())
+                    return;
+            }
+            if (auto h = targetHandle(o))
+                found.emplace_back(dist, *h);
+        };
+        Trinity::WorldObjectWorker worker(obj, work);
+        flh::visitAllNearObjects<::Cell>(obj, worker, range);
+        std::sort(found.begin(), found.end(),
+                  [](auto const& a, auto const& b) { return a.first < b.first; });
+        if (name == "worldobject.getNearObject")
+        {
+            if (!found.empty())
+                pushHandle(out, found.front().second);
+        }
+        else
+        {
+            for (auto const& item : found)
+                pushHandle(out, item.second);
+        }
+        return true;
+    }
+    if (name == "worldobject.playDirectSound" || name == "worldobject.playDistanceSound" ||
+        name == "worldobject.playMusic")
+    {
+        uint32 const id = static_cast<uint32>(iArg(args, 0));
+        Player* target = nullptr;
+        if (args.size() > 1)
+            if (HandleData other; asHandle(args[1], other))
+                target = playerOf(other);
+        if (name == "worldobject.playDirectSound")
+            obj->PlayDirectSound(id, target);
+        else if (name == "worldobject.playDistanceSound")
+            obj->PlayDistanceSound(id, target);
+        else
+            obj->PlayDirectMusic(id, target);
+        return true;
+    }
+    if (name == "worldobject.say" || name == "worldobject.yell")
+    {
+        std::string const msg = sArg(args, 0);
+        auto const lang = static_cast<Language>(iArg(args, 1));
+        bool const isSay = (name == "worldobject.say");
+        if (Unit* u = obj->ToUnit())
+        {
+            if (isSay)
+                u->Say(msg, lang);
+            else
+                u->Yell(msg, lang);
+        }
+        else if (obj->GetMap())
+        {
+            float const range = sWorld->getFloatConfig(isSay ? CONFIG_LISTEN_RANGE_SAY : CONFIG_LISTEN_RANGE_YELL);
+            Trinity::CustomChatTextBuilder builder(obj, isSay ? CHAT_MSG_MONSTER_SAY : CHAT_MSG_MONSTER_YELL, msg, lang);
+            Trinity::LocalizedDo<Trinity::CustomChatTextBuilder> localizer(builder);
+            Trinity::PlayerDistWorker<Trinity::LocalizedDo<Trinity::CustomChatTextBuilder>> worker(obj, range,
+                                                                                                   localizer);
+            ::Cell::VisitWorldObjects(obj, worker, range);
+        }
+        return true;
+    }
+    if (name == "worldobject.whisper")
+    {
+        std::string const msg = sArg(args, 0);
+        auto const lang = static_cast<Language>(iArg(args, 1));
+        bool const boss = bArg(args, 3, false);
+        HandleData receiver;
+        if (args.size() > 2 && asHandle(args[2], receiver))
+        {
+            if (Player* p = playerOf(receiver))
+            {
+                if (Unit* u = obj->ToUnit())
+                    u->Whisper(msg, lang, p, boss);
+                else if (p->GetSession())
+                {
+                    LocaleConstant const locale = p->GetSession()->GetSessionDbLocaleIndex();
+                    WorldPackets::Chat::Chat packet;
+                    packet.Initialize(boss ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_MONSTER_WHISPER, lang, obj, p, msg,
+                                      0, "", locale);
+                    p->SendDirectMessage(packet.Write());
+                }
+            }
+        }
         return true;
     }
     if (name == "worldobject.spawnCreature")
@@ -3178,22 +3480,7 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         {
             // the tap list (an unordered set) holds the players that may loot; the recipient is the one with the lowest
             // guid that is in the world, so the same list always answers the same player
-            Player* recipient = nullptr;
-            for (ObjectGuid const& guid : creature->GetTapList())
-                if (Player* player = ObjectAccessor::GetPlayer(*creature, guid))
-                    if (player->IsInWorld() && (!recipient || player->GetGUID() < recipient->GetGUID()))
-                        recipient = player;
-            if (!recipient)
-                return true;
-            if (name == "creature.getLootRecipient")
-                pushHandle(out, handleFor(recipient));
-            else if (Group* group = recipient->GetGroup())
-            {
-                HandleData h;
-                h.kind = ObjKind::Group;
-                h.guid = fromGuid(group->GetGUID());
-                pushHandle(out, h);
-            }
+            lootRecipientFromTapList(creature, creature->GetTapList(), name == "creature.getLootRecipientGroup", out);
             return true;
         }
 
@@ -3707,6 +3994,51 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         if (name == "gameobject.getDBTableGUIDLow")
         {
             out.emplace_back(static_cast<int64_t>(go->GetSpawnId()));
+            return true;
+        }
+        if (name == "gameobject.getDisplayId")
+        {
+            out.emplace_back(static_cast<int64_t>(go->GetDisplayId()));
+            return true;
+        }
+        if (name == "gameobject.getLootRecipient" || name == "gameobject.getLootRecipientGroup")
+        {
+            lootRecipientFromTapList(go, go->GetTapList(), name == "gameobject.getLootRecipientGroup", out);
+            return true;
+        }
+        if (name == "gameobject.hasQuest")
+        {
+            out.emplace_back(go->hasQuest(static_cast<uint32>(iArg(args, 0))));
+            return true;
+        }
+        if (name == "gameobject.isActive")
+        {
+            out.emplace_back(go->isActiveObject());
+            return true;
+        }
+        if (name == "gameobject.isDestructible")
+        {
+            out.emplace_back(go->IsDestructibleBuilding());
+            return true;
+        }
+        if (name == "gameobject.isTransport")
+        {
+            out.emplace_back(go->IsTransport());
+            return true;
+        }
+        if (name == "gameobject.removeFromWorld")
+        {
+            go->AddObjectToRemoveList();
+            return true;
+        }
+        if (name == "gameobject.setRespawnTime")
+        {
+            go->SetRespawnTime(static_cast<int32>(iArg(args, 0, 0)));
+            return true;
+        }
+        if (name == "gameobject.setSpawnedByDefault")
+        {
+            go->SetSpawnedByDefault(bArg(args, 0, true));
             return true;
         }
     }
@@ -5187,6 +5519,7 @@ void ForeverHost::runCommand(std::string const& line)
 std::vector<fl::HandleData> ForeverHost::objectsInRange(fl::HandleData const& self, int kind, float range,
                                                         uint32_t entry, int hostile, int dead)
 {
+    range = flh::clampSearchRange(range);
     std::vector<fl::HandleData> out;
     WorldObject* me = findObject(self);
     if (!me || !me->GetMap())
@@ -5290,6 +5623,17 @@ bool ForeverHost::spellExists(uint32_t spellId) { return spellEntry(spellId) != 
 bool ForeverHost::sendPacket(fl::HandleData const& target, uint32_t opcode, std::vector<uint8_t> const& data,
                              bool ignorePlayersInBg, uint64_t ignore)
 {
+    if (target.kind == ObjKind::Creature || target.kind == ObjKind::GameObject || target.kind == ObjKind::Corpse)
+    {
+        WorldObject* wo = findObject(target);
+        if (!wo)
+            return false;
+        WorldPacket packet(opcode, data.size());
+        if (!data.empty())
+            packet.append(data.data(), data.size());
+        wo->SendMessageToSet(&packet, true);
+        return true;
+    }
     if (target.kind != ObjKind::Player && target.kind != ObjKind::Group && target.kind != ObjKind::Guild)
         return false;
     if (!worldThread())

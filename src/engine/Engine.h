@@ -416,6 +416,9 @@ public:
     // The host's hook for "this object left the world" (player logout, creature despawn): drops its timed events at
     // once, from any thread that holds the Lua lock (eluna mode) or the owner thread.
     size_t removeLuaEventsOf(HandleData const& owner);
+    // Tracks and prunes WorldObject:Data() entries (fl.WorldObjectData) when their owner leaves the world.
+    void trackWorldObjectData(HandleData const& owner, std::string const& guidKey);
+    void removeWorldObjectData(HandleData const& owner);
     // The "event <name> needs core hook Cn" log, once per key. True the first time.
     bool noteHookGap(std::string const& key);
 
@@ -622,6 +625,9 @@ private:
     std::vector<int> _deferredUnrefs;                        // refs whose release was refused at depth 8
     uint64_t _nextOwnerSweepMs = 0;                          // owner-liveness sweep of object-bound timed events
     uint64_t _sweepCursor = 0;
+    std::map<std::string, HandleData> _worldObjectDataOwners;   // guid text -> owner handle for Data() pruning
+    std::string _dataSweepCursor;
+    void eraseWorldObjectDataKey(std::string const& key);
     std::set<std::string> _hookGaps;                         // "event X needs core hook Cn" logged once
     std::mutex _hookGapMutex;
 

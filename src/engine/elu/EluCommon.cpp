@@ -7,6 +7,8 @@
 #include "engine/Text.h"
 
 #include <cctype>
+#include <cfloat>
+#include <cmath>
 #include <exception>
 
 namespace flu
@@ -129,6 +131,14 @@ float argFloat(lua_State* L, int idx, char const* what)
     if (!(v == v))
         luaL_error(L, "%s must not be NaN", what);
     return static_cast<float>(v);
+}
+
+double argFinite(lua_State* L, int idx, char const* what)
+{
+    lua_Number const v = luaL_checknumber(L, idx);
+    if (!std::isfinite(v) || std::fabs(v) > static_cast<lua_Number>(FLT_MAX))
+        luaL_error(L, "%s must be a finite number", what);
+    return v;
 }
 
 bool argGuid(lua_State* L, int idx, fl::Guid& out, bool* legacyLow)

@@ -16,16 +16,6 @@ namespace
 {
 using fl::EventValue;
 
-// A finite number that fits a float: the core takes speeds, angles, heights and ranges as floats, and a NaN, an
-// infinity or an out-of-float value reaching its movement and cell math is undefined behaviour there.
-double argFinite(lua_State* L, int idx, char const* what)
-{
-    lua_Number const v = luaL_checknumber(L, idx);
-    if (!std::isfinite(v) || std::fabs(v) > static_cast<lua_Number>(FLT_MAX))
-        luaL_error(L, "%s must be a finite number", what);
-    return v;
-}
-
 // The core's UnitState bits that are defined (Unit.h UNIT_STATE_ALL_STATE_SUPPORTED): 0x2000, 0x80000 and 0x40000000 and up are
 // not states, so AddUnitState/ClearUnitState refuse them instead of writing meaningless bits into the unit.
 constexpr uint32_t kUnitStateSupported = 0x3FF7DFFFu;

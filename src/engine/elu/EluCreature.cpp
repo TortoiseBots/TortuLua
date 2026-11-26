@@ -19,14 +19,6 @@ using fl::EventValue;
 // grid search, so the radius arguments of this family stop there.
 constexpr double kMaxRadius = 533.333;
 
-double argFinite(lua_State* L, int idx, char const* what)
-{
-    lua_Number const v = luaL_checknumber(L, idx);
-    if (!std::isfinite(v) || std::fabs(v) > static_cast<lua_Number>(FLT_MAX))
-        luaL_error(L, "%s must be a finite number", what);
-    return v;
-}
-
 // The core's MapManager::IsValidMapCoord limit (MAP_HALFSIZE - 0.5): a home position past it sends the creature's
 // evade path to a point no map holds.
 constexpr double kMaxCoord = 17066.16;
