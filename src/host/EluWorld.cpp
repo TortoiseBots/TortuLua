@@ -1347,18 +1347,18 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
             {
                 Guild* guild;
                 ObjectGuid guid;
-                bool RankExists(uint32_t rank) const
-                {
-                    return guild->GetRankInfo(static_cast<GuildRankId>(rank)) != nullptr;
-                }
-                void AddMember(bool hasRank, uint32_t rank)
+                // The core adds the member at its lowest rank (no rank passed); an explicit rank is then set through
+                // the public ChangeMemberRank, which refuses a rank the guild does not have (it looks it up itself).
+                flh::GuildAddOutcome AddMember(bool hasRank, uint32_t rank)
                 {
                     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-                    Optional<GuildRankId> rankId;
-                    if (hasRank)
-                        rankId = static_cast<GuildRankId>(rank);
-                    if (guild->AddMember(trans, guid, rankId))
-                        CharacterDatabase.CommitTransaction(trans);
+                    if (!guild->AddMember(trans, guid, Optional<GuildRankId>()))
+                        return flh::GuildAddOutcome::NotAdded;
+                    flh::GuildAddOutcome outcome = flh::GuildAddOutcome::Added;
+                    if (hasRank && !guild->ChangeMemberRank(trans, guid, static_cast<GuildRankId>(rank)))
+                        outcome = flh::GuildAddOutcome::AddedAtDefaultRank;
+                    CharacterDatabase.CommitTransaction(trans);
+                    return outcome;
                 }
                 void DeleteMember(bool isDisbanding)
                 {
@@ -1374,9 +1374,10 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 }
                 void Disband() { guild->Disband(); }
             } target{g, p ? p->GetGUID() : ObjectGuid::Empty};
-            if (flh::applyGuildWrite(g ? &target : nullptr, p != nullptr, write) == flh::GuildWriteResult::UnknownRank)
-                log(fl::LogLevel::Warn, "ForeverLua: Guild change: the guild has no rank " + std::to_string(write.rank) +
-                                            "; the member was not added");
+            if (flh::applyGuildWrite(g ? &target : nullptr, p != nullptr, write) ==
+                flh::GuildWriteResult::AddedAtDefaultRank)
+                log(fl::LogLevel::Warn, "ForeverLua: Guild:AddMember: rank " + std::to_string(write.rank) +
+                                            " does not exist; the member was added at the default rank");
         };
         runSocialWrite("Guild change", job);
         return true;
