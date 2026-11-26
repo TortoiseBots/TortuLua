@@ -11,20 +11,24 @@
 #include <string>
 #include <vector>
 
+class AuraEffect;
 class Corpse;
 class Creature;
 class GameObject;
 class Item;
 class Map;
 class Player;
+class ProcEventInfo;
 class Spell;
 class Unit;
 class WorldObject;
 
 namespace flh
 {
-// A Spell object of the running Lua call (E2): a transient handle that resolves only inside that call.
+// A Spell, AuraEffect or ProcEventInfo object of the running Lua call: transient handles that resolve only inside that call.
 fl::HandleData handleForSpell(Spell* spell);
+fl::HandleData handleForAuraEffect(AuraEffect* eff);
+fl::HandleData handleForProcInfo(ProcEventInfo* proc);
 
 inline ObjectGuid toGuid(fl::Guid const& g)
 {

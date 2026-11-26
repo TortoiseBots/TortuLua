@@ -39,6 +39,8 @@ constexpr unsigned kQuest = kindBit(fl::ObjKind::Quest);
 constexpr unsigned kSpell = kindBit(fl::ObjKind::Spell);
 constexpr unsigned kAura = kindBit(fl::ObjKind::Aura);
 constexpr unsigned kSpellInfo = kindBit(fl::ObjKind::SpellInfo);
+constexpr unsigned kAuraEffect = kindBit(fl::ObjKind::AuraEffect);
+constexpr unsigned kProcInfo = kindBit(fl::ObjKind::ElunaProcInfo);
 constexpr unsigned kPacket = kindBit(fl::ObjKind::Packet);
 constexpr unsigned kCorpse = kindBit(fl::ObjKind::Corpse);
 constexpr unsigned kBattleGround = kindBit(fl::ObjKind::BattleGround);
@@ -151,6 +153,8 @@ void registerSpellMethods(lua_State* L);
 void registerAuraMethods(lua_State* L);
 // Long tail: the SpellInfo class (a documented spell entry; GetSpellInfo and Aura/Spell:GetSpellInfo make one).
 void registerSpellInfoMethods(lua_State* L);
+void registerAuraEffectMethods(lua_State* L);
+void registerProcInfoMethods(lua_State* L);
 // E5: the corpse, battleground, packet and vehicle classes and the methods of systems Classic 1.60 lacks.
 void registerCorpseMethods(lua_State* L);
 void registerBattleGroundMethods(lua_State* L);
