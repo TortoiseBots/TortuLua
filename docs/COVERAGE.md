@@ -11,12 +11,12 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
 | Global | 110 | 94 | 4 | 12 | 85% | 89% |
-| Object | 30 | 14 | 0 | 16 | 47% | 47% |
-| WorldObject | 51 | 23 | 0 | 28 | 45% | 45% |
+| Object | 30 | 15 | 15 | 0 | 50% | 100% |
+| WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 132 | 3 | 32 | 79% | 81% |
 | Player | 263 | 195 | 20 | 48 | 74% | 82% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
-| GameObject | 20 | 9 | 0 | 11 | 45% | 45% |
+| GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
 | Item | 66 | 56 | 4 | 6 | 85% | 91% |
 | Group | 27 | 27 | 0 | 0 | 100% | 100% |
 | Guild | 16 | 14 | 2 | 0 | 88% | 100% |
@@ -48,7 +48,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1014** | **82** | **347** | **70%** | **76%** |
+| **all** | **1443** | **1051** | **100** | **292** | **73%** | **80%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
@@ -194,49 +194,49 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 | Documented method | Status | Note |
 |---|---|---|
-| `GetByteValue` | **missing** |  |
+| `GetByteValue` | **stub** | stub: not available (this core) |
 | `GetEntry` | implemented |  |
-| `GetFloatValue` | **missing** |  |
+| `GetFloatValue` | **stub** | stub: not available (this core) |
 | `GetGUID` | implemented | returns all 128 bits as a 32-digit hex string (the docs type is a 64-bit number); the type, entry and map live in the high half |
 | `GetGUIDLow` | implemented |  |
-| `GetInt32Value` | **missing** |  |
+| `GetInt32Value` | **stub** | stub: not available (this core) |
 | `GetScale` | implemented |  |
 | `GetTypeId` | implemented |  |
-| `GetUInt16Value` | **missing** |  |
+| `GetUInt16Value` | **stub** | stub: not available (this core) |
 | `GetUInt32Value` | implemented |  |
-| `GetUInt64Value` | **missing** |  |
+| `GetUInt64Value` | **stub** | stub: not available (this core) |
 | `HasFlag` | implemented |  |
 | `IsInWorld` | implemented |  |
 | `IsPlayer` | implemented |  |
-| `RemoveFlag` | **missing** |  |
-| `SetByteValue` | **missing** |  |
-| `SetFlag` | **missing** |  |
-| `SetFloatValue` | **missing** |  |
-| `SetInt16Value` | **missing** |  |
-| `SetInt32Value` | **missing** |  |
+| `RemoveFlag` | **stub** | stub: not available (this core) |
+| `SetByteValue` | **stub** | stub: not available (this core) |
+| `SetFlag` | **stub** | stub: not available (this core) |
+| `SetFloatValue` | **stub** | stub: not available (this core) |
+| `SetInt16Value` | **stub** | stub: not available (this core) |
+| `SetInt32Value` | **stub** | stub: not available (this core) |
 | `SetScale` | implemented |  |
-| `SetUInt16Value` | **missing** |  |
-| `SetUInt32Value` | **missing** |  |
-| `SetUInt64Value` | **missing** |  |
-| `ToCorpse` | **missing** |  |
+| `SetUInt16Value` | **stub** | stub: not available (this core) |
+| `SetUInt32Value` | **stub** | stub: not available (this core) |
+| `SetUInt64Value` | **stub** | stub: not available (this core) |
+| `ToCorpse` | implemented |  |
 | `ToCreature` | implemented |  |
 | `ToGameObject` | implemented |  |
 | `ToPlayer` | implemented |  |
 | `ToUnit` | implemented |  |
-| `UpdateUInt32Value` | **missing** |  |
+| `UpdateUInt32Value` | **stub** | stub: not available (this core) |
 ### Class `WorldObject` (inherits `Object`)
 
 | Documented method | Status | Note |
 |---|---|---|
-| `Data` | **missing** |  |
-| `GetAngle` | **missing** |  |
+| `Data` | implemented |  |
+| `GetAngle` | implemented |  |
 | `GetAreaId` | implemented |  |
 | `GetCreaturesInRange` | implemented |  |
 | `GetDistance` | implemented |  |
-| `GetDistance2d` | **missing** |  |
-| `GetExactDistance` | **missing** |  |
-| `GetExactDistance2d` | **missing** |  |
-| `GetGameObjectsInRange` | **missing** |  |
+| `GetDistance2d` | implemented |  |
+| `GetExactDistance` | implemented |  |
+| `GetExactDistance2d` | implemented |  |
+| `GetGameObjectsInRange` | implemented |  |
 | `GetInstanceId` | implemented |  |
 | `GetLocation` | implemented |  |
 | `GetMap` | implemented |  |
@@ -245,38 +245,38 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `GetNearestCreature` | implemented |  |
 | `GetNearestGameObject` | implemented |  |
 | `GetNearestPlayer` | implemented |  |
-| `GetNearObject` | **missing** |  |
-| `GetNearObjects` | **missing** |  |
+| `GetNearObject` | implemented |  |
+| `GetNearObjects` | implemented |  |
 | `GetO` | implemented |  |
-| `GetPhaseMask` | **missing** |  |
+| `GetPhaseMask` | **stub** | stub: not available (this core) |
 | `GetPlayersInRange` | implemented |  |
-| `GetRelativePoint` | **missing** |  |
+| `GetRelativePoint` | implemented |  |
 | `GetX` | implemented |  |
 | `GetY` | implemented |  |
 | `GetZ` | implemented |  |
 | `GetZoneId` | implemented |  |
-| `IsInBack` | **missing** |  |
-| `IsInFront` | **missing** |  |
-| `IsInMap` | **missing** |  |
-| `IsInRange` | **missing** |  |
-| `IsInRange2d` | **missing** |  |
-| `IsInRange3d` | **missing** |  |
-| `IsWithinDist` | **missing** |  |
-| `IsWithinDist2d` | **missing** |  |
-| `IsWithinDist3d` | **missing** |  |
+| `IsInBack` | implemented |  |
+| `IsInFront` | implemented |  |
+| `IsInMap` | implemented |  |
+| `IsInRange` | implemented |  |
+| `IsInRange2d` | implemented |  |
+| `IsInRange3d` | implemented |  |
+| `IsWithinDist` | implemented |  |
+| `IsWithinDist2d` | implemented |  |
+| `IsWithinDist3d` | implemented |  |
 | `IsWithinDistInMap` | implemented |  |
-| `IsWithinLoS` | **missing** |  |
-| `PlayDirectSound` | **missing** |  |
-| `PlayDistanceSound` | **missing** |  |
-| `PlayMusic` | **missing** |  |
+| `IsWithinLoS` | implemented |  |
+| `PlayDirectSound` | implemented |  |
+| `PlayDistanceSound` | implemented |  |
+| `PlayMusic` | implemented |  |
 | `RegisterEvent` | implemented |  |
 | `RemoveEventById` | implemented |  |
 | `RemoveEvents` | implemented |  |
-| `SendPacket` | **missing** | the engine registers it on `Player` only |
-| `SendUnitSay` | **missing** | the engine registers it on `Unit` only |
-| `SendUnitWhisper` | **missing** | the engine registers it on `Unit` only |
-| `SendUnitYell` | **missing** | the engine registers it on `Unit` only |
-| `SetPhaseMask` | **missing** |  |
+| `SendPacket` | implemented |  |
+| `SendUnitSay` | implemented |  |
+| `SendUnitWhisper` | implemented |  |
+| `SendUnitYell` | implemented |  |
+| `SetPhaseMask` | **stub** | stub: not available (this core) |
 | `SpawnCreature` | implemented |  |
 | `SummonGameObject` | implemented |  |
 ### Class `Unit` (inherits `WorldObject`)
@@ -821,23 +821,23 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 |---|---|---|
 | `Despawn` | implemented |  |
 | `GetDBTableGUIDLow` | implemented |  |
-| `GetDisplayId` | **missing** |  |
+| `GetDisplayId` | implemented |  |
 | `GetGoState` | implemented |  |
-| `GetLootRecipient` | **missing** |  |
-| `GetLootRecipientGroup` | **missing** |  |
+| `GetLootRecipient` | implemented |  |
+| `GetLootRecipientGroup` | implemented |  |
 | `GetLootState` | implemented |  |
-| `HasQuest` | **missing** |  |
-| `IsActive` | **missing** |  |
-| `IsDestructible` | **missing** |  |
+| `HasQuest` | implemented |  |
+| `IsActive` | implemented |  |
+| `IsDestructible` | implemented |  |
 | `IsSpawned` | implemented |  |
-| `IsTransport` | **missing** |  |
-| `RemoveFromWorld` | **missing** |  |
+| `IsTransport` | implemented |  |
+| `RemoveFromWorld` | implemented |  |
 | `Respawn` | implemented |  |
-| `SaveToDB` | **missing** |  |
+| `SaveToDB` | **stub** | stub: not available (this server) |
 | `SetGoState` | implemented |  |
 | `SetLootState` | implemented |  |
-| `SetRespawnTime` | **missing** |  |
-| `SetSpawnedByDefault` | **missing** |  |
+| `SetRespawnTime` | implemented |  |
+| `SetSpawnedByDefault` | implemented |  |
 | `UseDoorOrButton` | implemented |  |
 ### Class `Item` (inherits `Object`)
 

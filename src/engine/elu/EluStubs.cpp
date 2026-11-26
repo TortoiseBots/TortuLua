@@ -21,8 +21,9 @@ int classicStubMethodFor(lua_State* L, char const* name)
     return luaL_error(L, "%s: not available on Classic 1.60", name);
 }
 
-// A documented call the pinned core has no API for (not a Classic-era feature: the core itself never grew it). Same
-// contract as the Classic stub: the name is in the class table, the call raises the documented error.
+// A documented call the pinned core has no API for (not a Classic-era feature: the core itself never grew it, or uses
+// typed fragments / phase shifts instead). Same contract as the Classic stub: the name is in the class table, the call
+// raises the documented error.
 int coreStubMethod(lua_State* L)
 {
     char const* name = lua_tostring(L, lua_upvalueindex(1));
@@ -82,6 +83,16 @@ void registerStubMethods(lua_State* L)
     for (char const* m : {"GetChatTag", "GetFreeTalentPoints", "GetLifetimeKills", "GetMailItem", "GetPhaseMaskForSpawn",
                           "IsHonorOrXPTarget", "IsVisibleForPlayer"})
         addCoreStubMethod(L, "Player", m);
+    // Object generic update-field and flag accessors: this core stores typed update-field fragments rather than a
+    // flat indexable values array.
+    for (char const* m :
+         {"GetByteValue", "GetFloatValue", "GetInt32Value", "GetUInt16Value", "GetUInt64Value", "RemoveFlag",
+          "SetByteValue", "SetFlag", "SetFloatValue", "SetInt16Value", "SetInt32Value", "SetUInt16Value",
+          "SetUInt32Value", "SetUInt64Value", "UpdateUInt32Value"})
+        addCoreStubMethod(L, "Object", m);
+    // WorldObject bitmask phasing: this core uses PhaseShift phase ids rather than a 32-bit phase mask.
+    for (char const* m : {"GetPhaseMask", "SetPhaseMask"})
+        addCoreStubMethod(L, "WorldObject", m);
 }
 
 void registerVehicleMethods(lua_State* L)

@@ -63,7 +63,8 @@ public:
     // the entry of a creature/game object) so two kinds can share a low counter; creatures and game objects live in the
     // store of ONE map and are found only through it; players are found by guid in a global table and may change map;
     // access follows the same flh::AccessRules the module uses.
-    static constexpr uint64_t kTypePlayer = 4, kTypeItem = 3, kTypeCreature = 9, kTypeGameObject = 11, kTypePet = 10;
+    static constexpr uint64_t kTypePlayer = 4, kTypeItem = 3, kTypeCreature = 9, kTypeGameObject = 11, kTypePet = 10,
+                              kTypeCorpse = 14;
     static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0);
     static fl::HandleData creature(uint64_t id, uint32_t map = 0, uint32_t instance = 0, uint32_t entry = 0);
     // A hunter/warlock pet: a creature handle whose guid is a Pet guid. The core keeps it in the map's Pet store, so only
@@ -72,6 +73,7 @@ public:
     bool petFallback = true;   // false: the pre-fix lookup (Map::GetCreature only) that never found a pet
     static fl::HandleData player(uint64_t id, uint32_t map = 0, uint32_t instance = 0);
     static fl::HandleData gameObject(uint64_t id, uint32_t map = 0, uint32_t instance = 0, uint32_t entry = 0);
+    static fl::HandleData corpse(uint64_t id, uint32_t map = 0, uint32_t instance = 0);
     static fl::HandleData item(uint64_t id);
     void add(fl::HandleData const& h, fl::ObjectInfo const& info);
     void remove(fl::HandleData const& h);
@@ -313,6 +315,51 @@ public:
     FakeItemState& itemState(fl::HandleData const& h) { return itemStates[{h.guid.hi, h.guid.lo}]; }
     bool itemStateCall(fl::HandleData const& self, std::string const& op, std::vector<fl::EventValue> const& args,
                        std::vector<fl::EventValue>& out);
+
+    // ---- Object / WorldObject / GameObject coverage ----
+    struct FakeWorldObject
+    {
+        double combatReach = 0.0;
+        bool losOk = true;
+        bool hostileToAll = false;
+        bool friendlyToAll = false;
+        struct SoundCall
+        {
+            std::string op;
+            uint32_t id = 0;
+            uint64_t targetPlayerLow = 0;
+        };
+        std::vector<SoundCall> sounds;
+        struct WoChat
+        {
+            std::string op, msg;
+            uint32_t lang = 0;
+            uint64_t targetLow = 0;
+            bool boss = false;
+        };
+        std::vector<WoChat> chats;
+    };
+    std::map<std::pair<uint64_t, uint64_t>, FakeWorldObject> woStates;
+    FakeWorldObject& woState(fl::HandleData const& h) { return woStates[{h.guid.hi, h.guid.lo}]; }
+    bool worldObjectStateCall(fl::HandleData const& self, std::string const& op,
+                              std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out);
+
+    struct FakeGameObject
+    {
+        uint32_t goState = 1, lootState = 1, displayId = 0;
+        bool spawned = true, active = false, destructible = false, transport = false, spawnedByDefault = true;
+        int32_t respawnTime = 0;
+        uint32_t dbLow = 0;
+        std::set<uint32_t> quests;
+        std::optional<fl::HandleData> lootRecipient, lootRecipientGroup;
+        std::vector<std::pair<std::string, std::vector<fl::EventValue>>> actions;
+    };
+    std::map<std::pair<uint64_t, uint64_t>, FakeGameObject> goStates;
+    FakeGameObject& goState(fl::HandleData const& h) { return goStates[{h.guid.hi, h.guid.lo}]; }
+    bool gameObjectStateCall(fl::HandleData const& self, std::string const& op,
+                             std::vector<fl::EventValue> const& args, std::vector<fl::EventValue>& out);
+    std::vector<fl::HandleData> objectsInRange(fl::HandleData const& self, int kind, float range, uint32_t entry,
+                                               int hostile, int dead) override;
     std::map<std::string, fl::DbRows> rawResults;   // sql -> rows (rawQuery)
     bool rawFail = false;
     std::vector<std::string> rawQueries;

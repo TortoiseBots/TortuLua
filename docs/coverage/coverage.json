@@ -347,14 +347,18 @@
    "inherits": null,
    "methods": {
     "GetByteValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetEntry": {
      "status": "implemented",
      "declared": "Object"
     },
     "GetFloatValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetGUID": {
      "status": "implemented",
@@ -366,7 +370,9 @@
      "declared": "Object"
     },
     "GetInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetScale": {
      "status": "implemented",
@@ -377,14 +383,18 @@
      "declared": "Object"
     },
     "GetUInt16Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "GetUInt32Value": {
      "status": "implemented",
      "declared": "Object"
     },
     "GetUInt64Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "HasFlag": {
      "status": "implemented",
@@ -399,38 +409,57 @@
      "declared": "Object"
     },
     "RemoveFlag": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetByteValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetFlag": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetFloatValue": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetInt16Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetScale": {
      "status": "implemented",
      "declared": "Object"
     },
     "SetUInt16Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetUInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "SetUInt64Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     },
     "ToCorpse": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "Object"
     },
     "ToCreature": {
      "status": "implemented",
@@ -449,7 +478,9 @@
      "declared": "Object"
     },
     "UpdateUInt32Value": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "Object"
     }
    }
   },
@@ -457,10 +488,12 @@
    "inherits": "Object",
    "methods": {
     "Data": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetAngle": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetAreaId": {
      "status": "implemented",
@@ -475,16 +508,20 @@
      "declared": "WorldObject"
     },
     "GetDistance2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetExactDistance": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetExactDistance2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetGameObjectsInRange": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetInstanceId": {
      "status": "implemented",
@@ -519,24 +556,29 @@
      "declared": "WorldObject"
     },
     "GetNearObject": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetNearObjects": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetO": {
      "status": "implemented",
      "declared": "WorldObject"
     },
     "GetPhaseMask": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "WorldObject"
     },
     "GetPlayersInRange": {
      "status": "implemented",
      "declared": "WorldObject"
     },
     "GetRelativePoint": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "GetX": {
      "status": "implemented",
@@ -555,47 +597,60 @@
      "declared": "WorldObject"
     },
     "IsInBack": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInFront": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInMap": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInRange": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInRange2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsInRange3d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDist": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDist2d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDist3d": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "IsWithinDistInMap": {
      "status": "implemented",
      "declared": "WorldObject"
     },
     "IsWithinLoS": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "PlayDirectSound": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "PlayDistanceSound": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "PlayMusic": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "RegisterEvent": {
      "status": "implemented",
@@ -610,23 +665,25 @@
      "declared": "WorldObject"
     },
     "SendPacket": {
-     "status": "missing",
-     "note": "the engine registers it on `Player` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SendUnitSay": {
-     "status": "missing",
-     "note": "the engine registers it on `Unit` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SendUnitWhisper": {
-     "status": "missing",
-     "note": "the engine registers it on `Unit` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SendUnitYell": {
-     "status": "missing",
-     "note": "the engine registers it on `Unit` only"
+     "status": "implemented",
+     "declared": "WorldObject"
     },
     "SetPhaseMask": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this core)",
+     "declared": "WorldObject"
     },
     "SpawnCreature": {
      "status": "implemented",
@@ -2699,47 +2756,57 @@
      "declared": "GameObject"
     },
     "GetDisplayId": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "GetGoState": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "GetLootRecipient": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "GetLootRecipientGroup": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "GetLootState": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "HasQuest": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "IsActive": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "IsDestructible": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "IsSpawned": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "IsTransport": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "RemoveFromWorld": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "Respawn": {
      "status": "implemented",
      "declared": "GameObject"
     },
     "SaveToDB": {
-     "status": "missing"
+     "status": "stub",
+     "note": "stub: not available (this server)",
+     "declared": "GameObject"
     },
     "SetGoState": {
      "status": "implemented",
@@ -2750,10 +2817,12 @@
      "declared": "GameObject"
     },
     "SetRespawnTime": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "SetSpawnedByDefault": {
-     "status": "missing"
+     "status": "implemented",
+     "declared": "GameObject"
     },
     "UseDoorOrButton": {
      "status": "implemented",
@@ -5842,54 +5911,6 @@
    "RegisterSpellEvent"
   ],
   "classes": {
-   "Object": [
-    "GetByteValue",
-    "GetFloatValue",
-    "GetInt32Value",
-    "GetUInt16Value",
-    "GetUInt64Value",
-    "RemoveFlag",
-    "SetByteValue",
-    "SetFlag",
-    "SetFloatValue",
-    "SetInt16Value",
-    "SetInt32Value",
-    "SetUInt16Value",
-    "SetUInt32Value",
-    "SetUInt64Value",
-    "ToCorpse",
-    "UpdateUInt32Value"
-   ],
-   "WorldObject": [
-    "Data",
-    "GetAngle",
-    "GetDistance2d",
-    "GetExactDistance",
-    "GetExactDistance2d",
-    "GetGameObjectsInRange",
-    "GetNearObject",
-    "GetNearObjects",
-    "GetPhaseMask",
-    "GetRelativePoint",
-    "IsInBack",
-    "IsInFront",
-    "IsInMap",
-    "IsInRange",
-    "IsInRange2d",
-    "IsInRange3d",
-    "IsWithinDist",
-    "IsWithinDist2d",
-    "IsWithinDist3d",
-    "IsWithinLoS",
-    "PlayDirectSound",
-    "PlayDistanceSound",
-    "PlayMusic",
-    "SendPacket",
-    "SendUnitSay",
-    "SendUnitWhisper",
-    "SendUnitYell",
-    "SetPhaseMask"
-   ],
    "Unit": [
     "AddFlatStatModifier",
     "AddPctStatModifier",
@@ -5982,19 +6003,6 @@
     "IsTargetableForAttack",
     "RemoveFromWorld",
     "SetAggroEnabled"
-   ],
-   "GameObject": [
-    "GetDisplayId",
-    "GetLootRecipient",
-    "GetLootRecipientGroup",
-    "HasQuest",
-    "IsActive",
-    "IsDestructible",
-    "IsTransport",
-    "RemoveFromWorld",
-    "SaveToDB",
-    "SetRespawnTime",
-    "SetSpawnedByDefault"
    ],
    "Item": [
     "GetExtraFlags",

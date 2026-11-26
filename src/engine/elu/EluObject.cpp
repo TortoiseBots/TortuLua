@@ -9,6 +9,7 @@
 #include <lauxlib.h>
 #include <lua.h>
 
+#include <cmath>
 #include <optional>
 
 namespace flu
@@ -85,6 +86,7 @@ int toKind(lua_State* L, ObjKind want, char const* display)
 int oToPlayer(lua_State* L) { return toKind(L, ObjKind::Player, "ToPlayer"); }
 int oToCreature(lua_State* L) { return toKind(L, ObjKind::Creature, "ToCreature"); }
 int oToGameObject(lua_State* L) { return toKind(L, ObjKind::GameObject, "ToGameObject"); }
+int oToCorpse(lua_State* L) { return toKind(L, ObjKind::Corpse, "ToCorpse"); }
 int oToUnit(lua_State* L)
 {
     HandleData const& h = self(L, kObject);
@@ -180,27 +182,200 @@ int wGetY(lua_State* L) { return readOp(L, kWorldObject, "worldobject.getY", "Ge
 int wGetZ(lua_State* L) { return readOp(L, kWorldObject, "worldobject.getZ", "GetZ"); }
 int wGetO(lua_State* L) { return readOp(L, kWorldObject, "worldobject.getO", "GetO"); }
 int wGetLocation(lua_State* L) { return readOp(L, kWorldObject, "worldobject.getLocation", "GetLocation"); }
-int wGetDistance(lua_State* L)
+namespace
+{
+constexpr float kPi = 3.14159265358979323846f;
+float optFloat(lua_State* L, int idx, float def, char const* what)
+{
+    if (lua_isnoneornil(L, idx))
+        return def;
+    return argFloat(L, idx, what);
+}
+int targetOrCoords2d(lua_State* L, char const* op, char const* display)
 {
     std::vector<EventValue> args;
     if (fl::toHandleAny(L, 2))
+        args.emplace_back(objArg(L, 2, kWorldObject, "target"));
+    else
     {
-        HandleData const& other = objArg(L, 2, kWorldObject, "target");
-        args.emplace_back(other);
+        args.emplace_back(argFloat(L, 2, "x"));
+        args.emplace_back(argFloat(L, 3, "y"));
     }
+    return readOp(L, kWorldObject, op, display, args);
+}
+int targetOrCoords3d(lua_State* L, char const* op, char const* display)
+{
+    std::vector<EventValue> args;
+    if (fl::toHandleAny(L, 2))
+        args.emplace_back(objArg(L, 2, kWorldObject, "target"));
     else
     {
         args.emplace_back(argFloat(L, 2, "x"));
         args.emplace_back(argFloat(L, 3, "y"));
         args.emplace_back(argFloat(L, 4, "z"));
     }
-    return readOp(L, kWorldObject, "worldobject.getDistance", "GetDistance", args);
+    return readOp(L, kWorldObject, op, display, args);
+}
+int soundToPlayer(lua_State* L, char const* op, char const* display, char const* idName)
+{
+    std::vector<EventValue> args{EventValue(static_cast<int64_t>(argUInt(L, 2, idName)))};
+    if (!lua_isnoneornil(L, 3))
+        args.emplace_back(objArg(L, 3, kPlayer, "player"));
+    return actionOp(L, kWorldObject, op, display, args);
+}
+}  // namespace
+int wData(lua_State* L)
+{
+    HandleData const& h = self(L, kWorldObject);
+    std::string const key = fl::guidText(h.guid);
+    lua_getfield(L, LUA_REGISTRYINDEX, "fl.WorldObjectData");
+    if (!lua_istable(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, LUA_REGISTRYINDEX, "fl.WorldObjectData");
+    }
+    lua_getfield(L, -1, key.c_str());
+    if (!lua_istable(L, -1))
+    {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, key.c_str());
+    }
+    lua_remove(L, -2);
+    return 1;
+}
+int wGetAngle(lua_State* L) { return targetOrCoords2d(L, "worldobject.getAngle", "GetAngle"); }
+int wGetDistance(lua_State* L) { return targetOrCoords3d(L, "worldobject.getDistance", "GetDistance"); }
+int wGetDistance2d(lua_State* L) { return targetOrCoords2d(L, "worldobject.getDistance2d", "GetDistance2d"); }
+int wGetExactDistance(lua_State* L) { return targetOrCoords3d(L, "worldobject.getExactDistance", "GetExactDistance"); }
+int wGetExactDistance2d(lua_State* L)
+{
+    return targetOrCoords2d(L, "worldobject.getExactDistance2d", "GetExactDistance2d");
+}
+int wGetRelativePoint(lua_State* L)
+{
+    return readOp(L, kWorldObject, "worldobject.getRelativePoint", "GetRelativePoint",
+                  {EventValue(argFloat(L, 2, "distance")), EventValue(argFloat(L, 3, "angle"))});
+}
+int wIsInFront(lua_State* L)
+{
+    HandleData const& target = objArg(L, 2, kWorldObject, "target");
+    return readOp(L, kWorldObject, "worldobject.isInFront", "IsInFront",
+                  {EventValue(target), EventValue(optFloat(L, 3, kPi, "arc"))});
+}
+int wIsInBack(lua_State* L)
+{
+    HandleData const& target = objArg(L, 2, kWorldObject, "target");
+    return readOp(L, kWorldObject, "worldobject.isInBack", "IsInBack",
+                  {EventValue(target), EventValue(optFloat(L, 3, kPi, "arc"))});
+}
+int wIsInMap(lua_State* L)
+{
+    HandleData const& target = objArg(L, 2, kWorldObject, "target");
+    return readOp(L, kWorldObject, "worldobject.isInMap", "IsInMap", {EventValue(target)});
+}
+int wIsInRange(lua_State* L)
+{
+    HandleData const& target = objArg(L, 2, kWorldObject, "target");
+    return readOp(L, kWorldObject, "worldobject.isInRange", "IsInRange",
+                  {EventValue(target), EventValue(argFloat(L, 3, "minrange")), EventValue(argFloat(L, 4, "maxrange")),
+                   EventValue(optBool(L, 5, true))});
+}
+int wIsInRange2d(lua_State* L)
+{
+    return readOp(L, kWorldObject, "worldobject.isInRange2d", "IsInRange2d",
+                  {EventValue(argFloat(L, 2, "x")), EventValue(argFloat(L, 3, "y")),
+                   EventValue(argFloat(L, 4, "minrange")), EventValue(argFloat(L, 5, "maxrange"))});
+}
+int wIsInRange3d(lua_State* L)
+{
+    return readOp(L, kWorldObject, "worldobject.isInRange3d", "IsInRange3d",
+                  {EventValue(argFloat(L, 2, "x")), EventValue(argFloat(L, 3, "y")), EventValue(argFloat(L, 4, "z")),
+                   EventValue(argFloat(L, 5, "minrange")), EventValue(argFloat(L, 6, "maxrange"))});
+}
+int wIsWithinDist(lua_State* L)
+{
+    HandleData const& target = objArg(L, 2, kWorldObject, "target");
+    return readOp(L, kWorldObject, "worldobject.isWithinDist", "IsWithinDist",
+                  {EventValue(target), EventValue(argFloat(L, 3, "distance")), EventValue(optBool(L, 4, true))});
+}
+int wIsWithinDist2d(lua_State* L)
+{
+    std::vector<EventValue> args;
+    if (fl::toHandleAny(L, 2))
+    {
+        args.emplace_back(objArg(L, 2, kWorldObject, "target"));
+        args.emplace_back(argFloat(L, 3, "distance"));
+    }
+    else
+    {
+        args.emplace_back(argFloat(L, 2, "x"));
+        args.emplace_back(argFloat(L, 3, "y"));
+        args.emplace_back(argFloat(L, 4, "distance"));
+    }
+    return readOp(L, kWorldObject, "worldobject.isWithinDist2d", "IsWithinDist2d", args);
+}
+int wIsWithinDist3d(lua_State* L)
+{
+    std::vector<EventValue> args;
+    if (fl::toHandleAny(L, 2))
+    {
+        args.emplace_back(objArg(L, 2, kWorldObject, "target"));
+        args.emplace_back(argFloat(L, 3, "distance"));
+    }
+    else
+    {
+        args.emplace_back(argFloat(L, 2, "x"));
+        args.emplace_back(argFloat(L, 3, "y"));
+        args.emplace_back(argFloat(L, 4, "z"));
+        args.emplace_back(argFloat(L, 5, "distance"));
+    }
+    return readOp(L, kWorldObject, "worldobject.isWithinDist3d", "IsWithinDist3d", args);
 }
 int wIsWithinDistInMap(lua_State* L)
 {
     HandleData const& target = objArg(L, 2, kWorldObject, "target");
     return readOp(L, kWorldObject, "worldobject.isWithinDistInMap", "IsWithinDistInMap",
                   {EventValue(target), EventValue(argFloat(L, 3, "distance")), EventValue(optBool(L, 4, true))});
+}
+int wIsWithinLoS(lua_State* L) { return targetOrCoords3d(L, "worldobject.isWithinLoS", "IsWithinLoS"); }
+int wPlayDirectSound(lua_State* L)
+{
+    return soundToPlayer(L, "worldobject.playDirectSound", "PlayDirectSound", "sound");
+}
+int wPlayDistanceSound(lua_State* L)
+{
+    return soundToPlayer(L, "worldobject.playDistanceSound", "PlayDistanceSound", "sound");
+}
+int wPlayMusic(lua_State* L) { return soundToPlayer(L, "worldobject.playMusic", "PlayMusic", "music"); }
+int wSendPacket(lua_State* L)
+{
+    HandleData const& h = self(L, kWorldObject);
+    sendPacketArg(L, h, 2, "SendPacket");
+    return 0;
+}
+int wSendUnitSay(lua_State* L)
+{
+    std::string const msg = argStr(L, 2, "msg");
+    return actionOp(L, kWorldObject, "worldobject.say", "SendUnitSay",
+                    {EventValue(msg), EventValue(static_cast<int64_t>(argUInt(L, 3, "language")))});
+}
+int wSendUnitYell(lua_State* L)
+{
+    std::string const msg = argStr(L, 2, "msg");
+    return actionOp(L, kWorldObject, "worldobject.yell", "SendUnitYell",
+                    {EventValue(msg), EventValue(static_cast<int64_t>(argUInt(L, 3, "language")))});
+}
+int wSendUnitWhisper(lua_State* L)
+{
+    std::string const msg = argStr(L, 2, "msg");
+    HandleData const& receiver = objArg(L, 4, kPlayer, "receiver");
+    return actionOp(L, kWorldObject, "worldobject.whisper", "SendUnitWhisper",
+                    {EventValue(msg), EventValue(static_cast<int64_t>(argUInt(L, 3, "lang"))), EventValue(receiver),
+                     EventValue(optBool(L, 5, false))});
 }
 
 float rangeArg(lua_State* L, int idx) { return static_cast<float>(luaL_optnumber(L, idx, 533.33333)); }
@@ -231,6 +406,30 @@ int wGetCreaturesInRange(lua_State* L)
     int hostile = static_cast<int>(optUInt(L, 4, 0));
     int dead = static_cast<int>(optUInt(L, 5, 1));
     return rangeList(L, 1, entry, hostile, dead);
+}
+int wGetGameObjectsInRange(lua_State* L)
+{
+    uint32_t entry = static_cast<uint32_t>(optUInt(L, 3, 0));
+    int hostile = static_cast<int>(optUInt(L, 4, 0));
+    return rangeList(L, 2, entry, hostile, 1);
+}
+std::vector<EventValue> nearArgs(lua_State* L)
+{
+    float const range = rangeArg(L, 2);
+    uint32_t const type = static_cast<uint32_t>(optUInt(L, 3, 0));
+    uint32_t const entry = static_cast<uint32_t>(optUInt(L, 4, 0));
+    uint32_t const hostile = static_cast<uint32_t>(optUInt(L, 5, 0));
+    uint32_t const dead = static_cast<uint32_t>(optUInt(L, 6, 1));
+    return {EventValue(range), EventValue(static_cast<int64_t>(type)), EventValue(static_cast<int64_t>(entry)),
+            EventValue(static_cast<int64_t>(hostile)), EventValue(static_cast<int64_t>(dead))};
+}
+int wGetNearObjects(lua_State* L)
+{
+    return listOp(L, kWorldObject, "worldobject.getNearObjects", "GetNearObjects", nearArgs(L));
+}
+int wGetNearObject(lua_State* L)
+{
+    return readHandleOp(L, kWorldObject, "worldobject.getNearObject", "GetNearObject", nearArgs(L));
 }
 int nearest(lua_State* L, int kind, uint32_t entry, int hostile, int dead)
 {
@@ -333,6 +532,7 @@ void registerObjectMethods(lua_State* L)
         {"GetGUIDLow", fl::safe<oGetGUIDLow>},   {"GetTypeId", fl::safe<oGetTypeId>},
         {"IsPlayer", fl::safe<oIsPlayer>},       {"ToPlayer", fl::safe<oToPlayer>},
         {"ToCreature", fl::safe<oToCreature>},   {"ToGameObject", fl::safe<oToGameObject>},
+        {"ToCorpse", fl::safe<oToCorpse>},
         {"ToUnit", fl::safe<oToUnit>},           {"IsInWorld", fl::safe<oIsInWorld>},
         {"GetScale", fl::safe<oGetScale>},
         {"SetScale", fl::safe<oSetScale>},       {"HasFlag", fl::safe<oHasFlag>},
@@ -375,18 +575,39 @@ void registerMapMethods(lua_State* L)
 void registerWorldObjectMethods(lua_State* L)
 {
     static luaL_Reg const regs[] = {
+        {"Data", fl::safe<wData>},
         {"GetName", fl::safe<wGetName>},           {"GetMap", fl::safe<wGetMap>},
         {"GetMapId", fl::safe<wGetMapId>},         {"GetInstanceId", fl::safe<wGetInstanceId>},
         {"GetZoneId", fl::safe<wGetZoneId>},       {"GetAreaId", fl::safe<wGetAreaId>},
         {"GetX", fl::safe<wGetX>},                 {"GetY", fl::safe<wGetY>},
         {"GetZ", fl::safe<wGetZ>},                 {"GetO", fl::safe<wGetO>},
-        {"GetLocation", fl::safe<wGetLocation>},   {"GetDistance", fl::safe<wGetDistance>},
+        {"GetLocation", fl::safe<wGetLocation>},   {"GetAngle", fl::safe<wGetAngle>},
+        {"GetDistance", fl::safe<wGetDistance>},   {"GetDistance2d", fl::safe<wGetDistance2d>},
+        {"GetExactDistance", fl::safe<wGetExactDistance>},
+        {"GetExactDistance2d", fl::safe<wGetExactDistance2d>},
+        {"GetRelativePoint", fl::safe<wGetRelativePoint>},
+        {"IsInFront", fl::safe<wIsInFront>},       {"IsInBack", fl::safe<wIsInBack>},
+        {"IsInMap", fl::safe<wIsInMap>},           {"IsInRange", fl::safe<wIsInRange>},
+        {"IsInRange2d", fl::safe<wIsInRange2d>},   {"IsInRange3d", fl::safe<wIsInRange3d>},
+        {"IsWithinDist", fl::safe<wIsWithinDist>}, {"IsWithinDist2d", fl::safe<wIsWithinDist2d>},
+        {"IsWithinDist3d", fl::safe<wIsWithinDist3d>},
         {"IsWithinDistInMap", fl::safe<wIsWithinDistInMap>},
+        {"IsWithinLoS", fl::safe<wIsWithinLoS>},
         {"GetNearestPlayer", fl::safe<wGetNearestPlayer>},
         {"GetNearestCreature", fl::safe<wGetNearestCreature>},
         {"GetNearestGameObject", fl::safe<wGetNearestGameObject>},
         {"GetPlayersInRange", fl::safe<wGetPlayersInRange>},
         {"GetCreaturesInRange", fl::safe<wGetCreaturesInRange>},
+        {"GetGameObjectsInRange", fl::safe<wGetGameObjectsInRange>},
+        {"GetNearObject", fl::safe<wGetNearObject>},
+        {"GetNearObjects", fl::safe<wGetNearObjects>},
+        {"PlayDirectSound", fl::safe<wPlayDirectSound>},
+        {"PlayDistanceSound", fl::safe<wPlayDistanceSound>},
+        {"PlayMusic", fl::safe<wPlayMusic>},
+        {"SendPacket", fl::safe<wSendPacket>},
+        {"SendUnitSay", fl::safe<wSendUnitSay>},
+        {"SendUnitWhisper", fl::safe<wSendUnitWhisper>},
+        {"SendUnitYell", fl::safe<wSendUnitYell>},
         {"SpawnCreature", fl::safe<wSpawnCreature>}, {"SummonGameObject", fl::safe<wSummonGameObject>},
         {"RegisterEvent", fl::safe<wRegisterEvent>}, {"RemoveEventById", fl::safe<wRemoveEventById>},
         {"RemoveEvents", fl::safe<wRemoveEvents>},   {nullptr, nullptr}};
