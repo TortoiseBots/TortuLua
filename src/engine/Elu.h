@@ -34,6 +34,7 @@ enum class EluKind : uint8_t
     Instance,
     Packet,
     BattleGround,  // E5: RegisterBGEvent (docs: state MAP, parameters event, bg, bgId, instanceId[, winner])
+    Spell,         // RegisterSpellEvent (docs: 23 spell/aura events; stub until all-spell hooks exist)
     Bot            // our bot API: RegisterBotEvent (world state only, ids 1-10)
 };
 

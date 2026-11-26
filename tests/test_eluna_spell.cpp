@@ -902,3 +902,60 @@ TEST_CASE("spellinfo: extended scalar, predicate, effect, target and stub method
         CHECK(err.find("not available on this core") != std::string::npos);
     }
 }
+
+TEST_CASE("eluna spell events: all 23 documented events register as honest C14 stubs and log once")
+{
+    SpellRig rig;
+    static char const* const kExpectedNames[23] = {
+        "CAST",
+        "AURA_APPLICATION",
+        "DISPEL",
+        "PERIODIC_TICK",
+        "PERIODIC_UPDATE",
+        "AURA_CALC_AMOUNT",
+        "CALC_PERIODIC",
+        "CHECK_PROC",
+        "PROC",
+        "CHECK_CAST",
+        "BEFORE_CAST",
+        "AFTER_CAST",
+        "OBJECT_AREA_TARGET",
+        "OBJECT_TARGET",
+        "DEST_TARGET",
+        "EFFECT_LAUNCH",
+        "EFFECT_LAUNCH_TARGET",
+        "EFFECT_CALC_ABSORB",
+        "EFFECT_HIT",
+        "BEFORE_HIT",
+        "EFFECT_HIT_TARGET",
+        "HIT",
+        "AFTER_HIT",
+    };
+
+    for (uint32_t id = 1; id <= 23; ++id)
+    {
+        std::string const lua =
+            "local c = RegisterSpellEvent(133, " + std::to_string(id) + ", function() end) return type(c)";
+        CHECK(rig.ok(lua) == "function");
+        CHECK(rig.host.logContains(std::string("event spell ") + kExpectedNames[id - 1] + " needs core hook C14"));
+    }
+    CHECK(rig.e().status().elunaHandlers == 23);
+
+    // Repeating registration for the same event ids does not duplicate the C14 warnings, and cancel removes one.
+    size_t const logsBefore = rig.host.logs.size();
+    CHECK(rig.ok("local c = RegisterSpellEvent(200, 1, function() end, 1) c() return type(c)") == "function");
+    CHECK(rig.host.logs.size() == logsBefore);
+    CHECK(rig.e().status().elunaHandlers == 23);
+
+    // Undocumented spell event id still registers and notes both the missing spec id and C14 once.
+    CHECK(rig.ok("return type(RegisterSpellEvent(133, 99, function() end))") == "function");
+    CHECK(rig.host.logContains("event spell 99 is not in the Eluna documentation"));
+    CHECK(rig.host.logContains("event spell ? needs core hook C14"));
+
+    // Argument validation runs before registration.
+    CHECK(errorOf(rig, "return RegisterSpellEvent(-1, 1, function() end)").find("entry must be an integer") !=
+          std::string::npos);
+    CHECK(errorOf(rig, "return RegisterSpellEvent(133, -1, function() end)").find("event must be an integer") !=
+          std::string::npos);
+    CHECK(errorOf(rig, "return RegisterSpellEvent(133, 1, 42)").find("function expected") != std::string::npos);
+}

@@ -278,8 +278,8 @@
    "status": "implemented"
   },
   "RegisterSpellEvent": {
-   "status": "stub",
-   "note": "stub: not available (this core)"
+   "status": "implemented",
+   "note": "accepts spell event registrations as honest stubs (all 23 events need core hook C14)"
   },
   "RegisterUniqueCreatureEvent": {
    "status": "implemented"
@@ -4153,7 +4153,7 @@
      "declared": "AuraEffect"
     }
    },
-   "note": "implemented, but unreachable from scripts until spell events exist"
+   "note": "implemented, but unreachable from scripts until core spell hooks exist"
   },
   "ElunaProcInfo": {
    "inherits": null,
@@ -4272,7 +4272,7 @@
      "declared": "ElunaProcInfo"
     }
    },
-   "note": "implemented, but unreachable from scripts until spell events exist"
+   "note": "implemented, but unreachable from scripts until core spell hooks exist"
   },
   "SpellInfo": {
    "inherits": null,
@@ -5507,8 +5507,8 @@
    "51": {
     "status": "implemented",
     "name": "QUEST_STATUS_CHANGED",
-    "note": "documented by name; the spec's id table has no id for it",
-    "requires": null
+    "requires": null,
+    "note": "documented by name; the spec's id table has no id for it"
    }
   },
   "creature": {
@@ -5792,17 +5792,23 @@
     "requires": null,
     "note": "fires for items whose ScriptName is forever_lua_item"
    },
-   "on_add": {
-    "status": "missing",
-    "name": "on_add"
+   "6": {
+    "status": "stub",
+    "name": "ADD",
+    "note": "stub: needs core hook C13; documented by name; the spec's id table has no id for it",
+    "requires": "C13"
    },
-   "on_equip": {
-    "status": "missing",
-    "name": "on_equip"
+   "7": {
+    "status": "stub",
+    "name": "EQUIP",
+    "note": "stub: needs core hook C13; documented by name; the spec's id table has no id for it",
+    "requires": "C13"
    },
-   "on_unequip": {
-    "status": "missing",
-    "name": "on_unequip"
+   "8": {
+    "status": "stub",
+    "name": "UNEQUIP",
+    "note": "stub: needs core hook C13; documented by name; the spec's id table has no id for it",
+    "requires": "C13"
    }
   },
   "player gossip": {
@@ -5889,9 +5895,11 @@
     "note": "stub: needs core hook C10",
     "requires": "C10"
    },
-   "on_member_accept": {
-    "status": "missing",
-    "name": "on_member_accept"
+   "7": {
+    "status": "stub",
+    "name": "MEMBER_ACCEPT",
+    "note": "stub: needs core hook C10; documented by name; the spec's id table has no id for it",
+    "requires": "C10"
    }
   },
   "guild": {
@@ -6072,97 +6080,143 @@
    }
   },
   "spell": {
-   "on_cast": {
-    "status": "missing",
-    "name": "on_cast"
+   "1": {
+    "status": "stub",
+    "name": "CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_aura_application": {
-    "status": "missing",
-    "name": "on_aura_application"
+   "2": {
+    "status": "stub",
+    "name": "AURA_APPLICATION",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_dispel": {
-    "status": "missing",
-    "name": "on_dispel"
+   "3": {
+    "status": "stub",
+    "name": "DISPEL",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_periodic_tick": {
-    "status": "missing",
-    "name": "on_periodic_tick"
+   "4": {
+    "status": "stub",
+    "name": "PERIODIC_TICK",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_periodic_update": {
-    "status": "missing",
-    "name": "on_periodic_update"
+   "5": {
+    "status": "stub",
+    "name": "PERIODIC_UPDATE",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_aura_calc_amount": {
-    "status": "missing",
-    "name": "on_aura_calc_amount"
+   "6": {
+    "status": "stub",
+    "name": "AURA_CALC_AMOUNT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_calc_periodic": {
-    "status": "missing",
-    "name": "on_calc_periodic"
+   "7": {
+    "status": "stub",
+    "name": "CALC_PERIODIC",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_check_proc": {
-    "status": "missing",
-    "name": "on_check_proc"
+   "8": {
+    "status": "stub",
+    "name": "CHECK_PROC",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_proc": {
-    "status": "missing",
-    "name": "on_proc"
+   "9": {
+    "status": "stub",
+    "name": "PROC",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_check_cast": {
-    "status": "missing",
-    "name": "on_check_cast"
+   "10": {
+    "status": "stub",
+    "name": "CHECK_CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_before_cast": {
-    "status": "missing",
-    "name": "on_before_cast"
+   "11": {
+    "status": "stub",
+    "name": "BEFORE_CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_after_cast": {
-    "status": "missing",
-    "name": "on_after_cast"
+   "12": {
+    "status": "stub",
+    "name": "AFTER_CAST",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_object_area_target": {
-    "status": "missing",
-    "name": "on_object_area_target"
+   "13": {
+    "status": "stub",
+    "name": "OBJECT_AREA_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_object_target": {
-    "status": "missing",
-    "name": "on_object_target"
+   "14": {
+    "status": "stub",
+    "name": "OBJECT_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_dest_target": {
-    "status": "missing",
-    "name": "on_dest_target"
+   "15": {
+    "status": "stub",
+    "name": "DEST_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_launch": {
-    "status": "missing",
-    "name": "on_effect_launch"
+   "16": {
+    "status": "stub",
+    "name": "EFFECT_LAUNCH",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_launch_target": {
-    "status": "missing",
-    "name": "on_effect_launch_target"
+   "17": {
+    "status": "stub",
+    "name": "EFFECT_LAUNCH_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_calc_absorb": {
-    "status": "missing",
-    "name": "on_effect_calc_absorb"
+   "18": {
+    "status": "stub",
+    "name": "EFFECT_CALC_ABSORB",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_hit": {
-    "status": "missing",
-    "name": "on_effect_hit"
+   "19": {
+    "status": "stub",
+    "name": "EFFECT_HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_before_hit": {
-    "status": "missing",
-    "name": "on_before_hit"
+   "20": {
+    "status": "stub",
+    "name": "BEFORE_HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_effect_hit_target": {
-    "status": "missing",
-    "name": "on_effect_hit_target"
+   "21": {
+    "status": "stub",
+    "name": "EFFECT_HIT_TARGET",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_hit": {
-    "status": "missing",
-    "name": "on_hit"
+   "22": {
+    "status": "stub",
+    "name": "HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    },
-   "on_after_hit": {
-    "status": "missing",
-    "name": "on_after_hit"
+   "23": {
+    "status": "stub",
+    "name": "AFTER_HIT",
+    "note": "stub: needs core hook C14; documented by name; the spec's id table has no id for it",
+    "requires": "C14"
    }
   }
  },
@@ -6177,41 +6231,6 @@
     "IsTargetableForAttack",
     "RemoveFromWorld",
     "SetAggroEnabled"
-   ]
-  },
-  "events": {
-   "item": [
-    "on_add",
-    "on_equip",
-    "on_unequip"
-   ],
-   "group": [
-    "on_member_accept"
-   ],
-   "spell": [
-    "on_cast",
-    "on_aura_application",
-    "on_dispel",
-    "on_periodic_tick",
-    "on_periodic_update",
-    "on_aura_calc_amount",
-    "on_calc_periodic",
-    "on_check_proc",
-    "on_proc",
-    "on_check_cast",
-    "on_before_cast",
-    "on_after_cast",
-    "on_object_area_target",
-    "on_object_target",
-    "on_dest_target",
-    "on_effect_launch",
-    "on_effect_launch_target",
-    "on_effect_calc_absorb",
-    "on_effect_hit",
-    "on_before_hit",
-    "on_effect_hit_target",
-    "on_hit",
-    "on_after_hit"
    ]
   }
  },

@@ -391,9 +391,11 @@ char const* hookGapFor(fl::Config const& cfg, fl::EluKind kind, uint32_t event)
             return nullptr;   // ScriptName forever_lua_gameobject (noteEventGaps says so)
         case fl::EluKind::Item:
             // C3 (PR #378) adds the use of every item only; quest accept, expire and remove still need the item's
-            // ScriptName forever_lua_item, in every core. DUMMY_EFFECT needs C9.
+            // ScriptName forever_lua_item, in every core. DUMMY_EFFECT needs C9; ADD, EQUIP and UNEQUIP need C13.
             if (event == 1)
                 return "C9";
+            if (event == 6 || event == 7 || event == 8)
+                return "C13";
             return event == 2 && !itemUse ? "C3" : nullptr;
         case fl::EluKind::PlayerGossip: return event == 1 ? nullptr : (gossip ? nullptr : "C3");
         case fl::EluKind::ItemGossip: return (event == 1 ? itemUse : gossip) ? nullptr : "C3";
@@ -436,10 +438,12 @@ char const* hookGapFor(fl::Config const& cfg, fl::EluKind kind, uint32_t event)
             }
         case fl::EluKind::CreatureGossip:
         case fl::EluKind::GameObjectGossip: return nullptr;
-        case fl::EluKind::Group: return event == 6 ? "C10" : nullptr;
+        case fl::EluKind::Group: return (event == 6 || event == 7) ? "C10" : nullptr;
         case fl::EluKind::Guild: return nullptr;
         case fl::EluKind::BattleGround:
             return nullptr;   // E5: the pinned core has BattlegroundScript/BattlegroundMapScript, so C12 is not needed
+        case fl::EluKind::Spell:
+            return "C14";
         case fl::EluKind::Map:
         case fl::EluKind::Instance:
             // LOAD, CREATURE_CREATE, GAMEOBJECT_CREATE and CHECK_ENCOUNTER need InstanceScript forwarding (C11).

@@ -99,6 +99,7 @@ char const* eluKindName(EluKind kind)
         case EluKind::Instance: return "instance";
         case EluKind::Packet: return "packet";
         case EluKind::BattleGround: return "battleground";
+        case EluKind::Spell: return "spell";
         case EluKind::Bot: return "bot";
     }
     return "event";
@@ -398,6 +399,9 @@ constexpr SpecRow kItem[] = {
     {3, {"QUEST_ACCEPT", EluReturn::StopOnTrue}},
     {4, {"EXPIRE", EluReturn::StopOnTrue}},
     {5, {"REMOVE", EluReturn::StopOnTrue}},
+    {6, {"ADD", EluReturn::None}},
+    {7, {"EQUIP", EluReturn::None}},
+    {8, {"UNEQUIP", EluReturn::None}},
 };
 
 constexpr SpecRow kGossip[] = {
@@ -405,7 +409,7 @@ constexpr SpecRow kGossip[] = {
     {2, {"SELECT", EluReturn::CancelOnFalse}},
 };
 
-// RegisterGroupEvent (docs table order: add, invite, remove, leader change, disband, create).
+// RegisterGroupEvent (docs table order: add, invite, remove, leader change, disband, create, member accept).
 constexpr SpecRow kGroup[] = {
     {1, {"MEMBER_ADD", EluReturn::None}},
     {2, {"MEMBER_INVITE", EluReturn::None}},
@@ -413,6 +417,7 @@ constexpr SpecRow kGroup[] = {
     {4, {"LEADER_CHANGE", EluReturn::None}},
     {5, {"DISBAND", EluReturn::None}},
     {6, {"CREATE", EluReturn::None}},
+    {7, {"MEMBER_ACCEPT", EluReturn::None}},
 };
 
 // RegisterGuildEvent: the docs' money events can return the new amount.
@@ -469,6 +474,33 @@ constexpr SpecRow kBattleGround[] = {
     {4, {"PRE_DESTROY", EluReturn::None}},
 };
 
+// RegisterSpellEvent: the 23 documented names from docs/coverage/eluna-documented-api.json (no id table in the spec).
+constexpr SpecRow kSpell[] = {
+    {1, {"CAST", EluReturn::None}},
+    {2, {"AURA_APPLICATION", EluReturn::None}},
+    {3, {"DISPEL", EluReturn::None}},
+    {4, {"PERIODIC_TICK", EluReturn::None}},
+    {5, {"PERIODIC_UPDATE", EluReturn::None}},
+    {6, {"AURA_CALC_AMOUNT", EluReturn::None}},
+    {7, {"CALC_PERIODIC", EluReturn::None}},
+    {8, {"CHECK_PROC", EluReturn::None}},
+    {9, {"PROC", EluReturn::None}},
+    {10, {"CHECK_CAST", EluReturn::None}},
+    {11, {"BEFORE_CAST", EluReturn::None}},
+    {12, {"AFTER_CAST", EluReturn::None}},
+    {13, {"OBJECT_AREA_TARGET", EluReturn::None}},
+    {14, {"OBJECT_TARGET", EluReturn::None}},
+    {15, {"DEST_TARGET", EluReturn::None}},
+    {16, {"EFFECT_LAUNCH", EluReturn::None}},
+    {17, {"EFFECT_LAUNCH_TARGET", EluReturn::None}},
+    {18, {"EFFECT_CALC_ABSORB", EluReturn::None}},
+    {19, {"EFFECT_HIT", EluReturn::None}},
+    {20, {"BEFORE_HIT", EluReturn::None}},
+    {21, {"EFFECT_HIT_TARGET", EluReturn::None}},
+    {22, {"HIT", EluReturn::None}},
+    {23, {"AFTER_HIT", EluReturn::None}},
+};
+
 template <size_t N>
 EluEventSpec const* findSpec(SpecRow const (&rows)[N], uint32_t event)
 {
@@ -498,6 +530,7 @@ EluEventSpec const* eluEventSpec(EluKind kind, uint32_t event)
         case EluKind::Instance: return findSpec(kMap, event);
         case EluKind::Packet: return findSpec(kPacket, event);
         case EluKind::BattleGround: return findSpec(kBattleGround, event);
+        case EluKind::Spell: return findSpec(kSpell, event);
         case EluKind::Bot: return findSpec(kBot, event);
     }
     return nullptr;

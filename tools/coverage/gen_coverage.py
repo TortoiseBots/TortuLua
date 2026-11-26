@@ -56,6 +56,7 @@ KIND_FAMILY = {
     "Instance": "instance",
     "Packet": "packet",
     "BattleGround": "battleground",
+    "Spell": "spell",
     "Bot": "bot",
 }
 
@@ -110,8 +111,8 @@ EVENT_NOTES = {
 
 # Engine caveats of a documented name, from README.md ('Eluna mode') and knowledge/modes/eluna-mode.md.
 CLASS_NOTES = {
-    "AuraEffect": "implemented, but unreachable from scripts until spell events exist",
-    "ElunaProcInfo": "implemented, but unreachable from scripts until spell events exist",
+    "AuraEffect": "implemented, but unreachable from scripts until core spell hooks exist",
+    "ElunaProcInfo": "implemented, but unreachable from scripts until core spell hooks exist",
 }
 
 METHOD_NOTES = {
@@ -141,6 +142,7 @@ GLOBAL_NOTES = {
     "GetPlayerGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
     "GetUnitGUID": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 "
                    "(required to match spawns off map 0)",
+    "RegisterSpellEvent": "accepts spell event registrations as honest stubs (all 23 events need core hook C14)",
 }
 
 STUB_MARKERS = [
@@ -752,7 +754,7 @@ def scan_event_tables(alias_text):
             for kind in current:
                 family_block[KIND_FAMILY[kind]] = m.group(1)
             current = []
-    missing = [f for f in EVENT_FAMILIES if f != "spell" and f not in family_block]
+    missing = [f for f in EVENT_FAMILIES if f not in family_block]
     if missing:
         raise ParseError(f"eluEventSpec does not map {missing}")
     return blocks, family_block
@@ -917,6 +919,25 @@ class Coverage:
                 self.add_block("\n".join(lines) + "\n")
 
     # -- events ----------------------------------------------------------------------------------------------
+    def _event_row(self, notes, kind, event_id, name):
+        classic = notes.classic(kind, event_id)
+        gap, conditional = notes.hook(kind, event_id)
+        if classic:
+            return {"status": "stub", "name": name,
+                    "note": f"stub: not available ({classic})", "requires": None}
+        if gap and not conditional:
+            return {"status": "stub", "name": name,
+                    "note": f"stub: needs core hook {gap}", "requires": gap}
+        if gap in ("C1", "C2", "C3"):
+            # The engine's own line names the interim ScriptName path for these three hooks.
+            return {"status": "implemented", "name": name,
+                    "requires": gap,
+                    "note": f"needs core hook {gap}; the engine names its interim ScriptName path"}
+        if gap:
+            return {"status": "stub", "name": name, "requires": gap,
+                    "note": f"stub: needs core hook {gap}"}
+        return {"status": "implemented", "name": name, "requires": None}
+
     def events(self, notes, blocks, family_block):
         for family in EVENT_FAMILIES:
             doc_family = self.doc["events"].get(family)
@@ -932,40 +953,18 @@ class Coverage:
                     self.json["extra"].setdefault("events", {}).setdefault(family, {})[str(event_id)] = name
                 self.add_block("\n".join(lines) + "\n")
                 continue
+            kind = next((k for k, f in KIND_FAMILY.items() if f == family), None)
+            # Instance events are registered through RegisterInstanceEvent (a C11 stub); the ids of the map
+            # table are what the engine knows, so the note is taken from the map events of the same table.
+            if kind is None:
+                kind = "Map"
             rows = []
             for event_id in sorted(documented_ids):
                 name = documented_ids[event_id]
                 if event_id not in engine_ids:
                     row = {"status": "missing", "name": name}
                 else:
-                    row = {"status": "implemented", "name": engine_ids[event_id]}
-                    kind = None
-                    for k, f in KIND_FAMILY.items():
-                        if f == family:
-                            kind = k
-                            break
-                    # Instance events are registered through RegisterInstanceEvent (a C11 stub); the ids of the map
-                    # table are what the engine knows, so the note is taken from the map events of the same table.
-                    if kind is None:
-                        kind = "Map"
-                    classic = notes.classic(kind, event_id)
-                    gap, conditional = notes.hook(kind, event_id)
-                    if classic:
-                        row = {"status": "stub", "name": engine_ids[event_id],
-                               "note": f"stub: not available ({classic})", "requires": None}
-                    elif gap and not conditional:
-                        row = {"status": "stub", "name": engine_ids[event_id],
-                               "note": f"stub: needs core hook {gap}", "requires": gap}
-                    elif gap in ("C1", "C2", "C3"):
-                        # The engine's own line names the interim ScriptName path for these three hooks.
-                        row = {"status": "implemented", "name": engine_ids[event_id],
-                               "requires": gap,
-                               "note": f"needs core hook {gap}; the engine names its interim ScriptName path"}
-                    elif gap:
-                        row = {"status": "stub", "name": engine_ids[event_id], "requires": gap,
-                               "note": f"stub: needs core hook {gap}"}
-                    else:
-                        row = {"status": "implemented", "name": engine_ids[event_id], "requires": None}
+                    row = self._event_row(notes, kind, event_id, engine_ids[event_id])
                 if EVENT_NOTES.get((family, event_id)):
                     row = dict(row)
                     row["note"] = (row.get("note") + "; " if row.get("note") else "") + EVENT_NOTES[(family, event_id)]
@@ -978,18 +977,23 @@ class Coverage:
                 entry = {k: v for k, v in row.items()}
                 self.json["events"].setdefault(family, {})[str(event_id)] = entry
                 rows.append((event_id, row))
+
+            # An event the spec's id table does not carry but the documentation names (matched by its words): when
+            # the engine registers it, it is resolved here through the same hook/classic notes instead of missing.
+            engine_tokens = {token(n) for n in engine_ids.values()}
             for name in name_only:
+                if token(name) in engine_tokens:
+                    continue
                 self.json["events"].setdefault(family, {})[name] = {"status": "missing", "name": name}
                 rows.append((name, {"status": "missing", "name": name, "note": "documented, no id in the spec"}))
 
-            # An event the spec's id table does not carry but the documentation names (matched by its words): the
-            # engine provides it, so it is documented and implemented.
             doc_tokens = {token(n) for n in (doc_family or {}).get("docs_names", [])}
             for event_id, name in sorted(engine_ids.items()):
                 if event_id in documented_ids or token(name) not in doc_tokens:
                     continue
-                row = {"status": "implemented", "name": name,
-                       "note": "documented by name; the spec's id table has no id for it", "requires": None}
+                row = self._event_row(notes, kind, event_id, name)
+                spec_note = "documented by name; the spec's id table has no id for it"
+                row["note"] = (row.get("note") + "; " if row.get("note") else "") + spec_note
                 self.json["events"].setdefault(family, {})[str(event_id)] = dict(row)
                 rows.append((event_id, row))
 
@@ -1047,7 +1051,7 @@ class Coverage:
             "Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification "
             "needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook "
             "(`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one "
-            "(C5-C11) has no path on this core.",
+            "(C5-C14) has no path on this core.",
             "",
             "Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the "
             "documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); "
@@ -1104,7 +1108,8 @@ class Coverage:
         out += ["", "## Appendix B: documented names with no id in the spec's event tables", "",
                 "The documentation pages list event names without numeric ids; the maintainers' API specification, section 3 "
                 "carries the ids. Where the documentation lists more names than the spec's table (item, group) or the "
-                "spec has no table at all (spell), those names cannot be joined by id and are counted as missing.", ""]
+                "spec has no table at all (spell), the engine assigns ids and matches those names by words against its "
+                "event tables (counted as missing only if the engine does not register them).", ""]
         for family, data in sorted(self.doc["events"].items()):
             if data.get("name_only"):
                 out.append(f"* `{family}`: " + ", ".join(f"`{n}`" for n in data["name_only"]))

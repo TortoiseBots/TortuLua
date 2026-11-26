@@ -124,8 +124,11 @@ TEST_CASE("e2 group events: docs arguments, cancel function, ClearGroupEvents, C
            "  group_remove = {ev, method, kicker, reason} end)\n"
            "RegisterGroupEvent(5, function(ev, group) group_disband = group_disband + 1 end)\n"
            "RegisterGroupEvent(6, function() end)   -- on_create: needs C10\n"
+           "local cancel_accept = RegisterGroupEvent(7, function() end)   -- on_member_accept: needs C10\n"
            "assert(type(cancel) == 'function')\n"
-           "cancel()");
+           "assert(type(cancel_accept) == 'function')\n"
+           "cancel()\n"
+           "cancel_accept()");
 
     rig.router.group(1, {fl::EventValue(g), fl::EventValue("0000000000000000000000000000000B")});
     rig.router.group(3, {fl::EventValue(g), fl::EventValue("0000000000000000000000000000000B"), fl::EventValue(1),
@@ -136,6 +139,10 @@ TEST_CASE("e2 group events: docs arguments, cancel function, ClearGroupEvents, C
     CHECK(rig.ok("return group_remove[1] .. ',' .. group_remove[2] .. ',' .. group_remove[4]") == "3,1,bye");
     CHECK(rig.ok("return group_disband") == "1");
     CHECK(rig.host.logContains("event group CREATE needs core hook C10"));
+    CHECK(rig.host.logContains("event group MEMBER_ACCEPT needs core hook C10"));
+    size_t const logsBeforeRepeat = rig.host.logs.size();
+    rig.ok("RegisterGroupEvent(7, function() end)");
+    CHECK(rig.host.logs.size() == logsBeforeRepeat);
 
     rig.ok("ClearGroupEvents()");
     rig.router.group(5, {fl::EventValue(g)});

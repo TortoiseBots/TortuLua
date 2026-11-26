@@ -2,7 +2,7 @@
 
 What an Eluna-style script can call in TortuLua, and every documented Eluna name it cannot. The engine side is read from the registration code itself (`src/engine/elu/*.cpp`, `src/engine/EluAlias.cpp`), the documented side from `docs/coverage/eluna-documented-api.json` (Eluna's published documentation plus the maintainers' API specification, sections 2-4 and 7). Regenerate with `tools/coverage/gen_coverage.py --write`; `tools/coverage/gen_coverage.py --check` fails when the engine registers a name this file does not list.
 
-Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook (`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one (C5-C11) has no path on this core.
+Status is computed for the pinned core **without** the C1-C4 core hooks: an event whose notification needs a hook registers and logs `needs core hook Cn` once. `Requires` names that hook; a conditional hook (`C1`/`C2`/`C3`) also has the interim ScriptName path the engine names in that line, an unconditional one (C5-C14) has no path on this core.
 
 Status legend: **implemented** = registered and works; **stub** = the call or the registration raises the documented error (`not available on Classic 1.60`, `not available on this core`, `needs core hook Cn`); **missing** = documented and not in the engine; **extra** = in the engine and not in the documented API (our extensions, the Lua sandbox).
 
@@ -10,7 +10,7 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
-| Global | 110 | 105 | 5 | 0 | 95% | 100% |
+| Global | 110 | 106 | 4 | 0 | 96% | 100% |
 | Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
 | Unit | 167 | 164 | 3 | 0 | 98% | 100% |
@@ -36,23 +36,23 @@ Status legend: **implemented** = registered and works; **stub** = the call or th
 | events: player | 51 | 27 | 24 | 0 | 53% | 100% |
 | events: creature | 28 | 27 | 1 | 0 | 96% | 100% |
 | events: gameobject | 13 | 10 | 3 | 0 | 77% | 100% |
-| events: item | 8 | 4 | 1 | 3 | 50% | 62% |
+| events: item | 8 | 4 | 4 | 0 | 50% | 100% |
 | events: player gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: creature gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: gameobject gossip | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: item gossip | 2 | 2 | 0 | 0 | 100% | 100% |
-| events: group | 7 | 5 | 1 | 1 | 71% | 86% |
+| events: group | 7 | 5 | 2 | 0 | 71% | 100% |
 | events: guild | 11 | 9 | 2 | 0 | 82% | 100% |
 | events: map | 7 | 3 | 4 | 0 | 43% | 100% |
 | events: instance | 7 | 3 | 4 | 0 | 43% | 100% |
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
-| events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1293** | **116** | **34** | **90%** | **98%** |
+| events: spell | 23 | 0 | 23 | 0 | 0% | 100% |
+| **all** | **1443** | **1294** | **142** | **7** | **90%** | **100%** |
 
 `Implemented %` counts the names a script can call and get a result; `Resolvable %` also counts the documented stubs (the call exists and raises the documented error instead of `attempt to call a nil value`). A class row counts the class's own documented methods; inherited ones are counted on the class the documentation declares them on.
 
-Class notes: `AuraEffect` — implemented, but unreachable from scripts until spell events exist; `ElunaProcInfo` — implemented, but unreachable from scripts until spell events exist.
+Class notes: `AuraEffect` — implemented, but unreachable from scripts until core spell hooks exist; `ElunaProcInfo` — implemented, but unreachable from scripts until core spell hooks exist.
 
 Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, `Db`, `Json`, `Gm`, the `Data` alias) are installed with `Mode = test` and are not part of the eluna surface (appendix A).
 
@@ -149,7 +149,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 | `RegisterPlayerEvent` | implemented |  |
 | `RegisterPlayerGossipEvent` | implemented |  |
 | `RegisterServerEvent` | implemented |  |
-| `RegisterSpellEvent` | **stub** | stub: not available (this core) |
+| `RegisterSpellEvent` | implemented | accepts spell event registrations as honest stubs (all 23 events need core hook C14) |
 | `RegisterUniqueCreatureEvent` | implemented |  |
 | `RegisterVehicleEvent` | **stub** | stub: not available (Classic 1.60) |
 | `ReloadEluna` | implemented |  |
@@ -1160,7 +1160,7 @@ Test-mode only: 19 names in 8 toolkit tables (`Event`, `Timer`, `Cmd`, `World`, 
 
 ### Class `AuraEffect`
 
-Note: implemented, but unreachable from scripts until spell events exist.
+Note: implemented, but unreachable from scripts until core spell hooks exist.
 
 | Documented method | Status | Note |
 |---|---|---|
@@ -1189,7 +1189,7 @@ Note: implemented, but unreachable from scripts until spell events exist.
 | `SetPeriodicTimer` | implemented |  |
 ### Class `ElunaProcInfo`
 
-Note: implemented, but unreachable from scripts until spell events exist.
+Note: implemented, but unreachable from scripts until core spell hooks exist.
 
 | Documented method | Status | Note |
 |---|---|---|
@@ -1566,9 +1566,9 @@ Note: implemented, but unreachable from scripts until spell events exist.
 | 3 | QUEST_ACCEPT | QUEST_ACCEPT | implemented |  | fires for items whose ScriptName is forever_lua_item |
 | 4 | EXPIRE | EXPIRE | implemented |  | fires for items whose ScriptName is forever_lua_item |
 | 5 | REMOVE | REMOVE | implemented |  | fires for items whose ScriptName is forever_lua_item |
-| — | on_add | — | **missing** | | documented, no id in the spec |
-| — | on_equip | — | **missing** | | documented, no id in the spec |
-| — | on_unequip | — | **missing** | | documented, no id in the spec |
+| 6 | — | ADD | **stub** | C13 | stub: needs core hook C13; documented by name; the spec's id table has no id for it |
+| 7 | — | EQUIP | **stub** | C13 | stub: needs core hook C13; documented by name; the spec's id table has no id for it |
+| 8 | — | UNEQUIP | **stub** | C13 | stub: needs core hook C13; documented by name; the spec's id table has no id for it |
 ### Events: player gossip
 
 | id | Documented name | Registered name | Status | Requires | Note |
@@ -1603,7 +1603,7 @@ Note: implemented, but unreachable from scripts until spell events exist.
 | 4 | LEADER_CHANGE | LEADER_CHANGE | implemented |  |  |
 | 5 | DISBAND | DISBAND | implemented |  |  |
 | 6 | CREATE | CREATE | **stub** | C10 | stub: needs core hook C10 |
-| — | on_member_accept | — | **missing** | | documented, no id in the spec |
+| 7 | — | MEMBER_ACCEPT | **stub** | C10 | stub: needs core hook C10; documented by name; the spec's id table has no id for it |
 ### Events: guild
 
 | id | Documented name | Registered name | Status | Requires | Note |
@@ -1659,29 +1659,29 @@ Note: implemented, but unreachable from scripts until spell events exist.
 
 | id | Documented name | Registered name | Status | Requires | Note |
 |---|---|---|---|---|---|
-| — | on_cast | — | **missing** | | documented, no id in the spec |
-| — | on_aura_application | — | **missing** | | documented, no id in the spec |
-| — | on_dispel | — | **missing** | | documented, no id in the spec |
-| — | on_periodic_tick | — | **missing** | | documented, no id in the spec |
-| — | on_periodic_update | — | **missing** | | documented, no id in the spec |
-| — | on_aura_calc_amount | — | **missing** | | documented, no id in the spec |
-| — | on_calc_periodic | — | **missing** | | documented, no id in the spec |
-| — | on_check_proc | — | **missing** | | documented, no id in the spec |
-| — | on_proc | — | **missing** | | documented, no id in the spec |
-| — | on_check_cast | — | **missing** | | documented, no id in the spec |
-| — | on_before_cast | — | **missing** | | documented, no id in the spec |
-| — | on_after_cast | — | **missing** | | documented, no id in the spec |
-| — | on_object_area_target | — | **missing** | | documented, no id in the spec |
-| — | on_object_target | — | **missing** | | documented, no id in the spec |
-| — | on_dest_target | — | **missing** | | documented, no id in the spec |
-| — | on_effect_launch | — | **missing** | | documented, no id in the spec |
-| — | on_effect_launch_target | — | **missing** | | documented, no id in the spec |
-| — | on_effect_calc_absorb | — | **missing** | | documented, no id in the spec |
-| — | on_effect_hit | — | **missing** | | documented, no id in the spec |
-| — | on_before_hit | — | **missing** | | documented, no id in the spec |
-| — | on_effect_hit_target | — | **missing** | | documented, no id in the spec |
-| — | on_hit | — | **missing** | | documented, no id in the spec |
-| — | on_after_hit | — | **missing** | | documented, no id in the spec |
+| 1 | — | CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 2 | — | AURA_APPLICATION | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 3 | — | DISPEL | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 4 | — | PERIODIC_TICK | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 5 | — | PERIODIC_UPDATE | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 6 | — | AURA_CALC_AMOUNT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 7 | — | CALC_PERIODIC | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 8 | — | CHECK_PROC | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 9 | — | PROC | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 10 | — | CHECK_CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 11 | — | BEFORE_CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 12 | — | AFTER_CAST | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 13 | — | OBJECT_AREA_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 14 | — | OBJECT_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 15 | — | DEST_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 16 | — | EFFECT_LAUNCH | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 17 | — | EFFECT_LAUNCH_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 18 | — | EFFECT_CALC_ABSORB | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 19 | — | EFFECT_HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 20 | — | BEFORE_HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 21 | — | EFFECT_HIT_TARGET | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 22 | — | HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
+| 23 | — | AFTER_HIT | **stub** | C14 | stub: needs core hook C14; documented by name; the spec's id table has no id for it |
 ### Events: bot (engine only: no documented counterpart)
 
 | id | Registered name |
@@ -1715,7 +1715,7 @@ These are installed only with `Mode = test` (`registerApi`, and the `Data` alias
 
 ## Appendix B: documented names with no id in the spec's event tables
 
-The documentation pages list event names without numeric ids; the maintainers' API specification, section 3 carries the ids. Where the documentation lists more names than the spec's table (item, group) or the spec has no table at all (spell), those names cannot be joined by id and are counted as missing.
+The documentation pages list event names without numeric ids; the maintainers' API specification, section 3 carries the ids. Where the documentation lists more names than the spec's table (item, group) or the spec has no table at all (spell), the engine assigns ids and matches those names by words against its event tables (counted as missing only if the engine does not register them).
 
 * `group`: `on_member_accept`
 * `item`: `on_add`, `on_equip`, `on_unequip`
