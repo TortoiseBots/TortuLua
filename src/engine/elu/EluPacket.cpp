@@ -45,6 +45,7 @@ int readInt(lua_State* L)
 int readString(lua_State* L)
 {
     fl::Engine::PacketValue& p = packetSelf(L);
+    need(L, p, 1);
     size_t end = p.readPos;
     while (end < p.bytes.size() && p.bytes[end] != 0)
         ++end;
@@ -83,10 +84,8 @@ void grow(lua_State* L, fl::Engine::PacketValue& p, size_t n)
 }
 
 template <typename T>
-int writeInt(lua_State* L)
+int appendVal(lua_State* L, fl::Engine::PacketValue& p, T v)
 {
-    fl::Engine::PacketValue& p = packetSelf(L);
-    T const v = static_cast<T>(luaL_checkinteger(L, 2));
     grow(L, p, sizeof(T));
     size_t const at = p.bytes.size();
     p.bytes.resize(at + sizeof(T));
@@ -94,38 +93,49 @@ int writeInt(lua_State* L)
     return 0;
 }
 
+lua_Integer argPacketInt(lua_State* L, int idx, char const* what)
+{
+    (void)what;
+    return luaL_checkinteger(L, idx);
+}
+
+double argDouble(lua_State* L, int idx, char const* what)
+{
+    lua_Number const v = luaL_checknumber(L, idx);
+    if (!(v == v))
+        luaL_error(L, "%s must not be NaN", what);
+    return static_cast<double>(v);
+}
+
+template <typename T>
+int writeInt(lua_State* L)
+{
+    fl::Engine::PacketValue& p = packetSelf(L);
+    return appendVal(L, p, static_cast<T>(argPacketInt(L, 2, "value")));
+}
+
 int writeFloat(lua_State* L)
 {
     fl::Engine::PacketValue& p = packetSelf(L);
-    float const v = argFloat(L, 2, "value");
-    grow(L, p, sizeof(v));
-    size_t const at = p.bytes.size();
-    p.bytes.resize(at + sizeof(v));
-    std::memcpy(p.bytes.data() + at, &v, sizeof(v));
-    return 0;
+    return appendVal(L, p, argFloat(L, 2, "value"));
 }
 
 int writeDouble(lua_State* L)
 {
     fl::Engine::PacketValue& p = packetSelf(L);
-    double const v = luaL_checknumber(L, 2);
-    grow(L, p, sizeof(v));
-    size_t const at = p.bytes.size();
-    p.bytes.resize(at + sizeof(v));
-    std::memcpy(p.bytes.data() + at, &v, sizeof(v));
-    return 0;
+    return appendVal(L, p, argDouble(L, 2, "value"));
 }
 
 int writeString(lua_State* L)
 {
     fl::Engine::PacketValue& p = packetSelf(L);
-    size_t n = 0;
-    char const* s = luaL_checklstring(L, 2, &n);
-    grow(L, p, n + 1);
+    std::string const s = argStr(L, 2, "value");
+    grow(L, p, s.size() + 1);
     size_t const at = p.bytes.size();
-    p.bytes.resize(at + n + 1);
-    std::memcpy(p.bytes.data() + at, s, n);
-    p.bytes[at + n] = 0;
+    p.bytes.resize(at + s.size() + 1);
+    if (!s.empty())
+        std::memcpy(p.bytes.data() + at, s.data(), s.size());
+    p.bytes[at + s.size()] = 0;
     return 0;
 }
 
@@ -150,7 +160,7 @@ int getSize(lua_State* L)
 int create(lua_State* L)
 {
     uint32_t const opcode = argUInt(L, 1, "opcode");
-    uint32_t const size = static_cast<uint32_t>(optUInt(L, 2, 0));
+    size_t const size = static_cast<size_t>(optUInt(L, 2, 0));
     std::string error;
     std::optional<fl::HandleData> h = eng(L).addPacket(opcode, size, error);
     if (!h)

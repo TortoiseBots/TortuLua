@@ -74,6 +74,16 @@ class TestTypeHintsGenerator(unittest.TestCase):
         params = [p.strip() for p in m.group(1).split(",") if p.strip()]
         self.assertEqual(len(params), 0, f"Player:GetAccountId expected 0 parameters, got {params}")
 
+        # WorldPacket template methods (Read*/Write*) are discovered with exact parameters
+        packet_lua = self.files.get("WorldPacket.lua")
+        self.assertIsNotNone(packet_lua)
+        m = re.search(r"function\s+WorldPacket:WriteByte\(([^)]*)\)", packet_lua)
+        self.assertIsNotNone(m, "WorldPacket:WriteByte not found in WorldPacket.lua")
+        self.assertEqual([p.strip() for p in m.group(1).split(",") if p.strip()], ["value"])
+        m = re.search(r"function\s+WorldPacket:ReadGUID\(([^)]*)\)", packet_lua)
+        self.assertIsNotNone(m, "WorldPacket:ReadGUID not found in WorldPacket.lua")
+        self.assertEqual([p.strip() for p in m.group(1).split(",") if p.strip()], [])
+
         # 2. Test programmatic unit: doc_methods parameter overrides
         mock_methods = {
             "CustomMethod": {"status": "implemented", "declared": "TestClass"}

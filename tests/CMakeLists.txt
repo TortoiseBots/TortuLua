@@ -32,6 +32,7 @@ add_executable(forever_lua_tests
   test_eluna_creature.cpp
   test_eluna_item.cpp
   test_eluna_object.cpp
+  test_eluna_packet.cpp
   test_eluna_player.cpp
   test_eluna_quest_map.cpp
   test_eluna_spell.cpp

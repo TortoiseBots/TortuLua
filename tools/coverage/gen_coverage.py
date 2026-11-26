@@ -326,7 +326,10 @@ class Engine:
             tables = {}
             for tm in re.finditer(r"(?:static\s+)?luaL_Reg\s+const\s+(\w+)\s*\[\]\s*=\s*\{", body):
                 end = matching(body, tm.end() - 1, "{", "}")
-                tables[tm.group(1)] = re.findall(r'\{\s*"(\w+)"\s*,\s*(?:fl::)?safe<(?:\w+::)?(\w+)>', body[tm.end():end])
+                tables[tm.group(1)] = re.findall(
+                    r'\{\s*"(\w+)"\s*,\s*(?:fl::)?safe<(?:\w+::)?(\w+)(?:<[^>{}]+>)?\s*>',
+                    body[tm.end():end],
+                )
             for am in re.finditer(r"addMethods\(L,\s*\"(\w+)\",\s*(\w+)\)", body):
                 cls, table = am.group(1), am.group(2)
                 if table not in tables:
@@ -364,7 +367,7 @@ class Engine:
     def _scan_eluna_globals(self):
         for register in ("registerGlobals", "registerGameGlobals"):
             body = self._body(register)
-            for m in re.finditer(r"set\(L,\s*\"(\w+)\",\s*(?:fl::)?safe<(?:\w+::)?(\w+)>\)", body):
+            for m in re.finditer(r"set\(L,\s*\"(\w+)\",\s*(?:fl::)?safe<(?:\w+::)?(\w+)(?:<[^>{}]+>)?\s*>\)", body):
                 self.globals[m.group(1)] = {"fn": m.group(2), "table": None, "where": register}
             if not any(True for _ in re.finditer(r"set\(L,", body)):
                 raise ParseError(f"{register}(): no set(L, ...) globals found")
