@@ -65,7 +65,7 @@ public:
     // access follows the same flh::AccessRules the module uses.
     static constexpr uint64_t kTypePlayer = 4, kTypeItem = 3, kTypeCreature = 9, kTypeGameObject = 11, kTypePet = 10,
                               kTypeCorpse = 14;
-    static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0);
+    static fl::Guid makeGuid(uint64_t type, uint64_t low, uint32_t entry = 0, uint16_t mapId = 0);
     static fl::HandleData creature(uint64_t id, uint32_t map = 0, uint32_t instance = 0, uint32_t entry = 0);
     // A hunter/warlock pet: a creature handle whose guid is a Pet guid. The core keeps it in the map's Pet store, so only
     // the lookup rule of src/host/CreatureLookup.h (GetCreature, then GetPet for a Pet guid) finds it.
@@ -432,7 +432,7 @@ public:
     std::vector<std::string> worldMessages;
     int reloadsRequested = 0;
     uint32_t fakeRealmId = 1;
-    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry) override;
+    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0) override;
     uint32_t realmId() override { return fakeRealmId; }
     bool isInventoryPos(int kind, uint8_t bag, uint8_t slot) override;
     fl::Access checkAccess(fl::HandleData const& h) override;

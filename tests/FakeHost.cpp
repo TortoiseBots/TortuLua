@@ -72,10 +72,10 @@ std::string FakeHost::guidToString(fl::Guid const& g)
     return "Guid-" + std::to_string(g.hi) + "-" + std::to_string(g.lo);
 }
 
-fl::Guid FakeHost::makeGuid(uint64_t type, uint64_t low, uint32_t entry)
+fl::Guid FakeHost::makeGuid(uint64_t type, uint64_t low, uint32_t entry, uint16_t mapId)
 {
     fl::Guid g;
-    g.hi = (type << 58) | (static_cast<uint64_t>(entry) << 20);
+    g.hi = (type << 58) | (static_cast<uint64_t>(mapId & 0x1FFF) << 44) | (static_cast<uint64_t>(entry) << 20);
     g.lo = low;
     return g;
 }
@@ -84,7 +84,7 @@ fl::HandleData FakeHost::creature(uint64_t id, uint32_t map, uint32_t instance, 
 {
     fl::HandleData h;
     h.kind = fl::ObjKind::Creature;
-    h.guid = makeGuid(kTypeCreature, id, entry);
+    h.guid = makeGuid(kTypeCreature, id, entry, static_cast<uint16_t>(map));
     h.mapId = map;
     h.instanceId = instance;
     return h;
@@ -93,7 +93,7 @@ fl::HandleData FakeHost::creature(uint64_t id, uint32_t map, uint32_t instance, 
 fl::HandleData FakeHost::pet(uint64_t id, uint32_t map, uint32_t instance, uint32_t entry)
 {
     fl::HandleData h = creature(id, map, instance, entry);
-    h.guid = makeGuid(kTypePet, id, entry);
+    h.guid = makeGuid(kTypePet, id, entry, static_cast<uint16_t>(map));
     return h;
 }
 
@@ -111,7 +111,7 @@ fl::HandleData FakeHost::gameObject(uint64_t id, uint32_t map, uint32_t instance
 {
     fl::HandleData h;
     h.kind = fl::ObjKind::GameObject;
-    h.guid = makeGuid(kTypeGameObject, id, entry);
+    h.guid = makeGuid(kTypeGameObject, id, entry, static_cast<uint16_t>(map));
     h.mapId = map;
     h.instanceId = instance;
     return h;
@@ -851,7 +851,15 @@ bool FakeHost::unitStateCall(fl::HandleData const& self, std::string const& op,
             u.immuneMechanics.erase(mech);
     }
     else if (op == "unit.setName")
+    {
+        if (self.kind != fl::ObjKind::Creature)
+        {
+            out.emplace_back(false);
+            return true;
+        }
         u.name = unitStringAt(args, 0);
+        out.emplace_back(true);
+    }
     else if (op == "unit.setPetGuid")
         u.petGuid = unitStringAt(args, 0);
     else if (op == "unit.setVisible")
@@ -2674,14 +2682,14 @@ bool FakeHost::guidInfo(fl::Guid const& g, uint32_t* entry, int* type)
     return true;
 }
 
-fl::Guid FakeHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry)
+fl::Guid FakeHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId)
 {
     switch (kind)
     {
         case fl::ObjKind::Player: return makeGuid(kTypePlayer, low, 0);
         case fl::ObjKind::Item: return makeGuid(kTypeItem, low, 0);
-        case fl::ObjKind::Creature: return makeGuid(kTypeCreature, low, entry);
-        case fl::ObjKind::GameObject: return makeGuid(kTypeGameObject, low, entry);
+        case fl::ObjKind::Creature: return makeGuid(kTypeCreature, low, entry, mapId);
+        case fl::ObjKind::GameObject: return makeGuid(kTypeGameObject, low, entry, mapId);
         default: return fl::Guid{};
     }
 }

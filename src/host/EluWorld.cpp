@@ -3440,7 +3440,12 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
                 receiver = unitOf(target);
             Player* p = unit->ToPlayer();
             if (!p || p->GetSession())
-                unit->TextEmote(sArg(args, 0), receiver, bArg(args, 2, false));
+            {
+                std::string msg = sArg(args, 0);
+                if (msg.size() > 255)
+                    msg.resize(255);
+                unit->TextEmote(msg, receiver, bArg(args, 2, false));
+            }
             return true;
         }
         if (name == "unit.setCanFly")
@@ -3475,7 +3480,19 @@ bool ForeverHost::gameCall(fl::HandleData const& self, std::string_view op, std:
         }
         if (name == "unit.setName")
         {
-            unit->SetName(sArg(args, 0));
+            // Player::SaveToDB writes GetName() into characters.name (12 chars), so only creatures may be renamed.
+            if (Creature* c = unit->ToCreature())
+            {
+                std::string s = sArg(args, 0);
+                if (s.size() > 64)
+                    s.resize(64);
+                c->SetName(std::move(s));
+                out.emplace_back(true);
+            }
+            else
+            {
+                out.emplace_back(false);
+            }
             return true;
         }
         if (name == "unit.setPetGuid")
@@ -6263,15 +6280,15 @@ void ForeverHost::takeDataWrites(std::vector<fl::DataWriteResult>& out)
         _db->takeConfirmed(out);
 }
 
-fl::Guid ForeverHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry)
+fl::Guid ForeverHost::buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId)
 {
     auto const counter = static_cast<ObjectGuid::LowType>(low);
     switch (kind)
     {
         case ObjKind::Player: return fromGuid(ObjectGuid::Create<HighGuid::Player>(counter));
         case ObjKind::Item: return fromGuid(ObjectGuid::Create<HighGuid::Item>(counter));
-        case ObjKind::Creature: return fromGuid(ObjectGuid::Create<HighGuid::Creature>(0, entry, counter));
-        case ObjKind::GameObject: return fromGuid(ObjectGuid::Create<HighGuid::GameObject>(0, entry, counter));
+        case ObjKind::Creature: return fromGuid(ObjectGuid::Create<HighGuid::Creature>(mapId, entry, counter));
+        case ObjKind::GameObject: return fromGuid(ObjectGuid::Create<HighGuid::GameObject>(mapId, entry, counter));
         default: return fl::Guid{};
     }
 }

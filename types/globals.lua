@@ -208,11 +208,12 @@ function GetLuaEngine() end
 ---@return any
 function GetMapById(mapId, arg2) end
 
----returns the 32-digit hex guid (same form as Object:GetGUID)
+---returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)
 ---@param lowguid any
 ---@param entry any
+---@param mapId any
 ---@return any
-function GetObjectGUID(lowguid, entry) end
+function GetObjectGUID(lowguid, entry, mapId) end
 
 ---@deprecated not available (Classic 1.60)
 ---@return any
@@ -268,11 +269,12 @@ function GetStateMapId() end
 ---@return any
 function GetTimeDiff(arg1) end
 
----returns the 32-digit hex guid (same form as Object:GetGUID)
+---returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 (required to match spawns off map 0)
 ---@param lowguid any
 ---@param entry any
+---@param mapId any
 ---@return any
-function GetUnitGUID(lowguid, entry) end
+function GetUnitGUID(lowguid, entry, mapId) end
 
 ---@param bag any
 ---@param slot any

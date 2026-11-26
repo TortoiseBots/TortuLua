@@ -244,8 +244,11 @@ public:
     virtual bool commandNameReserved(std::string const& /*name*/) { return false; }
 
     // ---- Eluna Unit/Item/Global coverage ----
-    // Builds a 128-bit guid of `kind` (Player, Item, Creature, GameObject) from a low counter and optional entry.
-    virtual Guid buildGuid(ObjKind /*kind*/, uint64_t /*low*/, uint32_t /*entry*/) { return Guid{}; }
+    // Builds a 128-bit guid of `kind` (Player, Item, Creature, GameObject) from a low counter, optional entry and mapId.
+    virtual Guid buildGuid(ObjKind /*kind*/, uint64_t /*low*/, uint32_t /*entry*/, uint16_t /*mapId*/ = 0)
+    {
+        return Guid{};
+    }
     virtual uint32_t realmId() { return 0; }
     // Player inventory position predicates (kind: 0 Bag, 1 Bank, 2 Equipment, 3 Inventory).
     virtual bool isInventoryPos(int /*kind*/, uint8_t /*bag*/, uint8_t /*slot*/) { return false; }

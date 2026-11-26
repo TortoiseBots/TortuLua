@@ -616,9 +616,9 @@ int pCreateULongLong(lua_State* L)
     return luaL_typeerror(L, 1, "number or string");
 }
 
-int pushBuiltGuid(lua_State* L, ObjKind kind, uint64_t low, uint32_t entry)
+int pushBuiltGuid(lua_State* L, ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0)
 {
-    std::string const text = fl::guidText(host(L).buildGuid(kind, low, entry));
+    std::string const text = fl::guidText(host(L).buildGuid(kind, low, entry, mapId));
     lua_pushlstring(L, text.data(), text.size());
     return 1;
 }
@@ -626,11 +626,17 @@ int pGetPlayerGUID(lua_State* L) { return pushBuiltGuid(L, ObjKind::Player, argU
 int pGetItemGUID(lua_State* L) { return pushBuiltGuid(L, ObjKind::Item, argUInt(L, 1, "lowguid"), 0); }
 int pGetUnitGUID(lua_State* L)
 {
-    return pushBuiltGuid(L, ObjKind::Creature, argUInt(L, 1, "lowguid"), argUInt(L, 2, "entry"));
+    uint64_t const low = argUInt(L, 1, "lowguid");
+    uint32_t const entry = argUInt(L, 2, "entry");
+    uint16_t const mapId = lua_isnoneornil(L, 3) ? 0 : static_cast<uint16_t>(argU16(L, 3, "mapId"));
+    return pushBuiltGuid(L, ObjKind::Creature, low, entry, mapId);
 }
 int pGetObjectGUID(lua_State* L)
 {
-    return pushBuiltGuid(L, ObjKind::GameObject, argUInt(L, 1, "lowguid"), argUInt(L, 2, "entry"));
+    uint64_t const low = argUInt(L, 1, "lowguid");
+    uint32_t const entry = argUInt(L, 2, "entry");
+    uint16_t const mapId = lua_isnoneornil(L, 3) ? 0 : static_cast<uint16_t>(argU16(L, 3, "mapId"));
+    return pushBuiltGuid(L, ObjKind::GameObject, low, entry, mapId);
 }
 int pGetRealmID(lua_State* L)
 {

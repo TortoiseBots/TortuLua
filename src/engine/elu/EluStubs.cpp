@@ -77,6 +77,19 @@ void registerStubMethods(lua_State* L)
         addStubMethod(L, "Unit", m);
     // Guild bank (GUILD 9/11 never fire; the documented bank method is a stub).
     addStubMethod(L, "Guild", "SetBankTabText");
+    // The documented Player reads the core has no API for: the chat tag and the lifetime-kill counter are gone from this
+    // core's player, talents are per-spec trees (no free points), a mail item is stored as a template id, the spawn phase
+    // mask and the honour/XP target test are not exposed, and visibility is only answered per seer.
+    for (char const* m : {"GetChatTag", "GetFreeTalentPoints", "GetLifetimeKills", "GetMailItem", "GetPhaseMaskForSpawn",
+                          "IsHonorOrXPTarget", "IsVisibleForPlayer"})
+        addCoreStubMethod(L, "Player", m);
+    // Object generic update-field and flag accessors: this core stores typed update-field fragments rather than a
+    // flat indexable values array.
+    for (char const* m :
+         {"GetByteValue", "GetFloatValue", "GetInt32Value", "GetUInt16Value", "GetUInt32Value", "GetUInt64Value",
+          "HasFlag", "RemoveFlag", "SetByteValue", "SetFlag", "SetFloatValue", "SetInt16Value", "SetInt32Value",
+          "SetUInt16Value", "SetUInt32Value", "SetUInt64Value", "UpdateUInt32Value"})
+        addCoreStubMethod(L, "Object", m);
     // WorldObject bitmask phasing: this core uses PhaseShift phase ids rather than a 32-bit phase mask.
     for (char const* m : {"GetPhaseMask", "SetPhaseMask"})
         addCoreStubMethod(L, "WorldObject", m);

@@ -664,6 +664,8 @@ int uRemoveCharmAuras(lua_State* L) { return actionOp(L, kUnit, "unit.removeChar
 int uSendUnitEmote(lua_State* L)
 {
     std::string const msg = argStr(L, 2, "msg");
+    if (msg.size() > 255)
+        luaL_error(L, "msg is longer than 255 bytes");
     std::vector<EventValue> args{EventValue(msg)};
     if (lua_isnoneornil(L, 3))
         args.emplace_back();
@@ -702,7 +704,14 @@ int uSetImmuneTo(lua_State* L)
 }
 int uSetName(lua_State* L)
 {
-    return actionOp(L, kUnit, "unit.setName", "SetName", {EventValue(argStr(L, 2, "name"))});
+    fl::HandleData const& h = self(L, kUnit);
+    std::string const name = argStr(L, 2, "name");
+    if (name.size() > 64)
+        luaL_error(L, "name is longer than 64 bytes");
+    std::vector<EventValue> out;
+    gameCall(L, h, "unit.setName", {EventValue(name)}, out, "SetName");
+    requireHostOk(L, out, "SetName", "only available on a creature");
+    return 0;
 }
 int uSetPetGUID(lua_State* L)
 {

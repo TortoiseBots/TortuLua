@@ -133,6 +133,10 @@ function Player:GetBattlegroundTypeId() end
 ---@return any
 function Player:GetChampioningFaction() end
 
+---@deprecated not available (this core)
+---@return any
+function Player:GetChatTag() end
+
 ---@return any
 function Player:GetCoinage() end
 
@@ -154,6 +158,10 @@ function Player:GetDrunkValue() end
 ---@param slot any
 ---@return any
 function Player:GetEquippedItemBySlot(slot) end
+
+---@deprecated not available (this core)
+---@return any
+function Player:GetFreeTalentPoints() end
 
 ---@return any
 function Player:GetGMRank() end
@@ -213,8 +221,16 @@ function Player:GetLevelPlayedTime() end
 ---@return any
 function Player:GetLFGRole() end
 
+---@deprecated not available (this core)
+---@return any
+function Player:GetLifetimeKills() end
+
 ---@return any
 function Player:GetMailCount() end
+
+---@deprecated not available (this core)
+---@return any
+function Player:GetMailItem() end
 
 ---@return any
 function Player:GetManaBonusFromIntellect() end
@@ -235,6 +251,10 @@ function Player:GetOriginalGroup() end
 
 ---@return any
 function Player:GetOriginalSubGroup() end
+
+---@deprecated not available (this core)
+---@return any
+function Player:GetPhaseMaskForSpawn() end
 
 ---@return any
 function Player:GetPlayerIP() end
@@ -471,6 +491,10 @@ function Player:IsGMVisible() end
 ---@return any
 function Player:IsGroupVisibleFor(player) end
 
+---@deprecated not available (this core)
+---@return any
+function Player:IsHonorOrXPTarget() end
+
 ---@return any
 function Player:IsHorde() end
 
@@ -519,6 +543,10 @@ function Player:IsTaxiCheater() end
 ---@deprecated not available (Classic 1.60)
 ---@return any
 function Player:IsUsingLfg() end
+
+---@deprecated not available (this core)
+---@return any
+function Player:IsVisibleForPlayer() end
 
 ---@return any
 function Player:KickPlayer() end

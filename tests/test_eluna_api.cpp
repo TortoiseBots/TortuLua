@@ -511,7 +511,7 @@ TEST_CASE("eluna globals: 64-bit integer helpers, GUID builders, realm id, inven
     CHECK(errorOf(rig, "return CreateULongLong(-1)").find("negative") != std::string::npos);
     CHECK(errorOf(rig, "return CreateULongLong('-1')").find("valid") != std::string::npos);
 
-    // GUID builders round-trip through the GUID helpers and lookup
+    // GUID builders round-trip through the GUID helpers and lookup; mapId defaults to 0 and selects non-zero maps
     CHECK(rig.ok("local g = GetPlayerGUID(51) return GetGUIDType(g) .. ',' .. GetGUIDLow(g) .. ',' .. GetPlayerByGUID(g):GetName()") ==
           "4,51,Hero");
     CHECK(rig.ok("local g = GetItemGUID(99) return GetGUIDType(g) .. ',' .. GetGUIDLow(g)") == "3,99");
@@ -519,6 +519,21 @@ TEST_CASE("eluna globals: 64-bit integer helpers, GUID builders, realm id, inven
           "9,777,12");
     CHECK(rig.ok("local g = GetObjectGUID(15, 888) return GetGUIDType(g) .. ',' .. GetGUIDEntry(g) .. ',' .. GetGUIDLow(g)") ==
           "11,888,15");
+    fl::HandleData mobMap1 = FakeHost::creature(12, 1, 0, 777);
+    rig.host.add(mobMap1, info);
+    rig.ok("RegisterCreatureEvent(1, 5, function(ev, creature) map1Mob = creature end)");
+    rig.e().emitEluna(fl::EluKind::Creature, 1, 5, {fl::EventValue(mobMap1)});
+    CHECK(rig.ok("return tostring(GetUnitGUID(12, 777, 1) == map1Mob:GetGUID()) .. ',' .. "
+                 "tostring(GetUnitGUID(12, 777) == map1Mob:GetGUID())") == "true,false");
+    fl::HandleData goMap532 = FakeHost::gameObject(15, 532, 0, 888);
+    rig.host.add(goMap532, info);
+    rig.ok("RegisterGameObjectEvent(1, 14, function(ev, go) map532Go = go end)");
+    rig.e().emitEluna(fl::EluKind::GameObject, 1, 14, {fl::EventValue(goMap532)});
+    CHECK(rig.ok("return tostring(GetObjectGUID(15, 888, 532) == map532Go:GetGUID()) .. ',' .. "
+                 "tostring(GetObjectGUID(15, 888) == map532Go:GetGUID())") == "true,false");
+    CHECK(errorOf(rig, "return GetUnitGUID(12, 777, -1)").find("mapId must be an integer 0..65535") != std::string::npos);
+    CHECK(errorOf(rig, "return GetObjectGUID(15, 888, 65536)").find("mapId must be an integer 0..65535") !=
+          std::string::npos);
 
     // GetRealmID
     rig.host.fakeRealmId = 7;

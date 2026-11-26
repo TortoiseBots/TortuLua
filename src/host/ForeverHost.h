@@ -128,7 +128,7 @@ public:
     bool worldOnlyReadOk() override;
     bool mapIsInstanced(uint32_t mapId) override;
     bool commandNameReserved(std::string const& name) override;
-    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry) override;
+    fl::Guid buildGuid(fl::ObjKind kind, uint64_t low, uint32_t entry, uint16_t mapId = 0) override;
     uint32_t realmId() override;
     bool isInventoryPos(int kind, uint8_t bag, uint8_t slot) override;
     // The roots of the core's command table (read once at start, before any Lua command exists).

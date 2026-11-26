@@ -160,7 +160,6 @@ std::vector<std::string> const& roundCalls()
         "SetCritterGUID(stored:GetGUID())",
         "SetFFA(false)",
         "SetImmuneTo(12, true)",
-        "SetName('Longtail')",
         "SetPetGUID(stored:GetGUID())",
         "SetVisible(true)",
     };
@@ -194,6 +193,12 @@ TEST_CASE("eluna unit long tail: every method of the round reaches the host and 
         fl::CallResult r = rig.run("stored:" + call);
         REQUIRE_FALSE(r.ok);
         CHECK(r.error.find("Player no longer exists") != std::string::npos);
+    }
+    rig.host.remove(mob);
+    {
+        fl::CallResult r = rig.run("mob:SetName('Longtail')");
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("Creature no longer exists") != std::string::npos);
     }
 }
 
@@ -508,6 +513,7 @@ TEST_CASE("eluna unit long tail: the values flow both ways through the fake unit
     CHECK(state.unitEmotes[0].msg == "yawns");
     CHECK(state.unitEmotes[0].receiverLow == mob.guid.lo);
     CHECK(state.unitEmotes[0].bossEmote);
+    CHECK(rig.run("stored:SendUnitEmote(string.rep('a', 255))").ok);
 
     rig.ok("stored:SetCanFly(true)");
     CHECK(state.canFly);
@@ -528,8 +534,15 @@ TEST_CASE("eluna unit long tail: the values flow both ways through the fake unit
     rig.ok("stored:SetImmuneTo(12, false)");
     CHECK(state.immuneMechanics.empty());
 
-    rig.ok("stored:SetName('Renamed')");
-    CHECK(state.name == "Renamed");
+    // SetName is creature-only (Player::SaveToDB persists GetName() into characters.name) and capped at 64 bytes.
+    rig.ok("mob:SetName('Renamed')");
+    CHECK(mobState.name == "Renamed");
+    CHECK(rig.run("mob:SetName(string.rep('a', 64))").ok);
+    {
+        fl::CallResult r = rig.run("stored:SetName('Renamed')");
+        REQUIRE_FALSE(r.ok);
+        CHECK(r.error.find("SetName: only available on a creature") != std::string::npos);
+    }
     rig.ok("stored:SetVisible(false)");
     CHECK_FALSE(state.visible);
     rig.ok("stored:SetVisible()");
@@ -615,6 +628,8 @@ TEST_CASE("eluna unit long tail: a bad argument raises before the host is called
     CHECK(errorOf("stored:IsInAccessiblePlaceFor(5)").find("bad argument") != std::string::npos);
     CHECK(errorOf("stored:IsInAccessiblePlaceFor(mob, 1/0)").find("radius must be a finite number") != std::string::npos);
     CHECK(errorOf("stored:SendUnitEmote('x', 5)").find("bad argument") != std::string::npos);
+    CHECK(errorOf("stored:SendUnitEmote(string.rep('a', 256))").find("255") != std::string::npos);
+    CHECK(errorOf("mob:SetName(string.rep('a', 65))").find("64") != std::string::npos);
     CHECK(errorOf("stored:SetImmuneTo(-1)").find("immunity must be an integer 0..36") != std::string::npos);
     CHECK(errorOf("stored:SetImmuneTo(37)").find("immunity must be an integer 0..36") != std::string::npos);
     CHECK(errorOf("stored:SetCreatorGUID('bad')").find("bad argument") != std::string::npos);

@@ -117,6 +117,8 @@ METHOD_NOTES = {
                            "type, entry and map live in the high half",
     ("Player", "SetFactionForRace"): "refuses a race id the core's race store does not know with an error and leaves "
                                      "team and faction unchanged",
+    ("Unit", "SetName"): "creature only (refuses Player handles so SaveToDB cannot persist an invalid player name); "
+                         "capped at 64 bytes",
     ("WorldPacket", "GetOpcode"): "only what CreatePacket made or a packet event passes; the events get a read-only copy",
 }
 GLOBAL_NOTES = {
@@ -127,9 +129,11 @@ GLOBAL_NOTES = {
     "CreateLongLong": "returns a native Lua 5.4 signed 64-bit integer",
     "CreateULongLong": "returns a native Lua 5.4 64-bit integer",
     "GetItemGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
-    "GetObjectGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetObjectGUID": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 "
+                     "(required to match spawns off map 0)",
     "GetPlayerGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
-    "GetUnitGUID": "returns the 32-digit hex guid (same form as Object:GetGUID)",
+    "GetUnitGUID": "returns the 32-digit hex guid (same form as Object:GetGUID); optional third mapId defaults to 0 "
+                   "(required to match spawns off map 0)",
 }
 
 STUB_MARKERS = [

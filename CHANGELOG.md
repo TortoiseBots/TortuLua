@@ -29,14 +29,14 @@ core without the optional C1-C4 core hooks.
 
 | Family | Documented | Implemented | Stub | Missing | Implemented % | Resolvable % |
 |---|---|---|---|---|---|---|
-| Global | 110 | 94 | 4 | 12 | 85% | 89% |
+| Global | 110 | 105 | 5 | 0 | 95% | 100% |
 | Object | 30 | 13 | 17 | 0 | 43% | 100% |
 | WorldObject | 51 | 49 | 2 | 0 | 96% | 100% |
-| Unit | 167 | 132 | 3 | 32 | 79% | 81% |
+| Unit | 167 | 164 | 3 | 0 | 98% | 100% |
 | Player | 263 | 195 | 20 | 48 | 74% | 82% |
 | Creature | 94 | 87 | 0 | 7 | 93% | 93% |
 | GameObject | 20 | 19 | 1 | 0 | 95% | 100% |
-| Item | 66 | 56 | 4 | 6 | 85% | 91% |
+| Item | 66 | 58 | 8 | 0 | 88% | 100% |
 | Group | 27 | 27 | 0 | 0 | 100% | 100% |
 | Guild | 16 | 14 | 2 | 0 | 88% | 100% |
 | Quest | 13 | 13 | 0 | 0 | 100% | 100% |
@@ -67,7 +67,7 @@ core without the optional C1-C4 core hooks.
 | events: packet | 2 | 2 | 0 | 0 | 100% | 100% |
 | events: battleground | 4 | 4 | 0 | 0 | 100% | 100% |
 | events: spell | 23 | 0 | 0 | 23 | 0% | 0% |
-| **all** | **1443** | **1058** | **104** | **281** | **73%** | **81%** |
+| **all** | **1443** | **1103** | **109** | **231** | **76%** | **84%** |
 
 ### Known limits
 
@@ -78,8 +78,8 @@ core without the optional C1-C4 core hooks.
 * **Low-coverage classes.** AuraEffect, ElunaProcInfo and the spell events are not implemented (0%); WorldPacket (39%),
   Object (43%), SpellInfo (56%) and Player (74%) are
   only partly covered. Classic-era systems (guild bank, vehicles, achievements, arena, dual spec, LFG) are documented
-  stubs that raise an error; documented Object, WorldObject, Player and Map calls the core has no API for are stubs
-  that raise `not available on this core`.
+  stubs that raise an error; documented Object, WorldObject, Player, Item and Map calls the core has no API for are
+  stubs that raise `not available on this core`.
 * **Core hooks.** Some events need the optional core hooks C1-C4 (and further hooks for instance maps); without them
   they register and log `needs core hook Cn` once.
 * **The bot API needs a provider module.** Without a bot module that implements `BotProvider`, `IsBotApiAvailable()`
