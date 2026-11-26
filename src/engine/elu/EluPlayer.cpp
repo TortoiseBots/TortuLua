@@ -23,6 +23,19 @@ double durabilityPercentArg(lua_State* L, int idx)
     return std::clamp(static_cast<double>(v), 0.0, 1.0);
 }
 
+// A repair discount is a cost factor in [0, 1]: 1.0 charges the full price, 0.0 repairs for free. The core multiplies
+// repair prices by it, so a non-finite value is refused and anything outside the range is clamped; otherwise an
+// infinite or negative factor would corrupt the charge.
+double durabilityDiscountArg(lua_State* L, int idx, char const* what)
+{
+    if (lua_isnoneornil(L, idx))
+        return 1.0;
+    lua_Number const v = luaL_checknumber(L, idx);
+    if (!std::isfinite(v))
+        luaL_error(L, "%s must be a finite number", what);
+    return std::clamp(static_cast<double>(v), 0.0, 1.0);
+}
+
 int pSendBroadcastMessage(lua_State* L)
 {
     std::string msg = argStr(L, 2, "message");
@@ -545,7 +558,7 @@ int pDurabilityRepairAll(lua_State* L)
 {
     return actionOp(L, kPlayer, "player.durabilityRepairAll", "DurabilityRepairAll",
                     {EventValue(optBool(L, 2, true)),
-                     EventValue(static_cast<double>(optFloat(L, 3, 1.0f, "discount"))),
+                     EventValue(durabilityDiscountArg(L, 3, "discount")),
                      EventValue(optBool(L, 4, false))});
 }
 
@@ -771,7 +784,7 @@ int pDurabilityRepair(lua_State* L)
 {
     return actionOp(L, kPlayer, "player.durabilityRepair", "DurabilityRepair",
                     {EventValue(static_cast<int64_t>(argU16(L, 2, "pos"))), EventValue(optBool(L, 3, true)),
-                     EventValue(static_cast<double>(optFloat(L, 4, 1.0f, "discount")))});
+                     EventValue(durabilityDiscountArg(L, 4, "discount"))});
 }
 }  // namespace
 

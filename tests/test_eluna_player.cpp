@@ -854,6 +854,17 @@ TEST_CASE("eluna player writes, round 2: the arguments reach the fake player sta
     CHECK(state.durabilities[8].inventory);
     CHECK(state.durabilities[9].percent == 1.0);
     CHECK_FALSE(state.durabilities[9].inventory);
+
+    // a repair discount is a factor in [0, 1]: anything outside is clamped before the host sees it
+    rig.ok("stored:DurabilityRepair(4, false, -0.5)");
+    rig.ok("stored:DurabilityRepair(4, false, 2)");
+    REQUIRE(state.durabilities.size() == 12);
+    CHECK(state.durabilities[10].discount == 0.0);
+    CHECK(state.durabilities[11].discount == 1.0);
+    rig.ok("stored:DurabilityRepairAll(false, -0.5)");
+    CHECK(state.repairDiscount == 0.0);
+    rig.ok("stored:DurabilityRepairAll(false, 2)");
+    CHECK(state.repairDiscount == 1.0);
 }
 
 TEST_CASE("eluna player writes, round 2: a bad argument raises before the host is called")
@@ -883,8 +894,18 @@ TEST_CASE("eluna player writes, round 2: a bad argument raises before the host i
     CHECK(errorOf("stored:SendMovieStart(-1)").find("movieId must be an integer 0..4294967295") != std::string::npos);
     CHECK(errorOf("stored:SendUpdateWorldState(1)").find("bad argument") != std::string::npos);
     CHECK(errorOf("stored:DurabilityRepair(70000)").find("pos must be an integer 0..65535") != std::string::npos);
-    CHECK(errorOf("stored:DurabilityRepair(4, false, 0/0)").find("discount must not be NaN") != std::string::npos);
-    CHECK(errorOf("stored:DurabilityRepairAll(false, 0/0)").find("discount must not be NaN") != std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepair(4, false, 0/0)").find("discount must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepair(4, false, 1/0)").find("discount must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepair(4, false, -1/0)").find("discount must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepairAll(false, 0/0)").find("discount must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepairAll(false, 1/0)").find("discount must be a finite number") !=
+          std::string::npos);
+    CHECK(errorOf("stored:DurabilityRepairAll(false, -1/0)").find("discount must be a finite number") !=
+          std::string::npos);
     CHECK(errorOf("stored:DurabilityLoss(5, 1)").find("item expected") != std::string::npos);
     CHECK(errorOf("stored:DurabilityLoss(ownedItem, 0/0)").find("percent must be a finite number") !=
           std::string::npos);
